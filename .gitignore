@@ -22,6 +22,10 @@ logs/
 # Testing
 coverage/
 .nyc_output/
+postman/
+TESTING.md
+*.postman_collection.json
+*.postman_environment.json
 
 # IDE
 .vscode/

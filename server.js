@@ -68,8 +68,8 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Mount route handlers (will be added in subsequent days)
-// app.use('/api/auth', require('./src/routes/auth'));
+// Mount route handlers
+app.use('/api/auth', require('./src/routes/auth'));
 // app.use('/api/documents', require('./src/routes/documents'));
 // app.use('/api/invoices', require('./src/routes/invoices'));
 // app.use('/api/resumes', require('./src/routes/resumes'));
