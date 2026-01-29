@@ -1,0 +1,585 @@
+{
+	"info": {
+		"_postman_id": "docuflow-api-collection",
+		"name": "DocuFlow - Document Processing API",
+		"description": "Complete API collection for DocuFlow document processing system",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3001",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "documentId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+									"    pm.collectionVariables.set('userId', response.data.user.id);",
+									"    ",
+									"    pm.test('Status code is 201', () => {",
+									"        pm.response.to.have.status(201);",
+									"    });",
+									"    ",
+									"    pm.test('Response has access token', () => {",
+									"        pm.expect(response.data.accessToken).to.be.a('string');",
+									"    });",
+									"    ",
+									"    pm.test('Response has user data', () => {",
+									"        pm.expect(response.data.user).to.have.property('email');",
+									"        pm.expect(response.data.user).to.not.have.property('password_hash');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@docuflow.com\",\n  \"password\": \"Admin123!\",\n  \"full_name\": \"Admin User\",\n  \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "register"]
+						},
+						"description": "Register a new user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+									"    pm.collectionVariables.set('userId', response.data.user.id);",
+									"    ",
+									"    pm.test('Status code is 200', () => {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    pm.test('Response has tokens', () => {",
+									"        pm.expect(response.data.accessToken).to.be.a('string');",
+									"        pm.expect(response.data.refreshToken).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@docuflow.com\",\n  \"password\": \"Admin123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Login with email and password"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has user data', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data).to.have.property('email');",
+									"    pm.expect(response.data).to.have.property('full_name');",
+									"    pm.expect(response.data).to.not.have.property('password_hash');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "me"]
+						},
+						"description": "Get current authenticated user"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+									"    ",
+									"    pm.test('Status code is 200', () => {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    pm.test('Response has new tokens', () => {",
+									"        pm.expect(response.data.accessToken).to.be.a('string');",
+									"        pm.expect(response.data.refreshToken).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "refresh"]
+						},
+						"description": "Refresh access token using refresh token"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Clear tokens after logout",
+									"pm.collectionVariables.set('accessToken', '');",
+									"pm.collectionVariables.set('refreshToken', '');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "logout"]
+						},
+						"description": "Logout current user"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for user registration, login, and token management"
+		},
+		{
+			"name": "Documents",
+			"item": [
+				{
+					"name": "Upload Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('documentId', response.data.document.id);",
+									"    ",
+									"    pm.test('Status code is 201', () => {",
+									"        pm.response.to.have.status(201);",
+									"    });",
+									"    ",
+									"    pm.test('Response has document data', () => {",
+									"        pm.expect(response.data.document).to.have.property('id');",
+									"        pm.expect(response.data.document).to.have.property('document_type');",
+									"        pm.expect(response.data.document).to.have.property('original_filename');",
+									"        pm.expect(response.data.document).to.have.property('file_size');",
+									"        pm.expect(response.data.document).to.have.property('mime_type');",
+									"    });",
+									"    ",
+									"    pm.test('Processing status is pending', () => {",
+									"        pm.expect(response.data.document.processing_status).to.equal('pending');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "document_type",
+									"value": "invoice",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/upload",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "upload"]
+						},
+						"description": "Upload a document (PDF, DOCX, PNG, or JPEG). Max file size: 10MB"
+					},
+					"response": []
+				},
+				{
+					"name": "List Documents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has documents array', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data.documents).to.be.an('array');",
+									"});",
+									"",
+									"pm.test('Response has pagination metadata', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.meta.pagination).to.have.property('page');",
+									"    pm.expect(response.meta.pagination).to.have.property('limit');",
+									"    pm.expect(response.meta.pagination).to.have.property('total');",
+									"    pm.expect(response.meta.pagination).to.have.property('totalPages');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "documents"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "document_type",
+									"value": "invoice",
+									"disabled": true
+								},
+								{
+									"key": "processing_status",
+									"value": "pending",
+									"disabled": true
+								},
+								{
+									"key": "sort_by",
+									"value": "upload_date",
+									"disabled": true
+								},
+								{
+									"key": "order",
+									"value": "DESC",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated list of documents with optional filters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Document Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has document data', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data.document).to.have.property('id');",
+									"    pm.expect(response.data.document).to.have.property('file_path');",
+									"    pm.expect(response.data.document).to.have.property('user_id');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/{{documentId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "documents", "{{documentId}}"]
+						},
+						"description": "Get details of a specific document by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Download Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has file content', () => {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.exist;",
+									"    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/{{documentId}}/download",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "documents", "{{documentId}}", "download"]
+						},
+						"description": "Download a document file"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response confirms deletion', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data.id).to.equal(pm.collectionVariables.get('documentId'));",
+									"});",
+									"",
+									"// Clear documentId after deletion",
+									"pm.collectionVariables.set('documentId', '');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/{{documentId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "documents", "{{documentId}}"]
+						},
+						"description": "Delete a document (both file and database record)"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Invalid File Type",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 400', () => {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Error message mentions invalid file type', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.error.code).to.equal('INVALID_FILE_TYPE');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "document_type",
+									"value": "invoice",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/upload",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "upload"]
+						},
+						"description": "Test uploading an invalid file type (e.g., .txt file) - should fail with 400"
+					},
+					"response": []
+				}
+			],
+			"description": "Document upload and management endpoints"
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": ["{{baseUrl}}"],
+					"path": ["health"]
+				},
+				"description": "Check API server health status"
+			},
+			"response": []
+		},
+		{
+			"name": "API Info",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api",
+					"host": ["{{baseUrl}}"],
+					"path": ["api"]
+				},
+				"description": "Get API information and available endpoints"
+			},
+			"response": []
+		}
+	]
+}
