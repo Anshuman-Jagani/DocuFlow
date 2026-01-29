@@ -69,7 +69,9 @@ app.get('/api', (req, res) => {
 });
 
 // Mount route handlers
+const documentRoutes = require('./src/routes/documents');
 app.use('/api/auth', require('./src/routes/auth'));
+app.use('/api', documentRoutes); // Handles /api/upload and /api/documents/*
 // app.use('/api/documents', require('./src/routes/documents'));
 // app.use('/api/invoices', require('./src/routes/invoices'));
 // app.use('/api/resumes', require('./src/routes/resumes'));

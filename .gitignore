@@ -10,6 +10,7 @@ yarn.lock
 .env
 .env.local
 .env.*.local
+.env.example
 
 # Uploads
 uploads/*
@@ -26,6 +27,7 @@ postman/
 TESTING.md
 *.postman_collection.json
 *.postman_environment.json
+
 
 # IDE
 .vscode/
