@@ -72,11 +72,10 @@ app.get('/api', (req, res) => {
 const documentRoutes = require('./src/routes/documents');
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api', documentRoutes); // Handles /api/upload and /api/documents/*
-// app.use('/api/documents', require('./src/routes/documents'));
-// app.use('/api/invoices', require('./src/routes/invoices'));
-// app.use('/api/resumes', require('./src/routes/resumes'));
-// app.use('/api/contracts', require('./src/routes/contracts'));
-// app.use('/api/receipts', require('./src/routes/receipts'));
+app.use('/api/invoices', require('./src/routes/invoices'));
+app.use('/api/resumes', require('./src/routes/resumes'));
+app.use('/api/contracts', require('./src/routes/contracts'));
+app.use('/api/receipts', require('./src/routes/receipts'));
 // app.use('/api/jobs', require('./src/routes/jobs'));
 // app.use('/api/webhooks', require('./src/routes/webhooks'));
 // app.use('/api/dashboard', require('./src/routes/dashboard'));
