@@ -3,8 +3,9 @@
 ## Project Overview
 
 **Repository**: https://github.com/Anshuman-Jagani/DocuFlow.git  
-**Timeline**: 15 working days (3 weeks × 5 days)  
-**Current Progress**: Day 5 Complete (33%) - Week 1 Complete ✅
+**Timeline**: 10 working days (2 weeks × 5 days) - **ACCELERATED SCHEDULE**  
+**Current Progress**: Day 5 Complete (50%) - Week 1 Complete ✅  
+**Week 2 Deadline**: February 6, 2026 (Friday) - Backend completion required
 
 ---
 
@@ -247,34 +248,24 @@
 
 ---
 
-## Week 2: Webhook Integration & API Development (Days 6-10)
+## Week 2: ACCELERATED BACKEND COMPLETION (Days 6-10)
 
-### 📋 Day 6: Webhook Infrastructure
+> [!IMPORTANT]
+> **Critical Deadline**: All backend development must be completed by February 6, 2026 (Friday)
+> 
+> This week consolidates the original 10 remaining days into 5 intensive development days. Each day will cover multiple components to meet the deadline.
+
+---
+
+### 📋 Day 6: Webhook Infrastructure + Document Processing (Monday, Feb 3)
+
+**Priority**: HIGH - Foundation for n8n integration
 
 **Files to Create**:
 - `src/utils/crypto.js` - HMAC signature utilities
 - `src/middleware/webhookVerify.js` - HMAC verification
 - `src/controllers/webhookController.js` - Webhook handlers
 - `src/routes/webhooks.js` - Webhook routes
-
-**Features**:
-- HMAC SHA-256 signature verification
-- Timestamp validation (prevent replay attacks)
-- Webhook payload logging
-- Error handling for webhooks
-- Webhook secret management
-
-**Security**:
-- Verify X-Webhook-Signature header
-- Validate X-Webhook-Timestamp
-- Reject old requests (>5 minutes)
-- Log all webhook attempts
-
-**Commit**: "Day 6: Webhook infrastructure and security"
-
----
-
-### 📋 Day 7: Document Processing Webhooks
 
 **API Endpoints**:
 - POST /api/webhooks/document-uploaded
@@ -298,181 +289,270 @@
 }
 ```
 
-**Commit**: "Day 7: Document processing webhooks"
+**Security Features**:
+- HMAC SHA-256 signature verification
+- Timestamp validation (prevent replay attacks)
+- Webhook payload logging
+- Verify X-Webhook-Signature header
+- Validate X-Webhook-Timestamp
+- Reject old requests (>5 minutes)
+
+**Testing**:
+- Create `tests/integration/webhooks.test.js`
+- Test signature verification
+- Test replay attack prevention
+- Test all webhook endpoints
+
+**Estimated Time**: 6-8 hours
+
+**Commit**: "Day 6: Webhook infrastructure and document processing webhooks"
 
 ---
 
-### 📋 Day 8: Invoice & Receipt APIs
+### 📋 Day 7: Job Posting APIs + Resume Matching Enhancement (Tuesday, Feb 4)
 
-**Invoice Endpoints**:
-- GET /api/invoices - List with filters (vendor, date range, status)
-- GET /api/invoices/:id - Get details
-- PUT /api/invoices/:id - Update (manual corrections)
-- GET /api/invoices/stats - Statistics (total, pending, avg amount)
-
-**Receipt Endpoints**:
-- GET /api/receipts - List with filters
-- GET /api/receipts/:id - Get details
-- GET /api/receipts/by-category - Group by expense category
-- GET /api/receipts/monthly-report - Monthly expense report
-
-**Commit**: "Day 8: Invoice and receipt APIs"
-
----
-
-### 📋 Day 9: Resume & Job Posting APIs
+**Priority**: HIGH - Complete resume/job functionality
 
 **Files to Create**:
-- `src/services/resumeService.js` - Resume matching logic
-- `src/controllers/jobController.js` - Job CRUD
-- `src/routes/jobs.js` - Job routes
+- `src/services/resumeService.js` - Enhanced resume matching logic
+- `src/controllers/jobController.js` - Job CRUD operations
+- `src/routes/jobs.js` - Job posting routes
+- `tests/unit/resumeService.test.js` - Resume matching tests
 
-**Resume Endpoints**:
-- GET /api/resumes - List with filters
-- GET /api/resumes/:id - Get details
-- POST /api/resumes/:id/match-job - Match to job
-- GET /api/resumes/top-candidates - Top scoring candidates
-
-**Job Endpoints**:
-- GET /api/jobs - List jobs
-- POST /api/jobs - Create job
-- GET /api/jobs/:id - Get job
+**Job Posting Endpoints** (5 new):
+- GET /api/jobs - List jobs with filters
+- POST /api/jobs - Create job posting
+- GET /api/jobs/:id - Get job details
 - PUT /api/jobs/:id - Update job
 - DELETE /api/jobs/:id - Delete job
 
-**Matching Algorithm**:
+**Enhanced Resume Endpoints**:
+- GET /api/resumes/top-candidates - Top scoring candidates across all jobs
+- POST /api/resumes/batch-match - Match multiple resumes to a job
+
+**Matching Algorithm Enhancement**:
 - Skills matching (required vs preferred)
-- Experience level matching
-- Location matching
-- Scoring: 0-100 based on criteria
-- Recommendation: strong_yes, yes, maybe, no, strong_no
+- Experience level matching (junior/mid/senior)
+- Location matching with remote options
+- Scoring: 0-100 based on weighted criteria
+  - Required skills: 40%
+  - Preferred skills: 20%
+  - Experience level: 20%
+  - Education: 10%
+  - Location: 10%
+- Recommendation levels: strong_yes (>80), yes (60-80), maybe (40-60), no (<40)
 
-**Commit**: "Day 9: Resume and job posting APIs"
+**Files Modified**:
+- `server.js` - Mount job routes
+- `src/controllers/resumeController.js` - Add batch matching endpoint
+
+**Testing**:
+- Test job CRUD operations
+- Test matching algorithm accuracy
+- Test edge cases (no skills, overqualified, etc.)
+
+**Estimated Time**: 6-8 hours
+
+**Commit**: "Day 7: Job posting APIs and enhanced resume matching"
 
 ---
 
-### 📋 Day 10: Contract APIs & Document Management
+### 📋 Day 8: Dashboard Analytics + Export Features (Wednesday, Feb 5)
 
-**Contract Endpoints**:
-- GET /api/contracts - List contracts
-- GET /api/contracts/:id - Get details
-- GET /api/contracts/expiring - Expiring in next 30 days
-- GET /api/contracts/high-risk - Risk score > 70
-
-**Enhanced Document Endpoints**:
-- GET /api/documents - Enhanced with filters
-- DELETE /api/documents/:id - Delete with cascade
-- POST /api/documents/:id/reprocess - Trigger n8n reprocessing
-
-**Commit**: "Day 10: Contract and document management APIs"
-
----
-
-## Week 3: Analytics, Security & Deployment (Days 11-15)
-
-### 📋 Day 11: Dashboard & Analytics APIs
+**Priority**: MEDIUM-HIGH - Business intelligence features
 
 **Files to Create**:
 - `src/controllers/dashboardController.js` - Analytics endpoints
-- `src/services/analyticsService.js` - Data aggregation
-- `src/routes/dashboard.js` - Dashboard routes
-
-**Endpoints**:
-- GET /api/dashboard/overview - Total docs, by type, by status
-- GET /api/dashboard/invoices-summary - Total amount, avg, trends
-- GET /api/dashboard/resume-pipeline - Candidate funnel
-- GET /api/dashboard/expense-trends - Monthly expense trends
-
-**Commit**: "Day 11: Dashboard and analytics APIs"
-
----
-
-### 📋 Day 12: Export & Settings Features
-
-**Files to Create**:
+- `src/services/analyticsService.js` - Data aggregation logic
 - `src/services/exportService.js` - PDF/CSV generation
-- `src/controllers/settingsController.js` - User settings
-- `src/routes/settings.js` - Settings routes
+- `src/routes/dashboard.js` - Dashboard routes
+- `tests/unit/analytics.test.js` - Analytics tests
 
-**Export Endpoints**:
-- GET /api/invoices/:id/export?format=pdf|csv
-- GET /api/receipts/export?format=csv|excel
+**Dashboard Endpoints** (4 new):
+- GET /api/dashboard/overview - Total docs, by type, by status, recent activity
+- GET /api/dashboard/invoices-summary - Total amount, avg, trends, by currency
+- GET /api/dashboard/resume-pipeline - Candidate funnel, match distribution
+- GET /api/dashboard/expense-trends - Monthly expense trends, category breakdown
 
-**Settings Endpoints**:
-- GET /api/settings - Get user settings
-- PUT /api/settings - Update settings
+**Export Endpoints** (3 new):
+- GET /api/invoices/:id/export?format=pdf|csv - Export single invoice
+- GET /api/receipts/export?format=csv|excel - Export receipt data with filters
+- GET /api/contracts/:id/export?format=pdf - Export contract summary
 
-**Commit**: "Day 12: Export and settings features"
+**Analytics Features**:
+- Time-based aggregations (daily, weekly, monthly)
+- Trend calculations (percentage change)
+- Category grouping with totals
+- Top vendors/merchants analysis
+- Document processing velocity metrics
 
----
+**Export Features**:
+- PDF generation using PDFKit or similar
+- CSV generation with proper escaping
+- Excel export using xlsx library
+- Customizable date ranges
+- Filtered exports based on query params
 
-### 📋 Day 13: Security Hardening
-
-**Files to Create**:
-- `src/middleware/rateLimiter.js` - Rate limiting config
-- Enhanced validation in existing files
-
-**Security Features**:
-- Rate limiting (different limits per endpoint type)
-- Input sanitization (XSS prevention)
-- SQL injection prevention (parameterized queries)
-- CORS configuration
-- Helmet security headers
-- File virus scanning (optional - ClamAV)
-
-**Rate Limits**:
-- Auth endpoints: 5 requests/15min per IP
-- File upload: 10 requests/hour per user
-- General API: 100 requests/15min per user
-- Webhooks: 1000 requests/hour
-
-**Commit**: "Day 13: Security hardening"
-
----
-
-### 📋 Day 14: Testing & Documentation
-
-**Files to Create**:
-- `tests/unit/auth.test.js` - Auth tests
-- `tests/unit/fileUpload.test.js` - Upload tests
-- `tests/integration/webhooks.test.js` - Webhook tests
-- `tests/integration/api.test.js` - API tests
-- `docs/swagger.yaml` - OpenAPI specification
+**Files Modified**:
+- `server.js` - Mount dashboard routes
+- `package.json` - Add export dependencies (pdfkit, xlsx)
 
 **Testing**:
-- Unit tests for services
-- Integration tests for endpoints
-- Test coverage > 70%
-- Mock database for tests
+- Test all analytics calculations
+- Test export file generation
+- Verify data accuracy
 
-**Documentation**:
-- Swagger UI at /api-docs
-- Complete API reference
-- Request/response examples
-- Authentication guide
+**Estimated Time**: 7-9 hours
 
-**Commit**: "Day 14: Testing and documentation"
+**Commit**: "Day 8: Dashboard analytics and export features"
 
 ---
 
-### 📋 Day 15: Docker, Deployment & Final Polish
+### 📋 Day 9: Security Hardening + Settings + Testing (Thursday, Feb 6)
+
+**Priority**: CRITICAL - Production readiness
 
 **Files to Create**:
-- `Dockerfile` - Multi-stage build
-- Enhanced `docker-compose.yml` - API + PostgreSQL
-- `src/seeders/` - Sample data seeders
+- `src/middleware/rateLimiter.js` - Rate limiting configuration
+- `src/middleware/sanitization.js` - Input sanitization
+- `src/controllers/settingsController.js` - User settings management
+- `src/routes/settings.js` - Settings routes
+- `tests/unit/auth.test.js` - Authentication tests
+- `tests/unit/fileUpload.test.js` - File upload tests
+- `tests/integration/api.test.js` - Full API integration tests
+- `tests/security/security.test.js` - Security tests
+
+**Security Features**:
+- **Rate Limiting**:
+  - Auth endpoints: 5 requests/15min per IP
+  - File upload: 10 requests/hour per user
+  - General API: 100 requests/15min per user
+  - Webhooks: 1000 requests/hour
+- **Input Sanitization**: XSS prevention using express-validator
+- **SQL Injection Prevention**: Verify parameterized queries
+- **CORS Configuration**: Strict origin validation
+- **Helmet Security Headers**: CSP, HSTS, etc.
+- **File Security**: Enhanced MIME type validation, file size limits
+
+**Settings Endpoints** (2 new):
+- GET /api/settings - Get user preferences
+- PUT /api/settings - Update settings (notifications, defaults, etc.)
+
+**Settings Schema**:
+```json
+{
+  "notifications": {
+    "email_on_upload": true,
+    "webhook_failures": true
+  },
+  "defaults": {
+    "currency": "USD",
+    "timezone": "UTC"
+  },
+  "privacy": {
+    "data_retention_days": 365
+  }
+}
+```
+
+**Testing Coverage Goals**:
+- Unit tests: >80% coverage
+- Integration tests: All critical paths
+- Security tests: Rate limiting, injection attempts
+- Mock database for isolated tests
+- Test all error scenarios
+
+**Files Modified**:
+- `server.js` - Apply rate limiting, helmet, sanitization middleware
+- All controllers - Add input sanitization
+- `package.json` - Add security dependencies
+
+**Estimated Time**: 8-10 hours
+
+**Commit**: "Day 9: Security hardening, settings, and comprehensive testing"
+
+---
+
+### 📋 Day 10: Documentation + Docker + Final Polish (Friday, Feb 7)
+
+**Priority**: CRITICAL - Deployment readiness
+
+**Files to Create**:
+- `docs/swagger.yaml` - Complete OpenAPI 3.0 specification
+- `Dockerfile` - Multi-stage production build
+- `docker-compose.prod.yml` - Production stack (API + PostgreSQL)
+- `src/seeders/demo-data.js` - Sample data seeder
 - `DEPLOYMENT.md` - Deployment guide
+- `API_REFERENCE.md` - Quick API reference
+- `.dockerignore` - Docker build optimization
+- `scripts/setup.sh` - Initial setup script
+- `scripts/health-check.js` - Health check endpoint
 
-**Features**:
-- Production Dockerfile
-- Docker Compose for full stack
-- Database seeding scripts
+**Documentation**:
+- **Swagger/OpenAPI**:
+  - Complete API specification
+  - All 40+ endpoints documented
+  - Request/response schemas
+  - Authentication flows
+  - Error codes reference
+  - Serve at /api-docs with Swagger UI
+- **API Reference**: Markdown quick reference
+- **Deployment Guide**: Step-by-step deployment instructions
+- **README.md**: Update with complete setup instructions
+
+**Docker Setup**:
+- **Dockerfile**:
+  - Multi-stage build (builder + production)
+  - Node.js 18 Alpine base
+  - Optimized layer caching
+  - Non-root user
+  - Health checks
+- **docker-compose.prod.yml**:
+  - API service with restart policy
+  - PostgreSQL with persistent volume
+  - Environment variable management
+  - Network isolation
+  - Health checks for both services
+
+**Seeder Data**:
+- 5 sample users (1 admin, 4 regular)
+- 20 sample documents across all types
+- 10 invoices with various statuses
+- 8 resumes with different skill sets
+- 5 job postings for matching
+- 6 contracts with different risk levels
+- 10 receipts across categories
+
+**Final Polish**:
+- Code cleanup and formatting
+- Remove console.logs, add proper logging
+- Optimize database queries
+- Add database indexes for performance
 - Environment-based configuration
-- Production logging
-- Health checks
-- Final code cleanup
+- Production logging with Winston
+- Error tracking setup
+- API versioning (v1 prefix)
 
-**Commit**: "Day 15: Docker setup and final polish"
+**Health Check Endpoint**:
+- GET /health - System health status
+- GET /api/v1/health - API health with DB connection check
+
+**Files Modified**:
+- `server.js` - Add Swagger UI, health checks, API versioning
+- `package.json` - Add documentation dependencies
+- `README.md` - Complete documentation
+- All route files - Add OpenAPI comments
+
+**Testing**:
+- Docker build verification
+- Docker Compose stack test
+- Seeder execution test
+- Health check validation
+- Full API smoke test
+
+**Estimated Time**: 8-10 hours
+
+**Commit**: "Day 10: Complete documentation, Docker setup, and final polish"
 
 ---
 
@@ -544,23 +624,28 @@ ALLOWED_ORIGINS=http://localhost:3001,http://localhost:5173
 | Week | Days | Status | Completion |
 |------|------|--------|------------|
 | Week 1 | 1-5 | ✅ Complete | 100% (5/5) |
-| Week 2 | 6-10 | Not Started | 0% |
-| Week 3 | 11-15 | Not Started | 0% |
+| Week 2 | 6-10 | 📋 In Progress | 0% (0/5) |
 
-**Overall**: 33% (5/15 days)  
-**Week 1**: ✅ COMPLETE - All CRUD endpoints implemented (32 total endpoints)
+**Overall**: 50% (5/10 days)  
+**Week 1**: ✅ COMPLETE - All CRUD endpoints implemented (32 total endpoints)  
+**Week 2**: 🚀 ACCELERATED SPRINT - All remaining backend work compressed into 5 intensive days
 
 ---
 
 ## Next Steps
 
-**Day 6 Focus**: Webhook Infrastructure
-- Create webhook verification middleware (HMAC)
+**Day 6 Focus**: Webhook Infrastructure + Document Processing (Monday, Feb 3)
+- Create webhook verification middleware with HMAC SHA-256
 - Implement webhook logging system
-- Build webhook base controller
-- Set up webhook routes structure
+- Build webhook handlers for all document types
+- Set up webhook routes (5 endpoints)
 - Add webhook secret management
 - Create webhook payload validators
-- Test webhook security
+- Test signature verification and replay attack prevention
+- Create integration tests for webhooks
 
-**Estimated Time**: 4-6 hours
+**Estimated Time**: 6-8 hours
+
+> [!WARNING]
+> **Critical Timeline**: With only 5 days remaining to complete all backend work, each day must deliver multiple components. Daily commits and progress tracking are essential.
+
