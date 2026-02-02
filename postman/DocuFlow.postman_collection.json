@@ -1328,6 +1328,212 @@
 			]
 		},
 		{
+			"name": "Webhooks",
+			"description": "Webhook endpoints for n8n integration. All requests require HMAC SHA-256 signature in X-Webhook-Signature and timestamp in X-Webhook-Timestamp.",
+			"item": [
+				{
+					"name": "Document Uploaded Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Webhook-Signature",
+								"value": "{{webhookSignature}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Webhook-Timestamp",
+								"value": "{{webhookTimestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"document_id\": \"{{documentId}}\",\n  \"document_type\": \"invoice\",\n  \"timestamp\": \"2024-01-01T12:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/document-uploaded",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"webhooks",
+								"document-uploaded"
+							]
+						},
+						"description": "Triggered when a document is uploaded to start processing"
+					},
+					"response": []
+				},
+				{
+					"name": "Invoice Processed Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Webhook-Signature",
+								"value": "{{webhookSignature}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Webhook-Timestamp",
+								"value": "{{webhookTimestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"document_id\": \"{{documentId}}\",\n  \"processed_data\": {\n    \"invoice_number\": \"INV-123\",\n    \"vendor_name\": \"ACME Corp\",\n    \"total_amount\": 150.50,\n    \"currency\": \"USD\",\n    \"issue_date\": \"2024-01-01\",\n    \"due_date\": \"2024-02-01\",\n    \"status\": \"pending\",\n    \"tax_amount\": 15.00,\n    \"line_items\": [\n      { \"description\": \"Item 1\", \"quantity\": 1, \"unit_price\": 135.50, \"total\": 135.50 }\n    ]\n  },\n  \"validation\": {\n    \"status\": \"valid\",\n    \"confidence_score\": 98,\n    \"errors\": []\n  },\n  \"timestamp\": \"2024-01-01T12:05:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/invoice-processed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"webhooks",
+								"invoice-processed"
+							]
+						},
+						"description": "Receives processed invoice data from n8n"
+					},
+					"response": []
+				},
+				{
+					"name": "Resume Processed Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Webhook-Signature",
+								"value": "{{webhookSignature}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Webhook-Timestamp",
+								"value": "{{webhookTimestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"document_id\": \"{{documentId}}\",\n  \"processed_data\": {\n    \"candidate_name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"phone\": \"+123456789\",\n    \"location\": \"New York\",\n    \"years_of_experience\": 5,\n    \"current_position\": \"Software Engineer\",\n    \"summary\": \"Experienced developer\",\n    \"skills\": [\"Node.js\", \"React\"],\n    \"experience\": [],\n    \"education\": []\n  },\n  \"validation\": {\n    \"status\": \"valid\",\n    \"confidence_score\": 95,\n    \"errors\": []\n  },\n  \"timestamp\": \"2024-01-01T12:10:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/resume-processed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"webhooks",
+								"resume-processed"
+							]
+						},
+						"description": "Receives processed resume data from n8n"
+					},
+					"response": []
+				},
+				{
+					"name": "Contract Analyzed Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Webhook-Signature",
+								"value": "{{webhookSignature}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Webhook-Timestamp",
+								"value": "{{webhookTimestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"document_id\": \"{{documentId}}\",\n  \"processed_data\": {\n    \"contract_title\": \"SaaS Agreement\",\n    \"contract_type\": \"service\",\n    \"contract_value\": 5000,\n    \"currency\": \"USD\",\n    \"start_date\": \"2024-01-01\",\n    \"end_date\": \"2024-12-31\",\n    \"status\": \"active\",\n    \"risk_score\": 20,\n    \"parties\": [],\n    \"payment_terms\": {},\n    \"obligations\": [],\n    \"red_flags\": []\n  },\n  \"validation\": {\n    \"status\": \"valid\",\n    \"confidence_score\": 90,\n    \"errors\": []\n  },\n  \"timestamp\": \"2024-01-01T12:15:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/contract-analyzed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"webhooks",
+								"contract-analyzed"
+							]
+						},
+						"description": "Receives analyzed contract data from n8n"
+					},
+					"response": []
+				},
+				{
+					"name": "Receipt Processed Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Webhook-Signature",
+								"value": "{{webhookSignature}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Webhook-Timestamp",
+								"value": "{{webhookTimestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"document_id\": \"{{documentId}}\",\n  \"processed_data\": {\n    \"merchant_name\": \"Starbucks\",\n    \"total_amount\": 15.50,\n    \"currency\": \"USD\",\n    \"purchase_date\": \"2024-01-01\",\n    \"category\": \"food\",\n    \"tax_amount\": 1.50,\n    \"payment_method\": \"card\",\n    \"is_business_expense\": true,\n    \"items\": []\n  },\n  \"validation\": {\n    \"status\": \"valid\",\n    \"confidence_score\": 99,\n    \"errors\": []\n  },\n  \"timestamp\": \"2024-01-01T12:20:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/webhooks/receipt-processed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"webhooks",
+								"receipt-processed"
+							]
+						},
+						"description": "Receives processed receipt data from n8n"
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Health Check",
 			"request": {
 				"auth": {
