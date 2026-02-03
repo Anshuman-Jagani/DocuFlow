@@ -36,11 +36,19 @@ router.put('/:id', resumeController.updateResume);
 router.delete('/:id', resumeController.deleteResume);
 
 /**
- * @route   POST /api/resumes/:id/match-job
+ * @route   POST /api/resumes/:id/match
  * @desc    Match resume with job posting
  * @access  Private
  * @body    { job_id: string }
  */
-router.post('/:id/match-job', resumeController.matchResumeWithJob);
+router.post('/:id/match', resumeController.matchResumeWithJob);
+
+/**
+ * @route   POST /api/resumes/batch-match
+ * @desc    Batch match all resumes to a job
+ * @access  Private
+ * @body    { job_id: string }
+ */
+router.post('/batch-match', resumeController.batchMatchResumes);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const { successResponse, errorResponse, paginationMeta } = require('../utils/res
 const { getPaginationParams, buildOrderClause } = require('../utils/pagination');
 const { buildSearchFilter } = require('../utils/queryHelpers');
 const { Op } = require('sequelize');
+const matchingService = require('../services/matchingService');
 
 /**
  * Get all resumes with pagination and filtering
@@ -184,7 +185,7 @@ exports.deleteResume = async (req, res, next) => {
 
 /**
  * Match resume with job posting
- * POST /api/resumes/:id/match-job
+ * POST /api/resumes/:id/match
  */
 exports.matchResumeWithJob = async (req, res, next) => {
   try {
@@ -196,45 +197,13 @@ exports.matchResumeWithJob = async (req, res, next) => {
       );
     }
     
-    // Find resume
+    // Perform matching using the service
+    const matchResult = await matchingService.matchResumeToJob(req.params.id, job_id);
+    
+    // Fetch updated resume with job data
     const resume = await Resume.findOne({
-      where: {
-        id: req.params.id,
-        user_id: req.user.id
-      }
-    });
-    
-    if (!resume) {
-      return res.status(404).json(
-        errorResponse('NOT_FOUND', 'Resume not found')
-      );
-    }
-    
-    // Find job posting
-    const job = await JobPosting.findByPk(job_id);
-    
-    if (!job) {
-      return res.status(404).json(
-        errorResponse('NOT_FOUND', 'Job posting not found')
-      );
-    }
-    
-    // Calculate match score
-    const matchResult = calculateJobMatch(resume, job);
-    
-    // Update resume with match data
-    await resume.update({
-      job_id: job_id,
-      match_score: matchResult.score,
-      match_details: matchResult.details
-    });
-    
-    // Reload with job data
-    await resume.reload({
-      include: [{
-        model: JobPosting,
-        as: 'job'
-      }]
+      where: { id: req.params.id },
+      include: [{ model: JobPosting, as: 'job' }]
     });
     
     res.json(successResponse(
@@ -245,74 +214,39 @@ exports.matchResumeWithJob = async (req, res, next) => {
       'Resume matched with job successfully'
     ));
   } catch (error) {
+    if (error.message === 'Resume or Job Posting not found') {
+      return res.status(404).json(errorResponse('NOT_FOUND', error.message));
+    }
     next(error);
   }
 };
 
 /**
- * Calculate job match score
- * @private
+ * Batch match all resumes to a job
+ * POST /api/resumes/batch-match
  */
-function calculateJobMatch(resume, job) {
-  let score = 0;
-  const details = {
-    skills_match: 0,
-    experience_match: 0,
-    matched_skills: [],
-    missing_skills: []
-  };
-  
-  // Extract resume skills
-  const resumeSkills = resume.skills?.technical || [];
-  const requiredSkills = job.required_skills || [];
-  const preferredSkills = job.preferred_skills || [];
-  
-  // Calculate skills match (60% weight)
-  if (requiredSkills.length > 0) {
-    const matchedRequired = requiredSkills.filter(skill => 
-      resumeSkills.some(rs => rs.toLowerCase() === skill.toLowerCase())
-    );
+exports.batchMatchResumes = async (req, res, next) => {
+  try {
+    const { job_id } = req.body;
     
-    details.matched_skills = matchedRequired;
-    details.missing_skills = requiredSkills.filter(skill => 
-      !matchedRequired.includes(skill)
-    );
+    if (!job_id) {
+      return res.status(400).json(
+        errorResponse('VALIDATION_ERROR', 'job_id is required')
+      );
+    }
     
-    const requiredMatch = (matchedRequired.length / requiredSkills.length) * 60;
-    score += requiredMatch;
-    details.skills_match = Math.round(requiredMatch);
-  }
-  
-  // Bonus for preferred skills (20% weight)
-  if (preferredSkills.length > 0) {
-    const matchedPreferred = preferredSkills.filter(skill => 
-      resumeSkills.some(rs => rs.toLowerCase() === skill.toLowerCase())
-    );
+    const results = await matchingService.batchMatch(job_id);
     
-    const preferredMatch = (matchedPreferred.length / preferredSkills.length) * 20;
-    score += preferredMatch;
+    res.json(successResponse(
+      {
+        results,
+        count: results.length
+      },
+      'Batch matching completed successfully'
+    ));
+  } catch (error) {
+    next(error);
   }
-  
-  // Experience match (20% weight)
-  const experienceRequired = job.experience_required?.toLowerCase() || '';
-  const yearsOfExperience = resume.years_of_experience || 0;
-  
-  if (experienceRequired.includes('entry') && yearsOfExperience >= 0) {
-    score += 20;
-    details.experience_match = 100;
-  } else if (experienceRequired.includes('mid') && yearsOfExperience >= 2) {
-    score += 20;
-    details.experience_match = 100;
-  } else if (experienceRequired.includes('senior') && yearsOfExperience >= 5) {
-    score += 20;
-    details.experience_match = 100;
-  } else if (yearsOfExperience > 0) {
-    score += 10;
-    details.experience_match = 50;
-  }
-  
-  return {
-    score: Math.round(score),
-    details
-  };
-}
+};
+
+// function calculateJobMatch removed - replaced by matchingService

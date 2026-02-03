@@ -7,6 +7,10 @@ module.exports = (sequelize) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
+    contract_title: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
     document_id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -19,6 +23,14 @@ module.exports = (sequelize) => {
     contract_type: {
       type: DataTypes.STRING(100),
       allowNull: true
+    },
+    contract_value: {
+      type: DataTypes.DECIMAL(15, 2),
+      allowNull: true
+    },
+    currency: {
+      type: DataTypes.STRING(10),
+      defaultValue: 'USD'
     },
     parties: {
       type: DataTypes.JSONB,

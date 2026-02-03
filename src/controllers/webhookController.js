@@ -21,12 +21,12 @@ const documentUploaded = async (req, res) => {
 
     if (!document) {
       logger.warn('Document not found for webhook', { document_id });
-      return errorResponse(res, 'Document not found', 404, 'DOCUMENT_NOT_FOUND');
+      return res.status(404).json(errorResponse('DOCUMENT_NOT_FOUND', 'Document not found'));
     }
 
     // Update document status
     await document.update({
-      status: 'processing'
+      processing_status: 'processing'
     });
 
     logger.info('Document status updated to processing', {
@@ -34,17 +34,19 @@ const documentUploaded = async (req, res) => {
       document_type
     });
 
-    return successResponse(res, {
-      message: 'Document upload acknowledged',
-      document_id,
-      status: 'processing'
-    });
+    return res.json(
+      successResponse({
+        message: 'Document upload acknowledged',
+        document_id,
+        processing_status: 'processing'
+      }, 'Document upload acknowledged')
+    );
   } catch (error) {
     logger.error('Error processing document-uploaded webhook', {
       error: error.message,
       stack: error.stack
     });
-    return errorResponse(res, 'Failed to process webhook', 500, 'WEBHOOK_ERROR');
+    return res.status(500).json(errorResponse('WEBHOOK_ERROR', 'Failed to process webhook'));
   }
 };
 
@@ -69,7 +71,7 @@ const invoiceProcessed = async (req, res) => {
 
     if (!invoice) {
       logger.warn('Invoice not found for webhook', { document_id });
-      return errorResponse(res, 'Invoice not found', 404, 'INVOICE_NOT_FOUND');
+      return res.status(404).json(errorResponse('INVOICE_NOT_FOUND', 'Invoice not found'));
     }
 
     // Prepare update data
@@ -82,10 +84,12 @@ const invoiceProcessed = async (req, res) => {
     if (processed_data.vendor_name) updateData.vendor_name = processed_data.vendor_name;
     if (processed_data.total_amount !== undefined) updateData.total_amount = processed_data.total_amount;
     if (processed_data.currency) updateData.currency = processed_data.currency;
-    if (processed_data.issue_date) updateData.issue_date = new Date(processed_data.issue_date);
+    if (processed_data.issue_date) updateData.invoice_date = new Date(processed_data.issue_date);
     if (processed_data.due_date) updateData.due_date = new Date(processed_data.due_date);
-    if (processed_data.status) updateData.status = processed_data.status;
-    if (processed_data.tax_amount !== undefined) updateData.tax_amount = processed_data.tax_amount;
+    if (processed_data.status && ['valid', 'needs_review', 'invalid'].includes(processed_data.status)) {
+      updateData.validation_status = processed_data.status;
+    }
+    if (processed_data.tax_amount !== undefined) updateData.tax = processed_data.tax_amount;
 
     // Update JSONB fields
     if (processed_data.line_items) updateData.line_items = processed_data.line_items;
@@ -96,7 +100,10 @@ const invoiceProcessed = async (req, res) => {
 
     // Update parent document status
     await Document.update(
-      { status: validation?.status === 'valid' ? 'completed' : 'needs_review' },
+      { 
+        processing_status: validation?.status === 'valid' ? 'completed' : 'needs_review',
+        processed_at: new Date()
+      },
       { where: { id: document_id } }
     );
 
@@ -106,19 +113,20 @@ const invoiceProcessed = async (req, res) => {
       confidence_score: validation?.confidence_score
     });
 
-    return successResponse(res, {
-      message: 'Invoice processed successfully',
-      invoice_id: invoice.id,
-      confidence_score: validation?.confidence_score,
-      status: validation?.status
-    });
+    return res.json(
+      successResponse({
+        invoice_id: invoice.id,
+        confidence_score: validation?.confidence_score,
+        status: validation?.status
+      }, 'Invoice processed successfully')
+    );
   } catch (error) {
     logger.error('Error processing invoice-processed webhook', {
       error: error.message,
       stack: error.stack,
       document_id: req.body?.document_id
     });
-    return errorResponse(res, 'Failed to process invoice webhook', 500, 'WEBHOOK_ERROR');
+    return res.status(500).json(errorResponse('WEBHOOK_ERROR', 'Failed to process invoice webhook'));
   }
 };
 
@@ -143,7 +151,7 @@ const resumeProcessed = async (req, res) => {
 
     if (!resume) {
       logger.warn('Resume not found for webhook', { document_id });
-      return errorResponse(res, 'Resume not found', 404, 'RESUME_NOT_FOUND');
+      return res.status(404).json(errorResponse('RESUME_NOT_FOUND', 'Resume not found'));
     }
 
     // Prepare update data
@@ -157,10 +165,10 @@ const resumeProcessed = async (req, res) => {
     if (processed_data.phone) updateData.phone = processed_data.phone;
     if (processed_data.location) updateData.location = processed_data.location;
     if (processed_data.years_of_experience !== undefined) {
-      updateData.years_of_experience = processed_data.years_of_experience;
+      updateData.total_years_experience = processed_data.years_of_experience;
     }
     if (processed_data.current_position) updateData.current_position = processed_data.current_position;
-    if (processed_data.summary) updateData.summary = processed_data.summary;
+    if (processed_data.summary) updateData.professional_summary = processed_data.summary;
 
     // Update JSONB fields
     if (processed_data.skills) updateData.skills = processed_data.skills;
@@ -172,7 +180,10 @@ const resumeProcessed = async (req, res) => {
 
     // Update parent document status
     await Document.update(
-      { status: validation?.status === 'valid' ? 'completed' : 'needs_review' },
+      { 
+        processing_status: validation?.status === 'valid' ? 'completed' : 'needs_review',
+        processed_at: new Date()
+      },
       { where: { id: document_id } }
     );
 
@@ -182,19 +193,20 @@ const resumeProcessed = async (req, res) => {
       confidence_score: validation?.confidence_score
     });
 
-    return successResponse(res, {
-      message: 'Resume processed successfully',
-      resume_id: resume.id,
-      confidence_score: validation?.confidence_score,
-      status: validation?.status
-    });
+    return res.json(
+      successResponse({
+        resume_id: resume.id,
+        confidence_score: validation?.confidence_score,
+        status: validation?.status
+      }, 'Resume processed successfully')
+    );
   } catch (error) {
     logger.error('Error processing resume-processed webhook', {
       error: error.message,
       stack: error.stack,
       document_id: req.body?.document_id
     });
-    return errorResponse(res, 'Failed to process resume webhook', 500, 'WEBHOOK_ERROR');
+    return res.status(500).json(errorResponse('WEBHOOK_ERROR', 'Failed to process resume webhook'));
   }
 };
 
@@ -219,7 +231,7 @@ const contractAnalyzed = async (req, res) => {
 
     if (!contract) {
       logger.warn('Contract not found for webhook', { document_id });
-      return errorResponse(res, 'Contract not found', 404, 'CONTRACT_NOT_FOUND');
+      return res.status(404).json(errorResponse('CONTRACT_NOT_FOUND', 'Contract not found'));
     }
 
     // Prepare update data
@@ -234,15 +246,15 @@ const contractAnalyzed = async (req, res) => {
       updateData.contract_value = processed_data.contract_value;
     }
     if (processed_data.currency) updateData.currency = processed_data.currency;
-    if (processed_data.start_date) updateData.start_date = new Date(processed_data.start_date);
-    if (processed_data.end_date) updateData.end_date = new Date(processed_data.end_date);
-    if (processed_data.status) updateData.status = processed_data.status;
+    if (processed_data.start_date) updateData.effective_date = new Date(processed_data.start_date);
+    if (processed_data.end_date) updateData.expiration_date = new Date(processed_data.end_date);
+    // Contract model doesn't have a status field based on our schema
     if (processed_data.risk_score !== undefined) updateData.risk_score = processed_data.risk_score;
 
     // Update JSONB fields
     if (processed_data.parties) updateData.parties = processed_data.parties;
     if (processed_data.payment_terms) updateData.payment_terms = processed_data.payment_terms;
-    if (processed_data.obligations) updateData.obligations = processed_data.obligations;
+    if (processed_data.obligations) updateData.key_obligations = processed_data.obligations;
     if (processed_data.red_flags) updateData.red_flags = processed_data.red_flags;
 
     // Update contract
@@ -250,7 +262,10 @@ const contractAnalyzed = async (req, res) => {
 
     // Update parent document status
     await Document.update(
-      { status: validation?.status === 'valid' ? 'completed' : 'needs_review' },
+      { 
+        processing_status: validation?.status === 'valid' ? 'completed' : 'needs_review',
+        processed_at: new Date()
+      },
       { where: { id: document_id } }
     );
 
@@ -261,20 +276,21 @@ const contractAnalyzed = async (req, res) => {
       risk_score: processed_data.risk_score
     });
 
-    return successResponse(res, {
-      message: 'Contract analyzed successfully',
-      contract_id: contract.id,
-      confidence_score: validation?.confidence_score,
-      risk_score: processed_data.risk_score,
-      status: validation?.status
-    });
+    return res.json(
+      successResponse({
+        contract_id: contract.id,
+        confidence_score: validation?.confidence_score,
+        risk_score: processed_data.risk_score,
+        status: validation?.status
+      }, 'Contract analyzed successfully')
+    );
   } catch (error) {
     logger.error('Error processing contract-analyzed webhook', {
       error: error.message,
       stack: error.stack,
       document_id: req.body?.document_id
     });
-    return errorResponse(res, 'Failed to process contract webhook', 500, 'WEBHOOK_ERROR');
+    return res.status(500).json(errorResponse('WEBHOOK_ERROR', 'Failed to process contract webhook'));
   }
 };
 
@@ -299,7 +315,7 @@ const receiptProcessed = async (req, res) => {
 
     if (!receipt) {
       logger.warn('Receipt not found for webhook', { document_id });
-      return errorResponse(res, 'Receipt not found', 404, 'RECEIPT_NOT_FOUND');
+      return res.status(404).json(errorResponse('RECEIPT_NOT_FOUND', 'Receipt not found'));
     }
 
     // Prepare update data
@@ -309,11 +325,11 @@ const receiptProcessed = async (req, res) => {
 
     // Update fields from processed_data
     if (processed_data.merchant_name) updateData.merchant_name = processed_data.merchant_name;
-    if (processed_data.total_amount !== undefined) updateData.total_amount = processed_data.total_amount;
+    if (processed_data.total_amount !== undefined) updateData.total = processed_data.total_amount;
     if (processed_data.currency) updateData.currency = processed_data.currency;
     if (processed_data.purchase_date) updateData.purchase_date = new Date(processed_data.purchase_date);
-    if (processed_data.category) updateData.category = processed_data.category;
-    if (processed_data.tax_amount !== undefined) updateData.tax_amount = processed_data.tax_amount;
+    if (processed_data.category) updateData.expense_category = processed_data.category;
+    if (processed_data.tax_amount !== undefined) updateData.tax = processed_data.tax_amount;
     if (processed_data.payment_method) updateData.payment_method = processed_data.payment_method;
     if (processed_data.is_business_expense !== undefined) {
       updateData.is_business_expense = processed_data.is_business_expense;
@@ -327,7 +343,10 @@ const receiptProcessed = async (req, res) => {
 
     // Update parent document status
     await Document.update(
-      { status: validation?.status === 'valid' ? 'completed' : 'needs_review' },
+      { 
+        processing_status: validation?.status === 'valid' ? 'completed' : 'needs_review',
+        processed_at: new Date()
+      },
       { where: { id: document_id } }
     );
 
@@ -337,19 +356,20 @@ const receiptProcessed = async (req, res) => {
       confidence_score: validation?.confidence_score
     });
 
-    return successResponse(res, {
-      message: 'Receipt processed successfully',
-      receipt_id: receipt.id,
-      confidence_score: validation?.confidence_score,
-      status: validation?.status
-    });
+    return res.json(
+      successResponse({
+        receipt_id: receipt.id,
+        confidence_score: validation?.confidence_score,
+        status: validation?.status
+      }, 'Receipt processed successfully')
+    );
   } catch (error) {
     logger.error('Error processing receipt-processed webhook', {
       error: error.message,
       stack: error.stack,
       document_id: req.body?.document_id
     });
-    return errorResponse(res, 'Failed to process receipt webhook', 500, 'WEBHOOK_ERROR');
+    return res.status(500).json(errorResponse('WEBHOOK_ERROR', 'Failed to process receipt webhook'));
   }
 };
 
