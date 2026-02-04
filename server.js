@@ -78,7 +78,7 @@ app.use('/api/contracts', require('./src/routes/contracts'));
 app.use('/api/receipts', require('./src/routes/receipts'));
 app.use('/api/jobs', require('./src/routes/jobPostings'));
 app.use('/api/webhooks', require('./src/routes/webhooks'));
-// app.use('/api/dashboard', require('./src/routes/dashboard'));
+app.use('/api/dashboard', require('./src/routes/dashboard'));
 // app.use('/api/settings', require('./src/routes/settings'));
 
 // 404 handler

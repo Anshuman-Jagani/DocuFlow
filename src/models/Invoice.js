@@ -77,6 +77,11 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: true
     },
+    status: {
+      type: DataTypes.ENUM('pending', 'paid', 'overdue', 'cancelled'),
+      defaultValue: 'pending',
+      allowNull: false
+    },
     validation_status: {
       type: DataTypes.ENUM('valid', 'needs_review', 'invalid'),
       allowNull: true

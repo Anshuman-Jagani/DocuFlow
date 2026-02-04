@@ -1534,6 +1534,86 @@
 			]
 		},
 		{
+			"name": "Dashboard",
+			"description": "Dashboard analytics and overview endpoints",
+			"item": [
+				{
+					"name": "Get Dashboard Overview",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has dashboard data', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data).to.have.property('summary');",
+									"    pm.expect(response.data).to.have.property('financial');",
+									"    pm.expect(response.data).to.have.property('trends');",
+									"    pm.expect(response.data).to.have.property('recent_activity');",
+									"});",
+									"",
+									"pm.test('Summary has document counts', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data.summary).to.have.property('total_documents');",
+									"    pm.expect(response.data.summary).to.have.property('documents_by_type');",
+									"    pm.expect(response.data.summary).to.have.property('processing_status');",
+									"});",
+									"",
+									"pm.test('Financial data includes invoices and receipts', () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data.financial).to.have.property('invoices');",
+									"    pm.expect(response.data.financial).to.have.property('receipts');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/overview",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"overview"
+							],
+							"query": [
+								{
+									"key": "period",
+									"value": "week",
+									"disabled": true,
+									"description": "Predefined period: week, month, quarter, year"
+								},
+								{
+									"key": "start_date",
+									"value": "2024-01-01",
+									"disabled": true,
+									"description": "Custom start date (YYYY-MM-DD)"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31",
+									"disabled": true,
+									"description": "Custom end date (YYYY-MM-DD)"
+								}
+							]
+						},
+						"description": "Get comprehensive dashboard overview with statistics, financial summaries, trends, and recent activity. Supports filtering by period or custom date range."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Health Check",
 			"request": {
 				"auth": {

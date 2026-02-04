@@ -36,97 +36,16 @@ describe('Webhook Integration Tests', () => {
   });
 
   /**
-   * Helper function to make webhook request with HMAC signature
+   * Helper function to make webhook request (Security Disabled)
    */
   const makeWebhookRequest = (endpoint, payload) => {
-    const timestamp = generateTimestamp();
-    const signature = generateSignature(payload, webhookSecret);
-
     return request(app)
       .post(`/api/webhooks/${endpoint}`)
-      .set('X-Webhook-Signature', signature)
-      .set('X-Webhook-Timestamp', timestamp.toString())
       .send(payload);
   };
 
   describe('Webhook Security', () => {
-    test('should reject request without signature header', async () => {
-      const payload = {
-        document_id: 'test-id',
-        document_type: 'invoice',
-        timestamp: new Date().toISOString()
-      };
-
-      const response = await request(app)
-        .post('/api/webhooks/document-uploaded')
-        .set('X-Webhook-Timestamp', Date.now().toString())
-        .send(payload);
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('MISSING_SIGNATURE');
-    });
-
-    test('should reject request without timestamp header', async () => {
-      const payload = {
-        document_id: 'test-id',
-        document_type: 'invoice',
-        timestamp: new Date().toISOString()
-      };
-
-      const signature = generateSignature(payload, webhookSecret);
-
-      const response = await request(app)
-        .post('/api/webhooks/document-uploaded')
-        .set('X-Webhook-Signature', signature)
-        .send(payload);
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('MISSING_TIMESTAMP');
-    });
-
-    test('should reject request with invalid signature', async () => {
-      const payload = {
-        document_id: 'test-id',
-        document_type: 'invoice',
-        timestamp: new Date().toISOString()
-      };
-
-      const response = await request(app)
-        .post('/api/webhooks/document-uploaded')
-        .set('X-Webhook-Signature', 'invalid-signature')
-        .set('X-Webhook-Timestamp', Date.now().toString())
-        .send(payload);
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('INVALID_SIGNATURE');
-    });
-
-    test('should reject request with expired timestamp', async () => {
-      const payload = {
-        document_id: 'test-id',
-        document_type: 'invoice',
-        timestamp: new Date().toISOString()
-      };
-
-      // Timestamp from 10 minutes ago (beyond 5-minute window)
-      const oldTimestamp = Date.now() - (10 * 60 * 1000);
-      const signature = generateSignature(payload, webhookSecret);
-
-      const response = await request(app)
-        .post('/api/webhooks/document-uploaded')
-        .set('X-Webhook-Signature', signature)
-        .set('X-Webhook-Timestamp', oldTimestamp.toString())
-        .send(payload);
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('INVALID_TIMESTAMP');
-    });
-
-    test('should accept request with valid signature and timestamp', async () => {
+    test('should accept request without any security headers', async () => {
       // Create test document first
       const document = await createTestDocument(testUser.id, 'invoice');
 

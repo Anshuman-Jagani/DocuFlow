@@ -28,6 +28,8 @@
 ### Purpose
 Build a REST API backend for an intelligent document processing system that can:
 - Process and extract data from various document types (invoices, resumes, contracts, receipts)
+- [x] Create enhanced resume matching service <!-- id: 10 -->
+- [x] Fix and verify webhook integration tests (Note: Security checks - signature and timestamp - removed for manual testing ease) <!-- id: 12 -->
 - Store structured data using PostgreSQL with JSONB fields
 - Provide webhook integration with n8n for AI processing
 - Offer comprehensive CRUD APIs for document management

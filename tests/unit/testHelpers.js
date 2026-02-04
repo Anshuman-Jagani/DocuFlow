@@ -68,10 +68,18 @@ async function createTestUser(overrides = {}) {
 /**
  * Factory: Create test document
  */
-async function createTestDocument(userId, overrides = {}) {
+async function createTestDocument(userId, typeOrOverrides = {}) {
+  // Handle both string (document type) and object (overrides) as second parameter
+  let overrides = {};
+  if (typeof typeOrOverrides === 'string') {
+    overrides = { document_type: typeOrOverrides };
+  } else {
+    overrides = typeOrOverrides;
+  }
+  
   const defaultDocument = {
     user_id: userId,
-    filename: `test-doc-${Date.now()}.pdf`,
+    filename: `test-doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.pdf`,
     original_filename: 'test-document.pdf',
     file_path: '/uploads/test.pdf',
     file_size: 1024,
@@ -296,6 +304,24 @@ async function createTestJobPosting(overrides = {}) {
   return await JobPosting.create({ ...defaultJob, ...overrides });
 }
 
+/**
+ * Generate authentication token for test user
+ */
+function generateAuthToken(user) {
+  const jwt = require('jsonwebtoken');
+  const { jwtConfig } = require('../../src/config/jwt');
+  
+  return jwt.sign(
+    { 
+      id: user.id, 
+      email: user.email,
+      role: user.role 
+    },
+    jwtConfig.secret,
+    { expiresIn: '24h' }
+  );
+}
+
 module.exports = {
   setupTestDB,
   teardownTestDB,
@@ -306,5 +332,6 @@ module.exports = {
   createTestResume,
   createTestContract,
   createTestReceipt,
-  createTestJobPosting
+  createTestJobPosting,
+  generateAuthToken
 };
