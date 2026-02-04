@@ -108,6 +108,7 @@ describe('Invoice Model', () => {
 
   test('should have default empty array for line_items', async () => {
     const invoice = await Invoice.create({
+      user_id: user.id,
       document_id: document.id,
       invoice_number: 'INV-001'
     });
@@ -357,13 +358,13 @@ describe('Receipt Model', () => {
       subtotal: 123.45,
       tax: 12.35,
       tip: 18.52,
-      total: 154.32
+      total_amount: 154.32
     });
 
     expect(parseFloat(receipt.subtotal)).toBe(123.45);
     expect(parseFloat(receipt.tax)).toBe(12.35);
     expect(parseFloat(receipt.tip)).toBe(18.52);
-    expect(parseFloat(receipt.total)).toBe(154.32);
+    expect(parseFloat(receipt.total_amount)).toBe(154.32);
   });
 
   test('should handle business expense flags', async () => {

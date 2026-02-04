@@ -143,7 +143,7 @@ exports.getDashboardOverview = async (req, res, next) => {
         where: { user_id: userId },
         attributes: ['created_at']
       }],
-      attributes: ['id', 'total', 'expense_category', 'is_business_expense', 'currency']
+      attributes: ['id', 'total_amount', 'expense_category', 'is_business_expense', 'currency']
     });
     
     // Filter receipts by date if period is specified
@@ -165,7 +165,7 @@ exports.getDashboardOverview = async (req, res, next) => {
           count: 0
         };
       }
-      acc[category].amount += parseFloat(receipt.total || 0);
+      acc[category].amount += parseFloat(receipt.total_amount || 0);
       acc[category].count++;
       return acc;
     }, {});
@@ -177,7 +177,7 @@ exports.getDashboardOverview = async (req, res, next) => {
     const receiptStats = {
       total_count: filteredReceipts.length,
       total_amount: filteredReceipts.reduce((sum, rec) => 
-        sum + parseFloat(rec.total || 0), 0
+        sum + parseFloat(rec.total_amount || 0), 0
       ),
       business_expenses: filteredReceipts.filter(rec => rec.is_business_expense).length,
       personal_expenses: filteredReceipts.filter(rec => !rec.is_business_expense).length,

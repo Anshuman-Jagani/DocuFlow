@@ -21,6 +21,50 @@ Document.belongsTo(User, {
   as: 'user'
 });
 
+User.hasMany(Invoice, {
+  foreignKey: 'user_id',
+  as: 'invoices',
+  onDelete: 'CASCADE'
+});
+
+Invoice.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+User.hasMany(Resume, {
+  foreignKey: 'user_id',
+  as: 'resumes',
+  onDelete: 'CASCADE'
+});
+
+Resume.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+User.hasMany(Contract, {
+  foreignKey: 'user_id',
+  as: 'contracts',
+  onDelete: 'CASCADE'
+});
+
+Contract.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+User.hasMany(Receipt, {
+  foreignKey: 'user_id',
+  as: 'receipts',
+  onDelete: 'CASCADE'
+});
+
+Receipt.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
 Document.hasOne(Invoice, {
   foreignKey: 'document_id',
   as: 'invoice',

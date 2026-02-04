@@ -1,4 +1,4 @@
-const { Document } = require('../models');
+const { Document, Invoice, Receipt, Resume, Contract } = require('../models');
 const { extractFileMetadata, deleteFile, fileExists } = require('../services/fileService');
 const { successResponse, errorResponse } = require('../utils/responses');
 const { getPaginationParams } = require('../utils/pagination');
@@ -26,6 +26,35 @@ const uploadDocument = async (req, res) => {
       mime_type: metadata.mimeType,
       processing_status: 'pending'
     });
+    
+    // Create specialized document record based on type
+    switch (document_type) {
+      case 'invoice':
+        await Invoice.create({
+          user_id: req.user.id,
+          document_id: document.id,
+          status: 'pending'
+        });
+        break;
+      case 'receipt':
+        await Receipt.create({
+          user_id: req.user.id,
+          document_id: document.id
+        });
+        break;
+      case 'resume':
+        await Resume.create({
+          user_id: req.user.id,
+          document_id: document.id
+        });
+        break;
+      case 'contract':
+        await Contract.create({
+          user_id: req.user.id,
+          document_id: document.id
+        });
+        break;
+    }
     
     logger.info(`Document uploaded successfully: ${document.id}`, {
       userId: req.user.id,

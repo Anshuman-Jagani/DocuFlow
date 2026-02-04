@@ -325,7 +325,7 @@ const receiptProcessed = async (req, res) => {
 
     // Update fields from processed_data
     if (processed_data.merchant_name) updateData.merchant_name = processed_data.merchant_name;
-    if (processed_data.total_amount !== undefined) updateData.total = processed_data.total_amount;
+    if (processed_data.total_amount !== undefined) updateData.total_amount = processed_data.total_amount;
     if (processed_data.currency) updateData.currency = processed_data.currency;
     if (processed_data.purchase_date) updateData.purchase_date = new Date(processed_data.purchase_date);
     if (processed_data.category) updateData.expense_category = processed_data.category;

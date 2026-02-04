@@ -47,7 +47,7 @@ exports.listReceipts = async (req, res, next) => {
       include: [{
         model: Document,
         as: 'document',
-        attributes: ['id', 'filename', 'file_path', 'file_type', 'file_size']
+        attributes: ['id', 'original_filename', 'file_path', 'mime_type', 'file_size']
       }]
     });
     
@@ -75,7 +75,7 @@ exports.getReceipt = async (req, res, next) => {
       include: [{
         model: Document,
         as: 'document',
-        attributes: ['id', 'filename', 'file_path', 'file_type', 'file_size', 'created_at']
+        attributes: ['id', 'original_filename', 'file_path', 'mime_type', 'file_size', 'created_at']
       }]
     });
     

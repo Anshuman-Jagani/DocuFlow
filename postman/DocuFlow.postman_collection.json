@@ -1329,23 +1329,13 @@
 		},
 		{
 			"name": "Webhooks",
-			"description": "Webhook endpoints for n8n integration. All requests require HMAC SHA-256 signature in X-Webhook-Signature and timestamp in X-Webhook-Timestamp.",
+			"description": "Webhook endpoints for n8n integration (no authentication required)",
 			"item": [
 				{
 					"name": "Document Uploaded Webhook",
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "X-Webhook-Signature",
-								"value": "{{webhookSignature}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Webhook-Timestamp",
-								"value": "{{webhookTimestamp}}",
-								"type": "text"
-							},
 							{
 								"key": "Content-Type",
 								"value": "application/json",
@@ -1377,16 +1367,6 @@
 						"method": "POST",
 						"header": [
 							{
-								"key": "X-Webhook-Signature",
-								"value": "{{webhookSignature}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Webhook-Timestamp",
-								"value": "{{webhookTimestamp}}",
-								"type": "text"
-							},
-							{
 								"key": "Content-Type",
 								"value": "application/json",
 								"type": "text"
@@ -1416,16 +1396,6 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "X-Webhook-Signature",
-								"value": "{{webhookSignature}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Webhook-Timestamp",
-								"value": "{{webhookTimestamp}}",
-								"type": "text"
-							},
 							{
 								"key": "Content-Type",
 								"value": "application/json",
@@ -1457,16 +1427,6 @@
 						"method": "POST",
 						"header": [
 							{
-								"key": "X-Webhook-Signature",
-								"value": "{{webhookSignature}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Webhook-Timestamp",
-								"value": "{{webhookTimestamp}}",
-								"type": "text"
-							},
-							{
 								"key": "Content-Type",
 								"value": "application/json",
 								"type": "text"
@@ -1496,16 +1456,6 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "X-Webhook-Signature",
-								"value": "{{webhookSignature}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Webhook-Timestamp",
-								"value": "{{webhookTimestamp}}",
-								"type": "text"
-							},
 							{
 								"key": "Content-Type",
 								"value": "application/json",

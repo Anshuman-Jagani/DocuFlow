@@ -130,6 +130,14 @@ async function createTestInvoice(documentId, overrides = {}) {
     confidence_score: 95
   };
 
+  // Ensure user_id is provided, either from overrides or by fetching the document
+  if (!overrides.user_id) {
+    const doc = await Document.findByPk(documentId);
+    if (doc) {
+      overrides.user_id = doc.user_id;
+    }
+  }
+
   return await Invoice.create({ ...defaultInvoice, ...overrides });
 }
 
@@ -190,6 +198,14 @@ async function createTestResume(documentId, overrides = {}) {
     recommendation: null
   };
 
+  // Ensure user_id is provided, either from overrides or by fetching the document
+  if (!overrides.user_id) {
+    const doc = await Document.findByPk(documentId);
+    if (doc) {
+      overrides.user_id = doc.user_id;
+    }
+  }
+
   return await Resume.create({ ...defaultResume, ...overrides });
 }
 
@@ -245,6 +261,14 @@ async function createTestContract(documentId, overrides = {}) {
     summary: 'Standard service agreement with low risk.'
   };
 
+  // Ensure user_id is provided, either from overrides or by fetching the document
+  if (!overrides.user_id) {
+    const doc = await Document.findByPk(documentId);
+    if (doc) {
+      overrides.user_id = doc.user_id;
+    }
+  }
+
   return await Contract.create({ ...defaultContract, ...overrides });
 }
 
@@ -274,7 +298,7 @@ async function createTestReceipt(documentId, overrides = {}) {
     subtotal: 12.50,
     tax: 1.25,
     tip: 2.50,
-    total: 16.25,
+    total_amount: 16.25,
     currency: 'USD',
     payment_method: 'Credit Card',
     expense_category: 'Meals & Entertainment',
@@ -283,6 +307,14 @@ async function createTestReceipt(documentId, overrides = {}) {
     tax_deductible: true,
     notes: 'Client meeting'
   };
+
+  // Ensure user_id is provided, either from overrides or by fetching the document
+  if (!overrides.user_id) {
+    const doc = await Document.findByPk(documentId);
+    if (doc) {
+      overrides.user_id = doc.user_id;
+    }
+  }
 
   return await Receipt.create({ ...defaultReceipt, ...overrides });
 }

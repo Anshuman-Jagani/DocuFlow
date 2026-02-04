@@ -1,46 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const webhookVerify = require('../middleware/webhookVerify');
 const webhookController = require('../controllers/webhookController');
 
 /**
  * Webhook Routes for n8n Integration
- * All routes are protected by HMAC signature verification
  */
 
 /**
  * @route   POST /api/webhooks/document-uploaded
  * @desc    Webhook for document upload notifications
- * @access  Webhook (HMAC verified)
+ * @access  Public
  */
-router.post('/document-uploaded', webhookVerify, webhookController.documentUploaded);
+router.post('/document-uploaded', webhookController.documentUploaded);
 
 /**
  * @route   POST /api/webhooks/invoice-processed
  * @desc    Webhook for processed invoice data from n8n
- * @access  Webhook (HMAC verified)
+ * @access  Public
  */
-router.post('/invoice-processed', webhookVerify, webhookController.invoiceProcessed);
+router.post('/invoice-processed', webhookController.invoiceProcessed);
 
 /**
  * @route   POST /api/webhooks/resume-processed
  * @desc    Webhook for processed resume data from n8n
- * @access  Webhook (HMAC verified)
+ * @access  Public
  */
-router.post('/resume-processed', webhookVerify, webhookController.resumeProcessed);
+router.post('/resume-processed', webhookController.resumeProcessed);
 
 /**
  * @route   POST /api/webhooks/contract-analyzed
  * @desc    Webhook for analyzed contract data from n8n
- * @access  Webhook (HMAC verified)
+ * @access  Public
  */
-router.post('/contract-analyzed', webhookVerify, webhookController.contractAnalyzed);
+router.post('/contract-analyzed', webhookController.contractAnalyzed);
 
 /**
  * @route   POST /api/webhooks/receipt-processed
  * @desc    Webhook for processed receipt data from n8n
- * @access  Webhook (HMAC verified)
+ * @access  Public
  */
-router.post('/receipt-processed', webhookVerify, webhookController.receiptProcessed);
+router.post('/receipt-processed', webhookController.receiptProcessed);
 
 module.exports = router;

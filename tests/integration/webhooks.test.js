@@ -375,7 +375,7 @@ describe('Webhook Integration Tests', () => {
 
       const updatedReceipt = await Receipt.findByPk(receipt.id);
       expect(updatedReceipt.merchant_name).toBe('Office Supplies Inc');
-      expect(parseFloat(updatedReceipt.total)).toBe(125.50);
+      expect(parseFloat(updatedReceipt.total_amount)).toBe(125.50);
       expect(updatedReceipt.expense_category).toBe('office_supplies');
       expect(updatedReceipt.is_business_expense).toBe(true);
       expect(updatedReceipt.items).toHaveLength(3);

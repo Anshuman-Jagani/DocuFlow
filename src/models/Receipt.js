@@ -7,6 +7,15 @@ module.exports = (sequelize) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
+    user_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id'
+      },
+      onDelete: 'CASCADE'
+    },
     document_id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -45,7 +54,7 @@ module.exports = (sequelize) => {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: true
     },
-    total: {
+    total_amount: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: true
     },

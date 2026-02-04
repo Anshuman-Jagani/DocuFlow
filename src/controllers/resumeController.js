@@ -57,7 +57,7 @@ exports.listResumes = async (req, res, next) => {
         {
           model: Document,
           as: 'document',
-          attributes: ['id', 'filename', 'file_path', 'file_type', 'file_size']
+          attributes: ['id', 'original_filename', 'file_path', 'mime_type', 'file_size']
         },
         {
           model: JobPosting,
@@ -93,7 +93,7 @@ exports.getResume = async (req, res, next) => {
         {
           model: Document,
           as: 'document',
-          attributes: ['id', 'filename', 'file_path', 'file_type', 'file_size', 'created_at']
+          attributes: ['id', 'original_filename', 'file_path', 'mime_type', 'file_size', 'created_at']
         },
         {
           model: JobPosting,

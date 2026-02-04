@@ -143,7 +143,7 @@ describe('Dashboard Integration Tests', () => {
       await Receipt.create({
         document_id: doc1.id,
         user_id: testUser.id,
-        total: 150.00,
+        total_amount: 150.00,
         expense_category: 'food',
         is_business_expense: true,
         currency: 'USD'
@@ -152,7 +152,7 @@ describe('Dashboard Integration Tests', () => {
       await Receipt.create({
         document_id: doc2.id,
         user_id: testUser.id,
-        total: 300.00,
+        total_amount: 300.00,
         expense_category: 'travel',
         is_business_expense: true,
         currency: 'USD'
@@ -161,7 +161,7 @@ describe('Dashboard Integration Tests', () => {
       await Receipt.create({
         document_id: doc3.id,
         user_id: testUser.id,
-        total: 50.00,
+        total_amount: 50.00,
         expense_category: 'food',
         is_business_expense: false,
         currency: 'USD'
@@ -318,7 +318,7 @@ describe('Dashboard Integration Tests', () => {
       await Receipt.create({
         document_id: receiptDoc.id,
         user_id: testUser.id,
-        total: 100.00,
+        total_amount: 100.00,
         expense_category: 'office',
         is_business_expense: true
       });
