@@ -1,0 +1,493 @@
+openapi: 3.0.0
+info:
+  title: DocuFlow API
+  description: AI-Powered Document Processing System REST API
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@docuflow.com
+
+servers:
+  - url: http://localhost:3001
+    description: Local development
+  - url: https://docuflow-api.onrender.com
+    description: Production (Render.com)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Documents
+    description: Document upload and management
+  - name: Invoices
+    description: Invoice processing and analytics
+  - name: Resumes
+    description: Resume processing and job matching
+  - name: Contracts
+    description: Contract analysis and risk assessment
+  - name: Receipts
+    description: Receipt processing and expense tracking
+  - name: Jobs
+    description: Job posting management
+  - name: Webhooks
+    description: n8n webhook integration
+  - name: Dashboard
+    description: Analytics and dashboard data
+  - name: Export
+    description: Data export functionality
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Basic health check
+      security: []
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                  uptime:
+                    type: number
+                  environment:
+                    type: string
+
+  /api/v1/health:
+    get:
+      tags:
+        - Health
+      summary: Health check with database connection
+      security: []
+      responses:
+        '200':
+          description: Server and database are healthy
+        '503':
+          description: Service unavailable (database disconnected)
+
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - full_name
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                full_name:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Validation error
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                      accessToken:
+                        type: string
+                      refreshToken:
+                        type: string
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      responses:
+        '200':
+          description: Current user details
+
+  /api/upload:
+    post:
+      tags:
+        - Documents
+      summary: Upload document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - document_type
+              properties:
+                file:
+                  type: string
+                  format: binary
+                document_type:
+                  type: string
+                  enum: [invoice, resume, contract, receipt]
+      responses:
+        '201':
+          description: Document uploaded successfully
+
+  /api/documents:
+    get:
+      tags:
+        - Documents
+      summary: List documents
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: document_type
+          in: query
+          schema:
+            type: string
+            enum: [invoice, resume, contract, receipt]
+      responses:
+        '200':
+          description: List of documents
+
+  /api/documents/{id}:
+    get:
+      tags:
+        - Documents
+      summary: Get document by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Document details
+    delete:
+      tags:
+        - Documents
+      summary: Delete document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document deleted
+
+  /api/invoices:
+    get:
+      tags:
+        - Invoices
+      summary: List invoices
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of invoices
+
+  /api/invoices/stats:
+    get:
+      tags:
+        - Invoices
+      summary: Get invoice statistics
+      responses:
+        '200':
+          description: Invoice statistics
+
+  /api/invoices/export/csv:
+    get:
+      tags:
+        - Export
+      summary: Export invoices to CSV
+      responses:
+        '200':
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /api/invoices/{id}/export/pdf:
+    get:
+      tags:
+        - Export
+      summary: Export invoice to PDF
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /api/resumes:
+    get:
+      tags:
+        - Resumes
+      summary: List resumes
+      responses:
+        '200':
+          description: List of resumes
+
+  /api/resumes/{id}/match-job:
+    post:
+      tags:
+        - Resumes
+      summary: Match resume with job posting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                job_id:
+                  type: string
+      responses:
+        '200':
+          description: Match results
+
+  /api/contracts:
+    get:
+      tags:
+        - Contracts
+      summary: List contracts
+      responses:
+        '200':
+          description: List of contracts
+
+  /api/contracts/expiring:
+    get:
+      tags:
+        - Contracts
+      summary: Get expiring contracts
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: Expiring contracts
+
+  /api/contracts/high-risk:
+    get:
+      tags:
+        - Contracts
+      summary: Get high-risk contracts
+      parameters:
+        - name: threshold
+          in: query
+          schema:
+            type: integer
+            default: 70
+      responses:
+        '200':
+          description: High-risk contracts
+
+  /api/receipts:
+    get:
+      tags:
+        - Receipts
+      summary: List receipts
+      responses:
+        '200':
+          description: List of receipts
+
+  /api/receipts/by-category:
+    get:
+      tags:
+        - Receipts
+      summary: Group receipts by category
+      responses:
+        '200':
+          description: Receipts grouped by category
+
+  /api/receipts/monthly-report:
+    get:
+      tags:
+        - Receipts
+      summary: Get monthly expense report
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: month
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Monthly report
+
+  /api/jobs:
+    get:
+      tags:
+        - Jobs
+      summary: List job postings
+      responses:
+        '200':
+          description: List of jobs
+    post:
+      tags:
+        - Jobs
+      summary: Create job posting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Job created
+
+  /api/webhooks/document-uploaded:
+    post:
+      tags:
+        - Webhooks
+      summary: Document uploaded webhook
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+
+  /api/webhooks/invoice-processed:
+    post:
+      tags:
+        - Webhooks
+      summary: Invoice processed webhook
+      security: []
+      responses:
+        '200':
+          description: Webhook processed
+
+  /api/dashboard/overview:
+    get:
+      tags:
+        - Dashboard
+      summary: Get dashboard overview
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object

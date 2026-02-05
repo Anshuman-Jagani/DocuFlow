@@ -2,6 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const path = require('path');
 const { testConnection } = require('./src/config/database');
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 const logger = require('./src/utils/logger');
@@ -12,10 +15,16 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+// CORS configuration - supports Vercel frontend
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173' // Vite default
+];
+
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -38,6 +47,13 @@ app.use((req, res, next) => {
   next();
 });
 
+// Swagger API Documentation
+const swaggerDocument = YAML.load(path.join(__dirname, 'docs', 'swagger.yaml'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+  customSiteTitle: 'DocuFlow API Documentation',
+  customCss: '.swagger-ui .topbar { display: none }'
+}));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -48,6 +64,31 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Enhanced health check with database connection
+app.get('/api/v1/health', async (req, res) => {
+  const healthCheck = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    database: 'unknown'
+  };
+
+  try {
+    // Test database connection
+    const { sequelize } = require('./src/models');
+    await sequelize.authenticate();
+    healthCheck.database = 'connected';
+    healthCheck.status = 'healthy';
+    res.json(healthCheck);
+  } catch (error) {
+    healthCheck.database = 'disconnected';
+    healthCheck.status = 'unhealthy';
+    healthCheck.error = error.message;
+    res.status(503).json(healthCheck);
+  }
+});
+
 // API routes
 app.get('/api', (req, res) => {
   res.json({
@@ -55,6 +96,7 @@ app.get('/api', (req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
+      healthDetailed: '/api/v1/health',
       auth: '/api/auth',
       documents: '/api/documents',
       invoices: '/api/invoices',

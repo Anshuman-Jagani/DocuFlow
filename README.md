@@ -1,18 +1,20 @@
-# Document Processing API
+# DocuFlow - AI-Powered Document Processing System
 
-REST API backend for an AI-powered document processing system that handles invoices, resumes, contracts, and receipts. Integrates with n8n workflows via webhooks and provides data to a React dashboard.
+REST API backend for an intelligent document processing system that handles invoices, resumes, contracts, and receipts. Integrates with n8n workflows via webhooks and provides comprehensive analytics.
 
 ## 🚀 Features
 
 - **File Upload & Storage**: Accept PDF, DOCX, PNG, JPG files up to 10MB
-- **Webhook Integration**: Secure n8n webhook endpoints with HMAC verification
+- **Webhook Integration**: n8n webhook endpoints for AI processing
 - **Document Processing**: Handle invoices, resumes, contracts, and receipts
 - **JWT Authentication**: Secure API with JWT tokens and refresh tokens
 - **Resume Matching**: AI-powered resume-to-job matching with scoring
-- **Contract Analysis**: Risk assessment and legal review flagging
-- **Expense Tracking**: Receipt categorization and tax deduction tracking
+- **Contract Analysis**: Risk assessment and expiration tracking
+- **Expense Tracking**: Receipt categorization and monthly reports
 - **Analytics Dashboard**: Comprehensive statistics and reporting
-- **Export Capabilities**: PDF and CSV/Excel export functionality
+- **Export Capabilities**: PDF and CSV export functionality
+- **Rate Limiting**: Protection against abuse
+- **Input Sanitization**: XSS prevention and security hardening
 
 ## 📋 Prerequisites
 
@@ -20,13 +22,13 @@ REST API backend for an AI-powered document processing system that handles invoi
 - PostgreSQL >= 14.0
 - npm >= 9.0.0
 
-## 🛠️ Installation
+## 🛠️ Local Development Setup
 
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
-cd document-processing-api
+git clone https://github.com/Anshuman-Jagani/DocuFlow.git
+cd DocuFlow
 ```
 
 ### 2. Install dependencies
@@ -44,31 +46,25 @@ cp .env.example .env
 Edit `.env` and configure your environment variables:
 
 ```env
-# Database
+# Database (Docker PostgreSQL for local development)
 DATABASE_URL=postgresql://postgres:password@localhost:5432/docprocessing
 
 # JWT
 JWT_SECRET=your-super-secret-jwt-key-change-in-production-min-32-chars
 REFRESH_TOKEN_SECRET=your-refresh-token-secret-change-in-production-min-32-chars
 
-# n8n Webhook
-N8N_WEBHOOK_SECRET=your-webhook-secret-shared-with-n8n-instance
-
 # Server
-PORT=3000
+PORT=3001
 NODE_ENV=development
+
+# CORS (add your frontend URL)
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
-### 4. Create PostgreSQL database
+### 4. Start PostgreSQL with Docker
 
 ```bash
-createdb docprocessing
-```
-
-Or using psql:
-
-```sql
-CREATE DATABASE docprocessing;
+docker-compose up -d
 ```
 
 ### 5. Run database migrations
@@ -77,128 +73,112 @@ CREATE DATABASE docprocessing;
 npm run migrate
 ```
 
-### 6. Start the server
+### 6. (Optional) Seed demo data
 
-Development mode:
+```bash
+npm run seed
+```
+
+Demo credentials:
+- Email: admin@docuflow.com
+- Password: Admin123!
+
+### 7. Start the development server
+
 ```bash
 npm run dev
 ```
 
-Production mode:
-```bash
-npm start
-```
-
 The server will start on `http://localhost:3001`
 
-## 📁 Project Structure
+## 🚀 Render.com Deployment (Free Forever)
 
-```
-document-processing-api/
-├── src/
-│   ├── config/          # Configuration files
-│   ├── controllers/     # Route controllers
-│   ├── models/          # Database models
-│   ├── routes/          # API routes
-│   ├── middleware/      # Custom middleware
-│   ├── services/        # Business logic
-│   ├── utils/           # Utility functions
-│   ├── migrations/      # Database migrations
-│   └── seeders/         # Database seeders
-├── uploads/             # File storage
-├── tests/               # Test files
-├── docs/                # Documentation
-├── server.js            # Entry point
-├── package.json
-└── README.md
-```
+Deploy to Render for production - **free forever**, perfect for your April demo!
 
-## 🔌 API Endpoints
+### Quick Deploy with Blueprint:
+
+1. **Push to GitHub:**
+   ```bash
+   git push origin main
+   ```
+
+2. **Deploy on Render:**
+   - Go to [render.com](https://render.com)
+   - Click "New" → "Blueprint"
+   - Select your GitHub repo
+   - Click "Apply"
+   - Done! 🎉
+
+📖 **Detailed Guide:** See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)
+
+**Why Render?**
+- ✅ Free forever (not just 30 days)
+- ✅ Free PostgreSQL included
+- ✅ Auto-deploys from GitHub
+- ✅ Perfect for demos and learning
+
+## 📚 API Documentation
+
+### Interactive Documentation (Swagger UI)
+Visit `/api-docs` when server is running:
+- **Local:** http://localhost:3001/api-docs
+- **Production:** https://your-app.onrender.com/api-docs
+
+### Quick Reference
+See [API_REFERENCE.md](./API_REFERENCE.md) for complete endpoint documentation.
+
+### Health Endpoints
+- `GET /health` - Basic health check
+- `GET /api/v1/health` - Health check with database connection
+
+## 🔌 Key API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
 - `GET /api/auth/me` - Get current user
 
 ### Documents
 - `POST /api/upload` - Upload document
 - `GET /api/documents` - List documents (paginated)
-- `GET /api/documents/:id` - Get document details
-- `DELETE /api/documents/:id` - Delete document
 - `GET /api/documents/:id/download` - Download file
-- `POST /api/documents/:id/reprocess` - Trigger reprocessing
 
 ### Invoices
 - `GET /api/invoices` - List invoices
-- `GET /api/invoices/:id` - Get invoice details
-- `PUT /api/invoices/:id` - Update invoice
 - `GET /api/invoices/stats` - Get statistics
-- `GET /api/invoices/:id/export` - Export as PDF/CSV
+- `GET /api/invoices/export/csv` - Export to CSV
+- `GET /api/invoices/:id/export/pdf` - Export to PDF
 
 ### Resumes
 - `GET /api/resumes` - List resumes
-- `GET /api/resumes/:id` - Get resume details
-- `POST /api/resumes/:id/match-job` - Match to job
-- `GET /api/resumes/top-candidates` - Get top candidates
+- `POST /api/resumes/:id/match-job` - Match to job posting
 
 ### Contracts
-- `GET /api/contracts` - List contracts
-- `GET /api/contracts/:id` - Get contract details
 - `GET /api/contracts/expiring` - Get expiring contracts
 - `GET /api/contracts/high-risk` - Get high-risk contracts
 
 ### Receipts
-- `GET /api/receipts` - List receipts
-- `GET /api/receipts/:id` - Get receipt details
 - `GET /api/receipts/by-category` - Group by category
-- `GET /api/receipts/monthly-report` - Monthly report
-- `GET /api/receipts/export` - Export as CSV/Excel
-
-### Job Postings
-- `GET /api/jobs` - List jobs
-- `POST /api/jobs` - Create job
-- `GET /api/jobs/:id` - Get job details
-- `PUT /api/jobs/:id` - Update job
-- `DELETE /api/jobs/:id` - Delete job
-
-### Webhooks (n8n Integration)
-- `POST /api/webhooks/document-uploaded`
-- `POST /api/webhooks/invoice-processed`
-- `POST /api/webhooks/resume-processed`
-- `POST /api/webhooks/contract-analyzed`
-- `POST /api/webhooks/receipt-processed`
+- `GET /api/receipts/monthly-report` - Monthly expense report
 
 ### Dashboard
 - `GET /api/dashboard/overview` - Overall statistics
-- `GET /api/dashboard/invoices-summary` - Invoice analytics
-- `GET /api/dashboard/resume-pipeline` - Candidate funnel
-- `GET /api/dashboard/expense-trends` - Expense trends
 
-### Settings
-- `GET /api/settings` - Get user settings
-- `PUT /api/settings` - Update settings
-
-### Health Check
-- `GET /health` - Server health status
+**Full API list:** 40+ endpoints - see `/api-docs` or [API_REFERENCE.md](./API_REFERENCE.md)
 
 ## 🔐 Authentication
 
 The API uses JWT (JSON Web Tokens) for authentication.
 
-### Login Flow
-
-1. Register or login to get access token:
 ```bash
+# Login
 POST /api/auth/login
 {
   "email": "user@example.com",
   "password": "password123"
 }
-```
 
-2. Include token in subsequent requests:
-```bash
+# Use token in requests
 Authorization: Bearer <your-jwt-token>
 ```
 
@@ -217,38 +197,6 @@ document_type: invoice|resume|contract|receipt
 **Supported formats**: PDF, DOCX, PNG, JPG  
 **Max file size**: 10MB
 
-## 🔗 n8n Webhook Integration
-
-### Webhook Security
-
-All webhooks require HMAC signature verification:
-
-```javascript
-Headers:
-  X-Webhook-Signature: sha256=<signature>
-  X-Webhook-Timestamp: <unix_timestamp>
-```
-
-### Webhook Payload Example
-
-```json
-{
-  "document_id": "uuid",
-  "document_type": "invoice",
-  "processed_data": {
-    "invoice_number": "INV-001",
-    "total_amount": 1500.00,
-    ...
-  },
-  "validation": {
-    "status": "valid",
-    "confidence_score": 95,
-    "errors": []
-  },
-  "timestamp": "2026-01-27T12:48:25Z"
-}
-```
-
 ## 🧪 Testing
 
 Run tests:
@@ -261,118 +209,78 @@ Run tests with coverage:
 npm run test:coverage
 ```
 
-Watch mode:
-```bash
-npm run test:watch
-```
+**Test Results:**
+- Total Tests: 90
+- Pass Rate: 100%
+- Code Coverage: ~48%
 
 ## 📊 Database Schema
 
-### Users
-- User authentication and authorization
-- Role-based access control (admin, user)
-
-### Documents
-- File metadata and storage
-- Processing status tracking
-
-### Invoices
-- Invoice data extraction
-- Validation and confidence scoring
-
-### Resumes
-- Candidate information
-- Skills and experience tracking
-- Job matching scores
-
-### Contracts
-- Contract analysis
-- Risk assessment
-- Legal review flags
-
-### Receipts
-- Expense tracking
-- Tax deduction categorization
-
-### Job Postings
-- Job requirements
-- Skills matching
-
-## 🐳 Docker Deployment
-
-Build and run with Docker Compose:
-
-```bash
-docker-compose up -d
-```
-
-This will start:
-- API server on port 3000
-- PostgreSQL database on port 5432
+- **Users** - Authentication and authorization
+- **Documents** - File metadata and processing status
+- **Invoices** - Invoice data with JSONB fields
+- **Resumes** - Candidate information and skills
+- **Contracts** - Contract analysis and risk assessment
+- **Receipts** - Expense tracking and categorization
+- **JobPostings** - Job requirements for matching
 
 ## 📝 Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | Server port | 3000 |
+| `PORT` | Server port | 3001 |
 | `NODE_ENV` | Environment | development |
 | `DATABASE_URL` | PostgreSQL connection string | - |
 | `JWT_SECRET` | JWT signing secret | - |
-| `JWT_EXPIRES_IN` | JWT expiration | 7d |
-| `REFRESH_TOKEN_SECRET` | Refresh token secret | - |
-| `REFRESH_TOKEN_EXPIRES_IN` | Refresh token expiration | 30d |
-| `N8N_WEBHOOK_SECRET` | n8n webhook secret | - |
-| `N8N_BASE_URL` | n8n instance URL | - |
+| `ALLOWED_ORIGINS` | CORS allowed origins | localhost |
 | `MAX_FILE_SIZE` | Max upload size in bytes | 10485760 |
-| `UPLOAD_DIR` | File upload directory | ./uploads |
-| `ALLOWED_ORIGINS` | CORS allowed origins | http://localhost:3000 |
-| `LOG_LEVEL` | Logging level | info |
 
-## 🔧 Development
+See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for complete environment variable reference.
 
-### Database Migrations
+## 🔧 Development Scripts
 
-Create a new migration:
 ```bash
-npx sequelize-cli migration:generate --name migration-name
+npm run dev          # Start development server
+npm start            # Start production server
+npm test             # Run tests
+npm run migrate      # Run database migrations
+npm run migrate:prod # Run migrations on Railway
+npm run seed         # Seed demo data
+npm run lint         # Lint code
+npm run format       # Format code
 ```
 
-Run migrations:
-```bash
-npm run migrate
+## 📁 Project Structure
+
+```
+DocuFlow/
+├── src/
+│   ├── config/          # Configuration files
+│   ├── controllers/     # Route controllers
+│   ├── models/          # Database models (Sequelize)
+│   ├── routes/          # API routes
+│   ├── middleware/      # Custom middleware
+│   ├── services/        # Business logic
+│   ├── utils/           # Utility functions
+│   ├── migrations/      # Database migrations
+│   └── seeders/         # Database seeders
+├── tests/               # Test files (Jest + Supertest)
+├── docs/                # API documentation (Swagger)
+├── uploads/             # File storage
+├── railway.json         # Railway deployment config
+├── server.js            # Entry point
+└── package.json
 ```
 
-Undo last migration:
-```bash
-npm run migrate:undo
-```
+## 🛡️ Security Features
 
-### Code Formatting
-
-Format code:
-```bash
-npm run format
-```
-
-Lint code:
-```bash
-npm run lint
-```
-
-## 📖 API Documentation
-
-Interactive API documentation is available at:
-```
-http://localhost:3000/api-docs
-```
-
-(Swagger UI - to be implemented in Day 14)
-
-## 🚧 Development Timeline
-
-- **Week 1 (Days 1-5)**: Foundation & Core Setup
-- **Week 2 (Days 6-10)**: Webhook Integration & API Development
-- **Week 3 (Days 11-15)**: Analytics, Security & Deployment
+- JWT authentication with refresh tokens
+- Password hashing with bcrypt
+- Rate limiting (auth, upload, API, webhooks)
+- Input sanitization (XSS prevention)
+- CORS configuration
+- Helmet security headers
+- User-based data isolation
 
 ## 🤝 Contributing
 
@@ -386,10 +294,21 @@ http://localhost:3000/api-docs
 
 This project is licensed under the MIT License.
 
+## 📖 Documentation
+
+- [Render Deployment Guide](./RENDER_DEPLOYMENT.md)
+- [API Reference](./API_REFERENCE.md)
+- [Project Report](./PROJECT_REPORT.md)
+- [Implementation Plan](./IMPLEMENTATION_PLAN.md)
+
 ## 👥 Support
 
-For support, email support@example.com or open an issue in the repository.
+- **Repository:** https://github.com/Anshuman-Jagani/DocuFlow
+- **Issues:** https://github.com/Anshuman-Jagani/DocuFlow/issues
 
 ---
 
-**Status**: Day 1 - Project Initialization Complete ✅
+**Status:** Day 10 Complete - Backend Ready for Render Deployment ✅  
+**Version:** 1.0.0  
+**Deployment:** Render.com (Free Forever)  
+**Last Updated:** February 5, 2026
