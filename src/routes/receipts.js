@@ -8,7 +8,7 @@ router.use(authenticate);
 
 /**
  * @route   GET /api/receipts/by-category
- * @desc    Get receipts grouped by expense category
+ * @desc    Get receipts grouped by category with totals
  * @access  Private
  * @query   start_date, end_date, is_business_expense
  */
@@ -16,11 +16,19 @@ router.get('/by-category', receiptController.getReceiptsByCategory);
 
 /**
  * @route   GET /api/receipts/monthly-report
- * @desc    Get monthly receipt report
+ * @desc    Generate monthly expense report
  * @access  Private
  * @query   year, month (required)
  */
 router.get('/monthly-report', receiptController.getMonthlyReport);
+
+/**
+ * @route   GET /api/receipts/export/csv
+ * @desc    Export receipts as CSV
+ * @access  Private
+ * @query   expense_category, merchant_name, is_business_expense, start_date, end_date, sort_by, sort_order
+ */
+router.get('/export/csv', receiptController.exportReceiptsCSV);
 
 /**
  * @route   GET /api/receipts
@@ -29,6 +37,13 @@ router.get('/monthly-report', receiptController.getMonthlyReport);
  * @query   page, limit, expense_category, merchant_name, is_business_expense, start_date, end_date, sort_by, sort_order
  */
 router.get('/', receiptController.listReceipts);
+
+/**
+ * @route   GET /api/receipts/:id/export/pdf
+ * @desc    Export single receipt as PDF
+ * @access  Private
+ */
+router.get('/:id/export/pdf', receiptController.exportReceiptPDF);
 
 /**
  * @route   GET /api/receipts/:id

@@ -3,6 +3,7 @@ const { successResponse, errorResponse, paginationMeta } = require('../utils/res
 const { getPaginationParams, buildOrderClause } = require('../utils/pagination');
 const { buildDateRangeFilter, buildSearchFilter, buildStatusFilter } = require('../utils/queryHelpers');
 const { Op } = require('sequelize');
+const { generateInvoiceCSV, generateInvoicePDF } = require('../services/exportService');
 
 /**
  * Get all invoices with pagination and filtering
@@ -194,3 +195,89 @@ exports.getInvoiceStats = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Export invoices as CSV
+ * GET /api/invoices/export/csv
+ */
+exports.exportInvoicesCSV = async (req, res, next) => {
+  try {
+    const { status, vendor_name, invoice_number, start_date, end_date } = req.query;
+    
+    // Build where clause (same as listInvoices)
+    const where = {
+      user_id: req.user.id,
+      ...buildStatusFilter('status', status),
+      ...buildDateRangeFilter('invoice_date', start_date, end_date)
+    };
+    
+    if (vendor_name) {
+      where.vendor_name = {
+        [Op.iLike]: `%${vendor_name}%`
+      };
+    }
+    
+    if (invoice_number) {
+      where.invoice_number = {
+        [Op.iLike]: `%${invoice_number}%`
+      };
+    }
+    
+    // Get all matching invoices (no pagination for export)
+    const invoices = await Invoice.findAll({
+      where,
+      order: buildOrderClause(req.query)
+    });
+    
+    if (invoices.length === 0) {
+      return res.status(404).json(
+        errorResponse('NO_DATA', 'No invoices found to export')
+      );
+    }
+    
+    // Generate CSV
+    const csv = generateInvoiceCSV(invoices);
+    
+    // Set headers for CSV download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=invoices_${Date.now()}.csv`);
+    res.send(csv);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Export single invoice as PDF
+ * GET /api/invoices/:id/export/pdf
+ */
+exports.exportInvoicePDF = async (req, res, next) => {
+  try {
+    const invoice = await Invoice.findOne({
+      where: {
+        id: req.params.id,
+        user_id: req.user.id
+      }
+    });
+    
+    if (!invoice) {
+      return res.status(404).json(
+        errorResponse('NOT_FOUND', 'Invoice not found')
+      );
+    }
+    
+    // Generate PDF
+    const doc = generateInvoicePDF(invoice);
+    
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice_${invoice.invoice_number || invoice.id}_${Date.now()}.pdf`);
+    
+    // Pipe PDF to response
+    doc.pipe(res);
+    doc.end();
+  } catch (error) {
+    next(error);
+  }
+};
+

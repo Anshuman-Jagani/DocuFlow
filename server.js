@@ -68,16 +68,30 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Mount route handlers
+
+// Mount route handlers with rate limiting
 const documentRoutes = require('./src/routes/documents');
-app.use('/api/auth', require('./src/routes/auth'));
+const { authLimiter, uploadLimiter, apiLimiter, webhookLimiter } = require('./src/middleware/rateLimiter');
+
+// Auth routes with strict rate limiting
+app.use('/api/auth', authLimiter, require('./src/routes/auth'));
+
+// Upload routes with upload-specific rate limiting
+app.use('/api/upload', uploadLimiter);
+
+// Webhook routes with high-volume rate limiting
+app.use('/api/webhooks', webhookLimiter, require('./src/routes/webhooks'));
+
+// All other API routes with general rate limiting
+app.use('/api', apiLimiter);
+
+// Document routes
 app.use('/api', documentRoutes); // Handles /api/upload and /api/documents/*
 app.use('/api/invoices', require('./src/routes/invoices'));
 app.use('/api/resumes', require('./src/routes/resumes'));
 app.use('/api/contracts', require('./src/routes/contracts'));
 app.use('/api/receipts', require('./src/routes/receipts'));
 app.use('/api/jobs', require('./src/routes/jobPostings'));
-app.use('/api/webhooks', require('./src/routes/webhooks'));
 app.use('/api/dashboard', require('./src/routes/dashboard'));
 // app.use('/api/settings', require('./src/routes/settings'));
 

@@ -3,6 +3,7 @@ const { successResponse, errorResponse, paginationMeta } = require('../utils/res
 const { getPaginationParams, buildOrderClause } = require('../utils/pagination');
 const { buildDateRangeFilter, buildStatusFilter } = require('../utils/queryHelpers');
 const { Op } = require('sequelize');
+const { generateReceiptCSV, generateReceiptPDF } = require('../services/exportService');
 
 /**
  * Get all receipts with pagination and filtering
@@ -278,3 +279,93 @@ exports.getMonthlyReport = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Export receipts as CSV
+ * GET /api/receipts/export/csv
+ */
+exports.exportReceiptsCSV = async (req, res, next) => {
+  try {
+    const { 
+      expense_category, 
+      merchant_name,
+      is_business_expense,
+      start_date, 
+      end_date
+    } = req.query;
+    
+    // Build where clause (same as listReceipts)
+    const where = {
+      user_id: req.user.id,
+      ...buildStatusFilter('expense_category', expense_category),
+      ...buildDateRangeFilter('receipt_date', start_date, end_date)
+    };
+    
+    if (merchant_name) {
+      where.merchant_name = {
+        [Op.iLike]: `%${merchant_name}%`
+      };
+    }
+    
+    if (is_business_expense !== undefined) {
+      where.is_business_expense = is_business_expense === 'true';
+    }
+    
+    // Get all matching receipts (no pagination for export)
+    const receipts = await Receipt.findAll({
+      where,
+      order: buildOrderClause(req.query)
+    });
+    
+    if (receipts.length === 0) {
+      return res.status(404).json(
+        errorResponse('NO_DATA', 'No receipts found to export')
+      );
+    }
+    
+    // Generate CSV
+    const csv = generateReceiptCSV(receipts);
+    
+    // Set headers for CSV download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=receipts_${Date.now()}.csv`);
+    res.send(csv);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Export single receipt as PDF
+ * GET /api/receipts/:id/export/pdf
+ */
+exports.exportReceiptPDF = async (req, res, next) => {
+  try {
+    const receipt = await Receipt.findOne({
+      where: {
+        id: req.params.id,
+        user_id: req.user.id
+      }
+    });
+    
+    if (!receipt) {
+      return res.status(404).json(
+        errorResponse('NOT_FOUND', 'Receipt not found')
+      );
+    }
+    
+    // Generate PDF
+    const doc = generateReceiptPDF(receipt);
+    
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=receipt_${receipt.merchant_name || receipt.id}_${Date.now()}.pdf`);
+    
+    // Pipe PDF to response
+    doc.pipe(res);
+    doc.end();
+  } catch (error) {
+    next(error);
+  }
+};
+

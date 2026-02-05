@@ -794,6 +794,71 @@
 						"description": "Get invoice statistics (total amount, count by status, by currency)"
 					},
 					"response": []
+				},
+				{
+					"name": "Export Invoices CSV",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/invoices/export/csv",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"invoices",
+								"export",
+								"csv"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"disabled": true
+								},
+								{
+									"key": "vendor_name",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "start_date",
+									"value": "2024-01-01",
+									"disabled": true
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Export invoices to CSV format with optional filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Export Invoice PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/invoices/{{invoiceId}}/export/pdf",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"invoices",
+								"{{invoiceId}}",
+								"export",
+								"pdf"
+							]
+						},
+						"description": "Export single invoice as PDF"
+					},
+					"response": []
 				}
 			]
 		},
@@ -1322,6 +1387,71 @@
 							]
 						},
 						"description": "Generate comprehensive monthly expense report with category and payment method breakdown"
+					},
+					"response": []
+				},
+				{
+					"name": "Export Receipts CSV",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/receipts/export/csv",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"receipts",
+								"export",
+								"csv"
+							],
+							"query": [
+								{
+									"key": "expense_category",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "is_business_expense",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "start_date",
+									"value": "2024-01-01",
+									"disabled": true
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Export receipts to CSV format with optional filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Export Receipt PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/receipts/{{receiptId}}/export/pdf",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"receipts",
+								"{{receiptId}}",
+								"export",
+								"pdf"
+							]
+						},
+						"description": "Export single receipt as PDF"
 					},
 					"response": []
 				}

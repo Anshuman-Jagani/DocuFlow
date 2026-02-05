@@ -10,8 +10,17 @@ router.use(authenticate);
  * @route   GET /api/invoices/stats
  * @desc    Get invoice statistics
  * @access  Private
+ * @query   start_date, end_date
  */
 router.get('/stats', invoiceController.getInvoiceStats);
+
+/**
+ * @route   GET /api/invoices/export/csv
+ * @desc    Export invoices as CSV
+ * @access  Private
+ * @query   status, vendor_name, invoice_number, start_date, end_date, sort_by, sort_order
+ */
+router.get('/export/csv', invoiceController.exportInvoicesCSV);
 
 /**
  * @route   GET /api/invoices
@@ -20,6 +29,13 @@ router.get('/stats', invoiceController.getInvoiceStats);
  * @query   page, limit, status, vendor_name, invoice_number, start_date, end_date, sort_by, sort_order
  */
 router.get('/', invoiceController.listInvoices);
+
+/**
+ * @route   GET /api/invoices/:id/export/pdf
+ * @desc    Export single invoice as PDF
+ * @access  Private
+ */
+router.get('/:id/export/pdf', invoiceController.exportInvoicePDF);
 
 /**
  * @route   GET /api/invoices/:id
