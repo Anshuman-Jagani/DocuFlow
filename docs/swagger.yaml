@@ -10,7 +10,7 @@ info:
 servers:
   - url: http://localhost:3001
     description: Local development
-  - url: https://docuflow-api.onrender.com
+  - url: https://docuflow-api-00ts.onrender.com
     description: Production (Render.com)
 
 components:
