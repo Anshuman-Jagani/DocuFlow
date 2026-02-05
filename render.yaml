@@ -5,9 +5,12 @@ services:
   # Web Service (Node.js API)
   - type: web
     name: docuflow-api
+    runtime: node
     env: node
     region: oregon
     plan: free
+    repo: https://github.com/Anshuman-Jagani/DocuFlow
+    branch: main
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
