@@ -1,15 +1,21 @@
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME || 'docprocessing',
-  process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD || 'password',
-  {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
+const isProduction = process.env.NODE_ENV === 'production';
+
+let sequelize;
+
+if (process.env.DATABASE_URL) {
+  // Use connection string for production (Render/Railway/etc)
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    logging: isProduction ? false : console.log,
+    dialectOptions: {
+      ssl: isProduction ? {
+        require: true,
+        rejectUnauthorized: false
+      } : false
+    },
     pool: {
       max: 10,
       min: 0,
@@ -21,8 +27,32 @@ const sequelize = new Sequelize(
       underscored: true,
       freezeTableName: true
     }
-  }
-);
+  });
+} else {
+  // Fallback to individual variables for local development
+  sequelize = new Sequelize(
+    process.env.DB_NAME || 'docprocessing',
+    process.env.DB_USER || 'postgres',
+    process.env.DB_PASSWORD || 'password',
+    {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      dialect: 'postgres',
+      logging: process.env.NODE_ENV === 'development' ? console.log : false,
+      pool: {
+        max: 10,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+      },
+      define: {
+        timestamps: true,
+        underscored: true,
+        freezeTableName: true
+      }
+    }
+  );
+}
 
 // Test database connection
 const testConnection = async () => {
