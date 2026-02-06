@@ -1,0 +1,387 @@
+# DocuFlow Frontend - 5 Day Development Plan
+
+## Overview
+Structured plan to build the complete DocuFlow frontend in 5 days with daily git commits and clear milestones.
+
+---
+
+## Day 1: Foundation & Authentication (Feb 6)
+
+### Goals
+- Complete project infrastructure setup
+- Build reusable UI components
+- Implement authentication flow
+- Create main layout structure
+
+### Tasks
+
+#### Morning: Core UI Components
+- [x] Project setup (Vite, TailwindCSS, dependencies) ✅
+- [x] API service layer ✅
+- [x] Auth store ✅
+- [x] Type definitions ✅
+- [ ] Button component
+- [ ] Card component
+- [ ] Badge component
+- [ ] Input component
+- [ ] Modal component
+- [ ] Toast notification system
+
+#### Afternoon: Authentication & Layout
+- [ ] Login page
+- [ ] Register page
+- [ ] Protected route wrapper
+- [ ] Sidebar navigation
+- [ ] Header with user menu
+- [ ] Main dashboard layout
+
+#### Git Commits
+```bash
+# Commit 1 (Morning)
+git add .
+git commit -m "feat: setup project infrastructure and core UI components
+
+- Initialize Vite + React + TypeScript
+- Configure TailwindCSS with custom design system
+- Set up API service with axios interceptors
+- Create Zustand auth store
+- Add TypeScript type definitions
+- Build reusable UI components (Button, Card, Badge, Input, Modal, Toast)"
+
+# Commit 2 (Afternoon)
+git add .
+git commit -m "feat: implement authentication and main layout
+
+- Create login and register pages with form validation
+- Add protected route wrapper
+- Build responsive sidebar navigation
+- Create header with user menu
+- Implement dashboard layout structure
+- Add logout functionality"
+```
+
+**End of Day 1 Deliverable**: Working authentication system with login/register, protected routes, and main layout
+
+---
+
+## Day 2: Dashboard & Upload (Feb 7)
+
+### Goals
+- Build dashboard with stats and charts
+- Implement file upload functionality
+- Create document list views
+
+### Tasks
+
+#### Morning: Dashboard Page
+- [ ] Dashboard stats cards (4 metrics)
+- [ ] Document processing trends chart (Recharts)
+- [ ] Expense breakdown pie chart
+- [ ] Recent activity table
+- [ ] Dashboard API integration
+- [ ] Auto-refresh functionality
+
+#### Afternoon: Upload & Documents
+- [ ] File uploader component (drag-drop)
+- [ ] Upload page with file type selector
+- [ ] File preview component
+- [ ] Upload progress tracking
+- [ ] Success/error notifications
+- [ ] Documents list page (basic table)
+
+#### Git Commits
+```bash
+# Commit 3 (Morning)
+git add .
+git commit -m "feat: build dashboard with stats and visualizations
+
+- Add 4 stat cards (total docs, pending, invoice amount, candidates)
+- Implement processing trends line chart
+- Create expense breakdown pie chart
+- Build recent activity table with status badges
+- Integrate dashboard API endpoints
+- Add auto-refresh every 30 seconds"
+
+# Commit 4 (Afternoon)
+git add .
+git commit -m "feat: implement file upload and document management
+
+- Create drag-and-drop file uploader with react-dropzone
+- Add file type selector and validation
+- Build file preview with thumbnails
+- Implement upload progress tracking
+- Add success/error toast notifications
+- Create basic documents list page"
+```
+
+**End of Day 2 Deliverable**: Functional dashboard with charts and working file upload system
+
+---
+
+## Day 3: Invoices & Resumes Modules (Feb 8)
+
+### Goals
+- Complete invoices module with full CRUD
+- Build resumes module with job matching
+- Implement advanced filtering and search
+
+### Tasks
+
+#### Morning: Invoices Module
+- [ ] Invoices list page with table
+- [ ] Search and filter functionality
+- [ ] Date range picker
+- [ ] Sortable columns
+- [ ] Pagination component
+- [ ] Invoice detail page/modal
+- [ ] PDF viewer component
+- [ ] Extracted data display
+- [ ] Edit invoice functionality
+- [ ] Export to CSV
+
+#### Afternoon: Resumes Module
+- [ ] Resumes list page (grid/table toggle)
+- [ ] Resume card component
+- [ ] Filter by skills, score, experience
+- [ ] Resume detail page
+- [ ] Match score breakdown
+- [ ] Experience timeline component
+- [ ] Skills categorization display
+- [ ] Job matching interface
+- [ ] Download resume functionality
+
+#### Git Commits
+```bash
+# Commit 5 (Morning)
+git add .
+git commit -m "feat: complete invoices module with full functionality
+
+- Build invoices list with search and filters
+- Add date range picker and sortable columns
+- Implement pagination
+- Create invoice detail page with PDF viewer
+- Display extracted data in structured format
+- Add edit invoice functionality
+- Implement CSV export feature"
+
+# Commit 6 (Afternoon)
+git add .
+git commit -m "feat: build resumes module with job matching
+
+- Create resumes list with grid/table views
+- Build resume card component with match score
+- Add filters for skills, score, and experience
+- Implement resume detail page
+- Display match score breakdown with visualizations
+- Create experience timeline component
+- Add job matching interface
+- Implement resume download functionality"
+```
+
+**End of Day 3 Deliverable**: Complete invoices and resumes modules with all features
+
+---
+
+## Day 4: Contracts, Receipts & Jobs (Feb 9)
+
+### Goals
+- Build contracts module with risk analysis
+- Create receipts module with analytics
+- Implement job postings management
+
+### Tasks
+
+#### Morning: Contracts & Receipts
+- [ ] Contracts list page
+- [ ] Contract filters (type, status, risk)
+- [ ] Expiry notifications
+- [ ] Contract detail page
+- [ ] Risk analysis display
+- [ ] Receipts list page (gallery view)
+- [ ] Receipt card component
+- [ ] Receipts filters
+- [ ] Monthly expense summary
+
+#### Afternoon: Receipts Analytics & Jobs
+- [ ] Receipts analytics page
+- [ ] Spending trends charts
+- [ ] Category breakdown visualization
+- [ ] Monthly report export
+- [ ] Job postings list page
+- [ ] Create job posting form
+- [ ] Job detail page
+- [ ] Matched candidates list
+
+#### Git Commits
+```bash
+# Commit 7 (Morning)
+git add .
+git commit -m "feat: implement contracts and receipts modules
+
+- Build contracts list with filters and expiry alerts
+- Create contract detail page with risk analysis
+- Add color-coded expiry indicators
+- Implement receipts gallery view
+- Build receipt card component
+- Add category and merchant filters
+- Display monthly expense summary"
+
+# Commit 8 (Afternoon)
+git add .
+git commit -m "feat: add receipts analytics and job postings
+
+- Create receipts analytics page with charts
+- Implement spending trends visualization
+- Add category breakdown and top merchants
+- Build monthly report export
+- Create job postings management
+- Add create/edit job posting form
+- Display matched candidates with scores"
+```
+
+**End of Day 4 Deliverable**: All document modules complete with analytics
+
+---
+
+## Day 5: Settings, Polish & Testing (Feb 10)
+
+### Goals
+- Build settings page
+- Implement responsive design
+- Add loading/error states
+- Test all features
+- Final polish and optimization
+
+### Tasks
+
+#### Morning: Settings & Refinements
+- [ ] Settings page with tabs
+- [ ] Profile settings
+- [ ] Change password
+- [ ] Notifications preferences
+- [ ] Processing thresholds
+- [ ] API key management
+- [ ] Add loading skeletons
+- [ ] Implement error boundaries
+- [ ] Add empty states
+
+#### Afternoon: Testing & Polish
+- [ ] Test all user flows
+- [ ] Fix responsive design issues
+- [ ] Add accessibility features (ARIA labels)
+- [ ] Optimize performance (lazy loading)
+- [ ] Add animations and transitions
+- [ ] Test on mobile/tablet
+- [ ] Write comprehensive README
+- [ ] Create deployment guide
+
+#### Git Commits
+```bash
+# Commit 9 (Morning)
+git add .
+git commit -m "feat: add settings page and improve UX
+
+- Build settings page with tabbed interface
+- Add profile and password management
+- Implement notifications preferences
+- Create processing thresholds configuration
+- Add API key management
+- Implement loading skeletons for all pages
+- Add error boundaries and empty states"
+
+# Commit 10 (Afternoon)
+git add .
+git commit -m "feat: final polish, optimization, and testing
+
+- Fix responsive design for mobile and tablet
+- Add ARIA labels for accessibility
+- Implement lazy loading for routes
+- Add smooth animations and transitions
+- Test all user flows and fix bugs
+- Optimize performance with code splitting
+- Update README with setup instructions
+- Add deployment documentation"
+
+# Final commit
+git add .
+git commit -m "docs: update project documentation
+
+- Add comprehensive README
+- Document all components
+- Add API integration guide
+- Create deployment instructions
+- Update environment variables documentation"
+```
+
+**End of Day 5 Deliverable**: Production-ready frontend application
+
+---
+
+## Daily Workflow
+
+### Each Day:
+1. **Start**: Pull latest changes, review plan
+2. **Morning**: Focus on core features (3-4 hours)
+3. **Lunch Break**: Test what you built
+4. **Afternoon**: Complete remaining features (3-4 hours)
+5. **End of Day**: Commit code, test, update task.md
+6. **Evening**: Optional - review next day's plan
+
+### Git Best Practices:
+- Commit at least 2 times per day (morning/afternoon)
+- Write descriptive commit messages
+- Test before committing
+- Keep commits focused and atomic
+
+---
+
+## Success Metrics
+
+### Day 1 ✅
+- [ ] Can login/register successfully
+- [ ] Protected routes work
+- [ ] Sidebar navigation functional
+
+### Day 2 ✅
+- [ ] Dashboard displays stats and charts
+- [ ] Can upload files successfully
+- [ ] Upload progress shows correctly
+
+### Day 3 ✅
+- [ ] Can view and filter invoices
+- [ ] Invoice details display correctly
+- [ ] Can view and match resumes
+
+### Day 4 ✅
+- [ ] All document types viewable
+- [ ] Analytics charts render
+- [ ] Can create job postings
+
+### Day 5 ✅
+- [ ] All features work on mobile
+- [ ] No console errors
+- [ ] App is production-ready
+
+---
+
+## Tech Stack Reminder
+
+**Core**: React 18 + TypeScript + Vite  
+**Routing**: React Router v6  
+**Styling**: TailwindCSS  
+**State**: Zustand + React Query  
+**Forms**: React Hook Form + Zod  
+**Charts**: Recharts  
+**Upload**: React Dropzone  
+
+---
+
+## Notes
+
+- Focus on functionality first, polish later
+- Test as you build, don't wait until the end
+- Keep commits small and frequent
+- If stuck, move to next task and come back
+- Day 5 buffer for any incomplete items
+
+**Total Estimated Time**: 40-50 hours over 5 days

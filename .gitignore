@@ -46,3 +46,4 @@ build/
 tmp/
 temp/
 *.tmp
+FUTURE_SCOPE_ANALYSIS.md
