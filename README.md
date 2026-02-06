@@ -1,286 +1,183 @@
-# DocuFlow - AI-Powered Document Processing System
+# DocuFlow - Intelligent Document Management System
 
-REST API backend for an intelligent document processing system that handles invoices, resumes, contracts, and receipts. Integrates with n8n workflows via webhooks and provides comprehensive analytics.
+DocuFlow is an intelligent document management and workflow automation system that streamlines document processing, storage, and analysis using AI-powered features and n8n workflow automation.
 
-## 🚀 Features
+## 🎯 Project Overview
 
-- **File Upload & Storage**: Accept PDF, DOCX, PNG, JPG files up to 10MB
-- **Webhook Integration**: n8n webhook endpoints for AI processing
-- **Document Processing**: Handle invoices, resumes, contracts, and receipts
-- **JWT Authentication**: Secure API with JWT tokens and refresh tokens
-- **Resume Matching**: AI-powered resume-to-job matching with scoring
-- **Contract Analysis**: Risk assessment and expiration tracking
-- **Expense Tracking**: Receipt categorization and monthly reports
-- **Analytics Dashboard**: Comprehensive statistics and reporting
-- **Export Capabilities**: PDF and CSV export functionality
-- **Rate Limiting**: Protection against abuse
-- **Input Sanitization**: XSS prevention and security hardening
+DocuFlow helps organizations and individuals manage their documents efficiently by:
+- Automatically classifying and extracting data from uploaded documents
+- Providing intelligent search and filtering capabilities
+- Automating workflows through n8n integration
+- Offering secure document storage and retrieval
+- Matching resumes with job postings using AI
 
-## 📋 Prerequisites
+## 🏗️ Architecture
 
-- Node.js >= 18.0.0
-- PostgreSQL >= 14.0
-- npm >= 9.0.0
+This is a **monorepo** containing both backend and frontend:
 
-## 🛠️ Local Development Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Anshuman-Jagani/DocuFlow.git
-cd DocuFlow
+```
+DocuFlow/
+├── backend/             # Node.js/Express API
+│   ├── src/            # Source code
+│   ├── tests/          # Backend tests
+│   ├── uploads/        # File storage
+│   └── README.md       # Backend documentation
+├── frontend/            # React/Next.js UI (coming soon)
+├── docs/               # Project documentation
+├── README.md           # This file
+├── PROJECT_REPORT.md   # Development progress
+├── TASK_TRACKER.md     # Task management
+└── IMPLEMENTATION_PLAN.md
 ```
 
-### 2. Install dependencies
+## 🚀 Tech Stack
 
+### Backend
+- **Node.js** & **Express.js** - REST API framework
+- **PostgreSQL** - Primary database
+- **Sequelize** - ORM for database management
+- **JWT** - Authentication & authorization
+- **Multer** - File upload handling
+- **n8n Integration** - Webhook-based workflow automation
+
+### Frontend (Coming Soon)
+- **React** - UI framework
+- **Next.js** - React framework with SSR
+- **TailwindCSS** - Styling
+
+### Testing & Quality
+- **Jest** - Testing framework
+- **Supertest** - API testing
+- **ESLint** - Code quality
+
+## � Getting Started
+
+### Backend Setup
+
+1. **Navigate to backend directory:**
+```bash
+cd backend
+```
+
+2. **Install dependencies:**
 ```bash
 npm install
 ```
 
-### 3. Set up environment variables
-
+3. **Set up environment variables:**
 ```bash
 cp .env.example .env
+# Edit .env with your configuration
 ```
 
-Edit `.env` and configure your environment variables:
-
-```env
-# Database (Docker PostgreSQL for local development)
-DATABASE_URL=postgresql://postgres:password@localhost:5432/docprocessing
-
-# JWT
-JWT_SECRET=your-super-secret-jwt-key-change-in-production-min-32-chars
-REFRESH_TOKEN_SECRET=your-refresh-token-secret-change-in-production-min-32-chars
-
-# Server
-PORT=3001
-NODE_ENV=development
-
-# CORS (add your frontend URL)
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
-```
-
-### 4. Start PostgreSQL with Docker
-
+4. **Start PostgreSQL with Docker:**
 ```bash
 docker-compose up -d
 ```
 
-### 5. Run database migrations
-
+5. **Run database migrations:**
 ```bash
 npm run migrate
 ```
 
-### 6. (Optional) Seed demo data
-
-```bash
-npm run seed
-```
-
-Demo credentials:
-- Email: admin@docuflow.com
-- Password: Admin123!
-
-### 7. Start the development server
-
+6. **Start the development server:**
 ```bash
 npm run dev
 ```
 
-The server will start on `http://localhost:3001`
+The API will be available at `http://localhost:3001`
 
-## 🚀 Render.com Deployment (Free Forever)
+� **For detailed backend setup and API documentation, see [backend/README.md](./backend/README.md)**
 
-Deploy to Render for production - **free forever**, perfect for your April demo!
+### Frontend Setup (Coming Soon)
 
-### Quick Deploy with Blueprint:
+Frontend development will begin after backend completion.
 
-1. **Push to GitHub:**
-   ```bash
-   git push origin main
-   ```
+## � Documentation
 
-2. **Deploy on Render:**
-   - Go to [render.com](https://render.com)
-   - Click "New" → "Blueprint"
-   - Select your GitHub repo
-   - Click "Apply"
-   - Done! 🎉
+- [Backend README](./backend/README.md) - Backend setup and development
+- [API Reference](./backend/API_REFERENCE.md) - Complete API endpoint documentation
+- [n8n Integration Spec](./backend/N8N_INTEGRATION_SPEC.md) - Webhook integration details
+- [Render Deployment](./backend/RENDER_DEPLOYMENT.md) - Production deployment guide
+- [Project Report](./PROJECT_REPORT.md) - Development progress and achievements
+- [Task Tracker](./TASK_TRACKER.md) - Current task status
+- [Implementation Plan](./IMPLEMENTATION_PLAN.md) - Technical implementation details
 
-📖 **Detailed Guide:** See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)
+## 🔑 Key Features
 
-**Why Render?**
-- ✅ Free forever (not just 30 days)
-- ✅ Free PostgreSQL included
-- ✅ Auto-deploys from GitHub
-- ✅ Perfect for demos and learning
+### Document Management
+- Upload and store documents (PDF, DOCX, PNG, JPG)
+- Automatic document classification
+- Secure file storage with user isolation
+- Document search and filtering
 
-## 📚 API Documentation
+### Specialized Document Processing
+- **Invoices**: Automatic data extraction, statistics, CSV/PDF export
+- **Receipts**: Expense tracking, categorization, monthly reports
+- **Resumes**: Skills extraction, job matching with AI scoring
+- **Contracts**: Risk assessment, expiration tracking, analysis
 
-### Interactive Documentation (Swagger UI)
-Visit `/api-docs` when server is running:
-- **Local:** http://localhost:3001/api-docs
-- **Production:** https://your-app.onrender.com/api-docs
+### Workflow Automation
+- n8n webhook integration for AI processing
+- Real-time document processing pipelines
+- HMAC signature verification for security
+- Automated job matching and notifications
 
-### Quick Reference
-See [API_REFERENCE.md](./API_REFERENCE.md) for complete endpoint documentation.
-
-### Health Endpoints
-- `GET /health` - Basic health check
-- `GET /api/v1/health` - Health check with database connection
-
-## 🔌 Key API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
-
-### Documents
-- `POST /api/upload` - Upload document
-- `GET /api/documents` - List documents (paginated)
-- `GET /api/documents/:id/download` - Download file
-
-### Invoices
-- `GET /api/invoices` - List invoices
-- `GET /api/invoices/stats` - Get statistics
-- `GET /api/invoices/export/csv` - Export to CSV
-- `GET /api/invoices/:id/export/pdf` - Export to PDF
-
-### Resumes
-- `GET /api/resumes` - List resumes
-- `POST /api/resumes/:id/match-job` - Match to job posting
-
-### Contracts
-- `GET /api/contracts/expiring` - Get expiring contracts
-- `GET /api/contracts/high-risk` - Get high-risk contracts
-
-### Receipts
-- `GET /api/receipts/by-category` - Group by category
-- `GET /api/receipts/monthly-report` - Monthly expense report
-
-### Dashboard
-- `GET /api/dashboard/overview` - Overall statistics
-
-**Full API list:** 40+ endpoints - see `/api-docs` or [API_REFERENCE.md](./API_REFERENCE.md)
-
-## 🔐 Authentication
-
-The API uses JWT (JSON Web Tokens) for authentication.
-
-```bash
-# Login
-POST /api/auth/login
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-# Use token in requests
-Authorization: Bearer <your-jwt-token>
-```
-
-## 📤 File Upload
-
-Upload documents using multipart/form-data:
-
-```bash
-POST /api/upload
-Content-Type: multipart/form-data
-
-file: <file>
-document_type: invoice|resume|contract|receipt
-```
-
-**Supported formats**: PDF, DOCX, PNG, JPG  
-**Max file size**: 10MB
+### Security & Performance
+- JWT-based authentication with refresh tokens
+- Rate limiting on all endpoints
+- Input sanitization and XSS prevention
+- User-based data isolation
+- Comprehensive error handling
 
 ## 🧪 Testing
 
-Run tests:
-```bash
-npm test
-```
+The backend has comprehensive test coverage:
 
-Run tests with coverage:
 ```bash
-npm run test:coverage
+cd backend
+npm test                # Run all tests
+npm run test:coverage   # Run with coverage report
 ```
 
 **Test Results:**
-- Total Tests: 90
+- Total Tests: 90+
 - Pass Rate: 100%
 - Code Coverage: ~48%
 
-## 📊 Database Schema
+## 🌐 Deployment
 
-- **Users** - Authentication and authorization
-- **Documents** - File metadata and processing status
-- **Invoices** - Invoice data with JSONB fields
-- **Resumes** - Candidate information and skills
-- **Contracts** - Contract analysis and risk assessment
-- **Receipts** - Expense tracking and categorization
-- **JobPostings** - Job requirements for matching
+The backend is deployed on **Render.com** (free forever tier):
+- Production URL: https://docuflow.onrender.com
+- Free PostgreSQL database included
+- Auto-deploys from GitHub
+- Perfect for demos and learning
 
-## 📝 Environment Variables
+See [backend/RENDER_DEPLOYMENT.md](./backend/RENDER_DEPLOYMENT.md) for deployment instructions.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | 3001 |
-| `NODE_ENV` | Environment | development |
-| `DATABASE_URL` | PostgreSQL connection string | - |
-| `JWT_SECRET` | JWT signing secret | - |
-| `ALLOWED_ORIGINS` | CORS allowed origins | localhost |
-| `MAX_FILE_SIZE` | Max upload size in bytes | 10485760 |
+## � Project Status
 
-See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for complete environment variable reference.
+**Current Phase:** Backend Complete, Frontend Development Starting
 
-## 🔧 Development Scripts
+### Completed (Backend)
+✅ User authentication & authorization  
+✅ Document upload & storage  
+✅ Specialized document processing (Invoice, Receipt, Resume, Contract)  
+✅ n8n webhook integration  
+✅ Dashboard & analytics  
+✅ Export functionality (PDF, CSV)  
+✅ Security features (rate limiting, sanitization)  
+✅ Comprehensive testing  
+✅ Production deployment on Render  
 
-```bash
-npm run dev          # Start development server
-npm start            # Start production server
-npm test             # Run tests
-npm run migrate      # Run database migrations
-npm run migrate:prod # Run migrations on Railway
-npm run seed         # Seed demo data
-npm run lint         # Lint code
-npm run format       # Format code
-```
+### In Progress
+🔄 Frontend development setup
 
-## 📁 Project Structure
-
-```
-DocuFlow/
-├── src/
-│   ├── config/          # Configuration files
-│   ├── controllers/     # Route controllers
-│   ├── models/          # Database models (Sequelize)
-│   ├── routes/          # API routes
-│   ├── middleware/      # Custom middleware
-│   ├── services/        # Business logic
-│   ├── utils/           # Utility functions
-│   ├── migrations/      # Database migrations
-│   └── seeders/         # Database seeders
-├── tests/               # Test files (Jest + Supertest)
-├── docs/                # API documentation (Swagger)
-├── uploads/             # File storage
-├── railway.json         # Railway deployment config
-├── server.js            # Entry point
-└── package.json
-```
-
-## 🛡️ Security Features
-
-- JWT authentication with refresh tokens
-- Password hashing with bcrypt
-- Rate limiting (auth, upload, API, webhooks)
-- Input sanitization (XSS prevention)
-- CORS configuration
-- Helmet security headers
-- User-based data isolation
+### Upcoming
+⏳ React/Next.js UI implementation  
+⏳ User dashboard interface  
+⏳ Document management UI  
+⏳ Analytics visualizations  
 
 ## 🤝 Contributing
 
@@ -292,14 +189,7 @@ DocuFlow/
 
 ## 📄 License
 
-This project is licensed under the MIT License.
-
-## 📖 Documentation
-
-- [Render Deployment Guide](./RENDER_DEPLOYMENT.md)
-- [API Reference](./API_REFERENCE.md)
-- [Project Report](./PROJECT_REPORT.md)
-- [Implementation Plan](./IMPLEMENTATION_PLAN.md)
+This project is part of an academic project for SEM-8.
 
 ## 👥 Support
 
@@ -308,7 +198,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Status:** Day 10 Complete - Backend Ready for Render Deployment ✅  
 **Version:** 1.0.0  
-**Deployment:** Render.com (Free Forever)  
-**Last Updated:** February 5, 2026
+**Last Updated:** February 6, 2026  
+**Status:** Backend Complete ✅ | Frontend Starting 🚀
