@@ -28,9 +28,9 @@ const Login: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await api.post('/api/auth/login', data);
-      const { token, user } = response.data.data;
+      const { accessToken, user } = response.data.data;
       
-      login(token, user);
+      login(accessToken, user);
       showToast('Login successful!', 'success');
       navigate('/dashboard');
     } catch (error: any) {

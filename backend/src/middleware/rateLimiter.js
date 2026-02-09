@@ -8,11 +8,11 @@ const rateLimit = require('express-rate-limit');
 /**
  * Auth endpoints rate limiter
  * Protects login/register from brute force attacks
- * 5 requests per 15 minutes per IP
+ * 50 requests per 15 minutes per IP (increased for development)
  */
 exports.authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: 50, // 50 requests per window (increased from 5 for development)
   message: {
     success: false,
     error: {
@@ -28,11 +28,11 @@ exports.authLimiter = rateLimit({
 /**
  * File upload rate limiter
  * Prevents abuse of file upload endpoints
- * 10 requests per hour per user
+ * 50 requests per hour per user (disabled in development)
  */
 exports.uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // 10 requests per window
+  max: 50, // 50 requests per window
   message: {
     success: false,
     error: {
@@ -42,7 +42,8 @@ exports.uploadLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'test',
+  // Skip rate limiting in test and development environments
+  skip: (req) => process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development' || !process.env.NODE_ENV,
   // Use user ID as key if authenticated, otherwise IP
   keyGenerator: (req) => {
     return req.user?.id || req.ip;
@@ -52,11 +53,11 @@ exports.uploadLimiter = rateLimit({
 /**
  * General API rate limiter
  * Protects all API endpoints from excessive requests
- * 100 requests per 15 minutes per user
+ * 500 requests per 15 minutes per user (disabled in development)
  */
 exports.apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 500, // 500 requests per window
   message: {
     success: false,
     error: {
@@ -66,7 +67,8 @@ exports.apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'test',
+  // Skip rate limiting in test and development environments
+  skip: (req) => process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development' || !process.env.NODE_ENV,
   // Use user ID as key if authenticated, otherwise IP
   keyGenerator: (req) => {
     return req.user?.id || req.ip;

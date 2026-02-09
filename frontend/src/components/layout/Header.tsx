@@ -34,7 +34,7 @@ const Header: React.FC = () => {
       {/* Left side - could add breadcrumbs here */}
       <div className="flex-1">
         <h2 className="text-lg font-semibold text-gray-900">
-          Welcome back, {user?.name || 'User'}!
+          Welcome back, {user?.full_name || 'User'}!
         </h2>
       </div>
 
@@ -56,7 +56,7 @@ const Header: React.FC = () => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="text-left hidden md:block">
-              <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+              <p className="text-sm font-medium text-gray-900">{user?.full_name}</p>
               <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
           </button>

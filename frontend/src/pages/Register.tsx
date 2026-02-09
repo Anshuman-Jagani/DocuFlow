@@ -7,7 +7,7 @@ import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { FileText, CheckCircle } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ const Register: React.FC = () => {
     setIsLoading(true);
     try {
       await api.post('/api/auth/register', {
-        name: data.name,
+        full_name: data.full_name,
         email: data.email,
         password: data.password,
       });
@@ -86,8 +86,8 @@ const Register: React.FC = () => {
             label="Full Name"
             type="text"
             placeholder="John Doe"
-            error={errors.name?.message}
-            {...register('name')}
+            error={errors.full_name?.message}
+            {...register('full_name')}
           />
 
           <Input

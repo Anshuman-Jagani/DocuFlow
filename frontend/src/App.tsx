@@ -3,7 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Upload from './pages/Upload';
+import Documents from './pages/Documents';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -22,8 +25,22 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
 
           {/* Protected routes */}
           <Route
@@ -34,9 +51,24 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/upload"
+            element={
+              <ProtectedRoute>
+                <Upload />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute>
+                <Documents />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Placeholder routes for other pages */}
-          <Route path="/upload" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/invoices" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/receipts" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/resumes" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

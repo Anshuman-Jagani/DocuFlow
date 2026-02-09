@@ -63,7 +63,7 @@ const uploadDocument = async (req, res) => {
     });
     
     return res.status(201).json(
-      successResponse('Document uploaded successfully', {
+      successResponse({
         document: {
           id: document.id,
           document_type: document.document_type,
@@ -73,7 +73,7 @@ const uploadDocument = async (req, res) => {
           processing_status: document.processing_status,
           upload_date: document.upload_date
         }
-      })
+      }, 'Document uploaded successfully')
     );
   } catch (error) {
     logger.error('Error uploading document:', error);
@@ -134,11 +134,7 @@ const listDocuments = async (req, res) => {
     };
     
     return res.json(
-      successResponse('Documents retrieved successfully', {
-        documents
-      }, {
-        pagination
-      })
+      successResponse(documents, 'Documents retrieved successfully', { pagination })
     );
   } catch (error) {
     logger.error('Error listing documents:', error);
@@ -170,9 +166,7 @@ const getDocument = async (req, res) => {
     }
     
     return res.json(
-      successResponse('Document retrieved successfully', {
-        document
-      })
+      successResponse(document, 'Document retrieved successfully')
     );
   } catch (error) {
     logger.error('Error getting document:', error);
@@ -270,9 +264,7 @@ const deleteDocument = async (req, res) => {
     });
     
     return res.json(
-      successResponse('Document deleted successfully', {
-        id
-      })
+      successResponse({ id }, 'Document deleted successfully')
     );
   } catch (error) {
     logger.error('Error deleting document:', error);
