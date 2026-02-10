@@ -10,7 +10,7 @@ yarn.lock
 .env
 .env.local
 .env.*.local
-.env.example
+
 
 # Uploads
 uploads/*
@@ -24,8 +24,7 @@ logs/
 coverage/
 .nyc_output/
 TESTING.md
-
-
+.agent/
 
 # IDE
 .vscode/
@@ -46,4 +45,11 @@ build/
 tmp/
 temp/
 *.tmp
+
+# Documentation
+.env.example
 FUTURE_SCOPE_ANALYSIS.md
+RENDER_DEPLOYMENT.md
+N8N_INTEGRATION_SPEC.md
+N8N_IMPLEMENTATION_ANALYSIS.md
+API_REFERENCE.md

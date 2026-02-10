@@ -5,6 +5,10 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Documents from './pages/Documents';
+import InvoiceList from './pages/InvoiceList';
+import InvoiceDetail from './pages/InvoiceDetail';
+import ResumeList from './pages/ResumeList';
+import ResumeDetail from './pages/ResumeDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 
@@ -68,10 +72,44 @@ function App() {
             }
           />
 
+          {/* Invoice routes */}
+          <Route
+            path="/invoices"
+            element={
+              <ProtectedRoute>
+                <InvoiceList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/invoices/:id"
+            element={
+              <ProtectedRoute>
+                <InvoiceDetail />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Resume routes */}
+          <Route
+            path="/resumes"
+            element={
+              <ProtectedRoute>
+                <ResumeList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/resumes/:id"
+            element={
+              <ProtectedRoute>
+                <ResumeDetail />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Placeholder routes for other pages */}
-          <Route path="/invoices" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/receipts" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/resumes" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/contracts" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/jobs" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
