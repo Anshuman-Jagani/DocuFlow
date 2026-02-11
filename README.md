@@ -101,12 +101,6 @@ cd backend
 npm test
 ```
 
-## 🌐 Deployment
-
-The system is production-ready and currently deployed on **Render**:
-- **API**: [https://docuflow.onrender.com](https://docuflow.onrender.com)
-- **Database**: PostgreSQL on Render
-
 ## � License & Credits
 
 Developed as a Final Year Project (SEM-8).  
