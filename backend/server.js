@@ -19,7 +19,8 @@ app.use(helmet());
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:3000',
   'http://localhost:3001',
-  'http://localhost:5173' // Vite default
+  'http://localhost:5173',
+  'https://docu-flow-sandy.vercel.app', // Vite default
 ];
 
 app.use(cors({
