@@ -17,8 +17,10 @@ import ReceiptAnalytics from './pages/Receipts/ReceiptAnalytics';
 import JobList from './pages/Jobs/JobList';
 import JobDetail from './pages/Jobs/JobDetail';
 import JobCreate from './pages/Jobs/JobCreate';
+import SettingsPage from './pages/SettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -33,9 +35,10 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
           {/* Public routes */}
           <Route
             path="/login"
@@ -186,15 +189,16 @@ function App() {
             }
           />
 
-          {/* Placeholder routes for other pages */}
-          <Route path="/settings" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          {/* Settings route */}
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-      </BrowserRouter>
-    </QueryClientProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
