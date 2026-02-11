@@ -32,7 +32,7 @@ const createJobPosting = async (req, res) => {
     logger.info(`Job posting created successfully: ${jobPosting.id}`);
 
     return res.status(201).json(
-      successResponse({ jobPosting }, 'Job posting created successfully')
+      successResponse(jobPosting, 'Job posting created successfully')
     );
   } catch (error) {
     logger.error('Error creating job posting:', error);
@@ -88,7 +88,7 @@ const getAllJobPostings = async (req, res) => {
     };
 
     return res.json(
-      successResponse({ jobPostings }, 'Job postings retrieved successfully', { pagination })
+      successResponse(jobPostings, 'Job postings retrieved successfully', { pagination })
     );
   } catch (error) {
     logger.error('Error fetching job postings:', error);
@@ -114,7 +114,7 @@ const getJobPostingById = async (req, res) => {
     }
 
     return res.json(
-      successResponse({ jobPosting }, 'Job posting retrieved successfully')
+      successResponse(jobPosting, 'Job posting retrieved successfully')
     );
   } catch (error) {
     logger.error('Error fetching job posting:', error);
@@ -162,7 +162,7 @@ const updateJobPosting = async (req, res) => {
     logger.info(`Job posting updated successfully: ${id}`);
 
     return res.json(
-      successResponse({ jobPosting }, 'Job posting updated successfully')
+      successResponse(jobPosting, 'Job posting updated successfully')
     );
   } catch (error) {
     logger.error('Error updating job posting:', error);

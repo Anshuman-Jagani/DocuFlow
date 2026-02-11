@@ -37,7 +37,7 @@ describe('Job Posting Integration Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.jobPosting.title).toBe('Software Engineer');
+      expect(res.body.data.title).toBe('Software Engineer');
     });
   });
 
@@ -48,7 +48,7 @@ describe('Job Posting Integration Tests', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.data.jobPostings.length).toBeGreaterThan(0);
+      expect(res.body.data.length).toBeGreaterThan(0);
     });
   });
 });

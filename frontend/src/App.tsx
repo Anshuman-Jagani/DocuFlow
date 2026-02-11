@@ -9,6 +9,14 @@ import InvoiceList from './pages/InvoiceList';
 import InvoiceDetail from './pages/InvoiceDetail';
 import ResumeList from './pages/ResumeList';
 import ResumeDetail from './pages/ResumeDetail';
+import ContractList from './pages/Contracts/ContractList';
+import ContractDetail from './pages/Contracts/ContractDetail';
+import ReceiptList from './pages/Receipts/ReceiptList';
+import ReceiptDetail from './pages/Receipts/ReceiptDetail';
+import ReceiptAnalytics from './pages/Receipts/ReceiptAnalytics';
+import JobList from './pages/Jobs/JobList';
+import JobDetail from './pages/Jobs/JobDetail';
+import JobCreate from './pages/Jobs/JobCreate';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 
@@ -108,10 +116,77 @@ function App() {
             }
           />
 
+          {/* Contract routes */}
+          <Route
+            path="/contracts"
+            element={
+              <ProtectedRoute>
+                <ContractList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contracts/:id"
+            element={
+              <ProtectedRoute>
+                <ContractDetail />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Receipt routes */}
+          <Route
+            path="/receipts"
+            element={
+              <ProtectedRoute>
+                <ReceiptList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receipts/:id"
+            element={
+              <ProtectedRoute>
+                <ReceiptDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receipts/analytics"
+            element={
+              <ProtectedRoute>
+                <ReceiptAnalytics />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Job routes */}
+          <Route
+            path="/jobs"
+            element={
+              <ProtectedRoute>
+                <JobList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/jobs/new"
+            element={
+              <ProtectedRoute>
+                <JobCreate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/jobs/:id"
+            element={
+              <ProtectedRoute>
+                <JobDetail />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Placeholder routes for other pages */}
-          <Route path="/receipts" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/contracts" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/jobs" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
           {/* Default redirect */}
