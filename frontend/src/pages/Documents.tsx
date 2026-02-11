@@ -251,7 +251,7 @@ export default function Documents() {
                           {formatFileSize(doc.file_size)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {formatDistanceToNow(new Date(doc.upload_date), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
                         </td>
                         <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
                           <button
@@ -262,7 +262,7 @@ export default function Documents() {
                             <Download className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(doc.id)}
+                            onClick={() => handleDelete(String(doc.id))}
                             className="text-red-600 hover:text-red-900 inline-flex items-center ml-3"
                             title="Delete"
                           >
