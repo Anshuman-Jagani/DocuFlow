@@ -48,6 +48,11 @@ module.exports = (sequelize) => {
     processed_at: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+    extracted_text: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null
     }
   }, {
     tableName: 'documents',
