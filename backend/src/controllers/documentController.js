@@ -121,7 +121,7 @@ const listDocuments = async (req, res) => {
       limit: parsedLimit,
       offset,
       order: [[sort_by, order.toUpperCase()]],
-      attributes: ['id', 'document_type', 'original_filename', 'file_size', 'mime_type', 'processing_status', 'upload_date', 'processed_at']
+      attributes: ['id', 'document_type', 'original_filename', 'file_size', 'mime_type', 'processing_status', 'upload_date', 'processed_at', 'created_at', 'updated_at']
     });
     
     // Build pagination metadata
