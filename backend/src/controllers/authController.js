@@ -31,6 +31,16 @@ const register = async (req, res, next) => {
     // Generate tokens
     const tokens = generateTokens(user);
 
+    // Calculate access token expiration (7 days from now to match JWT)
+    const accessTokenExpiresAt = new Date();
+    accessTokenExpiresAt.setDate(accessTokenExpiresAt.getDate() + 7);
+
+    // Persist the latest access token for use by n8n workflows
+    await user.update({
+      access_token: tokens.accessToken,
+      token_expires_at: accessTokenExpiresAt
+    });
+
     logger.info(`New user registered: ${email}`);
 
     res.status(201).json(
@@ -77,6 +87,16 @@ const login = async (req, res, next) => {
     // Generate tokens
     const tokens = generateTokens(user);
 
+    // Calculate access token expiration (7 days from now to match JWT)
+    const accessTokenExpiresAt = new Date();
+    accessTokenExpiresAt.setDate(accessTokenExpiresAt.getDate() + 7);
+
+    // Persist the latest access token for use by n8n workflows
+    await user.update({
+      access_token: tokens.accessToken,
+      token_expires_at: accessTokenExpiresAt
+    });
+
     logger.info(`User logged in: ${email}`);
 
     res.json(
@@ -100,9 +120,13 @@ const login = async (req, res, next) => {
  */
 const logout = async (req, res, next) => {
   try {
-    // In a stateless JWT system, logout is handled client-side
-    // by removing the token. This endpoint is here for consistency
-    // and can be extended to implement token blacklisting if needed.
+    // Clear persisted access token so it can no longer be used by n8n
+    if (req.user) {
+      await req.user.update({
+        access_token: null,
+        token_expires_at: null
+      });
+    }
 
     logger.info(`User logged out: ${req.user?.email || 'unknown'}`);
 
@@ -156,6 +180,16 @@ const refreshToken = async (req, res, next) => {
 
     // Generate new tokens
     const tokens = generateTokens(user);
+
+    // Calculate access token expiration (7 days from now to match JWT)
+    const accessTokenExpiresAt = new Date();
+    accessTokenExpiresAt.setDate(accessTokenExpiresAt.getDate() + 7);
+
+    // Persist the latest access token for use by n8n workflows
+    await user.update({
+      access_token: tokens.accessToken,
+      token_expires_at: accessTokenExpiresAt
+    });
 
     logger.info(`Token refreshed for user: ${user.email}`);
 

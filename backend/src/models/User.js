@@ -28,6 +28,16 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM('admin', 'user'),
       defaultValue: 'user',
       allowNull: false
+    },
+    // Stores the latest JWT access token issued to the user
+    access_token: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    // Mirrors the expiry of the stored access token
+    token_expires_at: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'users',
