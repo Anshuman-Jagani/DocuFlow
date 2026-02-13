@@ -26,7 +26,7 @@ const ResumeDetail: React.FC = () => {
   const fetchResume = async () => {
     try {
       setLoading(true);
-      const response = await resumeApi.getResumeById(Number(id));
+      const response = await resumeApi.getResumeById(id!);
       setResume(response.data);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Failed to fetch resume', 'error');
@@ -40,7 +40,7 @@ const ResumeDetail: React.FC = () => {
     if (!resume?.document?.filename) return;
     
     try {
-      await resumeApi.downloadResume(Number(id), resume.document.filename);
+      await resumeApi.downloadResume(id!, resume.document.filename);
       showToast('Resume downloaded successfully', 'success');
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Failed to download resume', 'error');
@@ -49,7 +49,7 @@ const ResumeDetail: React.FC = () => {
 
   const handleDelete = async () => {
     try {
-      await resumeApi.deleteResume(Number(id));
+      await resumeApi.deleteResume(id!);
       showToast('Resume deleted successfully', 'success');
       navigate('/resumes');
     } catch (error: any) {

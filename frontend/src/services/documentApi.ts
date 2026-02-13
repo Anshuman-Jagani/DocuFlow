@@ -33,17 +33,17 @@ export const invoiceApi = {
     return response.data;
   },
 
-  getInvoiceById: async (id: number) => {
+  getInvoiceById: async (id: string) => {
     const response = await api.get(`/api/invoices/${id}`);
     return response.data;
   },
 
-  updateInvoice: async (id: number, data: Partial<Invoice>) => {
+  updateInvoice: async (id: string, data: Partial<Invoice>) => {
     const response = await api.put(`/api/invoices/${id}`, data);
     return response.data;
   },
 
-  deleteInvoice: async (id: number) => {
+  deleteInvoice: async (id: string) => {
     const response = await api.delete(`/api/invoices/${id}`);
     return response.data;
   },
@@ -111,17 +111,17 @@ export const resumeApi = {
     return response.data;
   },
 
-  getResumeById: async (id: number) => {
+  getResumeById: async (id: string) => {
     const response = await api.get(`/api/resumes/${id}`);
     return response.data;
   },
 
-  deleteResume: async (id: number) => {
+  deleteResume: async (id: string) => {
     const response = await api.delete(`/api/resumes/${id}`);
     return response.data;
   },
 
-  downloadResume: async (id: number, filename: string) => {
+  downloadResume: async (id: string, filename: string) => {
     const response = await api.get(`/api/resumes/${id}/download`, {
       responseType: 'blob',
     });
@@ -136,7 +136,7 @@ export const resumeApi = {
     window.URL.revokeObjectURL(url);
   },
 
-  matchResumeToJob: async (resumeId: number, jobId: number) => {
+  matchResumeToJob: async (resumeId: string, jobId: string) => {
     const response = await api.post(`/api/resumes/${resumeId}/match`, { jobId });
     return response.data;
   },

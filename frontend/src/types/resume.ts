@@ -1,7 +1,7 @@
 export interface Resume {
-  id: number;
-  document_id: number;
-  user_id: number;
+  id: string;
+  document_id: string;
+  user_id: string;
   candidate_name: string;
   email?: string;
   phone?: string;
@@ -17,7 +17,7 @@ export interface Resume {
   created_at: string;
   updated_at: string;
   document?: {
-    id: number;
+    id: string;
     filename: string;
     file_path: string;
     file_url?: string;

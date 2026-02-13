@@ -27,7 +27,7 @@ const InvoiceDetail: React.FC = () => {
   const fetchInvoice = async () => {
     try {
       setLoading(true);
-      const response = await invoiceApi.getInvoiceById(Number(id));
+      const response = await invoiceApi.getInvoiceById(id!);
       setInvoice(response.data);
       setEditedInvoice(response.data);
     } catch (error: any) {
@@ -40,7 +40,7 @@ const InvoiceDetail: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      await invoiceApi.updateInvoice(Number(id), editedInvoice);
+      await invoiceApi.updateInvoice(id!, editedInvoice);
       showToast('Invoice updated successfully', 'success');
       setEditing(false);
       fetchInvoice();
@@ -51,7 +51,7 @@ const InvoiceDetail: React.FC = () => {
 
   const handleDelete = async () => {
     try {
-      await invoiceApi.deleteInvoice(Number(id));
+      await invoiceApi.deleteInvoice(id!);
       showToast('Invoice deleted successfully', 'success');
       navigate('/invoices');
     } catch (error: any) {
