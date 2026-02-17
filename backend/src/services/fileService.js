@@ -82,10 +82,24 @@ const getFileStats = async (filePath) => {
   }
 };
 
+/**
+ * Get absolute path for a file relative to the project root
+ * @param {string} relativePath - Relative path from project root
+ * @returns {string} Absolute path
+ */
+const getAbsolutePath = (relativePath) => {
+  // If it's already an absolute path, return it
+  if (path.isAbsolute(relativePath)) return relativePath;
+  
+  // Resolve relative to the backend project root (two levels up from src/services)
+  return path.resolve(__dirname, '../../', relativePath);
+};
+
 module.exports = {
   extractFileMetadata,
   deleteFile,
   fileExists,
   isValidFilePath,
-  getFileStats
+  getFileStats,
+  getAbsolutePath
 };

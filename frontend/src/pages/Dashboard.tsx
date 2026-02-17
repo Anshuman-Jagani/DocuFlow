@@ -60,29 +60,21 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard
             title="Total Documents"
-            value={overview?.totalDocuments || 0}
+            value={overview?.summary.total_documents || 0}
             icon={FileText}
             color="blue"
             isLoading={isLoading}
-            trend={
-              overview?.totalDocuments && overview.totalDocuments > 0 && overview.thisMonth?.uploaded !== undefined
-                ? {
-                    value: Math.round((overview.thisMonth.uploaded / overview.totalDocuments) * 100),
-                    isPositive: true,
-                  }
-                : undefined
-            }
           />
           <StatCard
             title="Pending Processing"
-            value={overview?.processingStatus.pending || 0}
+            value={overview?.summary.processing_status.pending || 0}
             icon={Clock}
             color="yellow"
             isLoading={isLoading}
           />
           <StatCard
-            title="Completed This Month"
-            value={overview?.thisMonth.processed || 0}
+            title="Completed"
+            value={overview?.summary.processing_status.completed || 0}
             icon={CheckCircle}
             color="green"
             isLoading={isLoading}
@@ -90,8 +82,8 @@ const Dashboard = () => {
           <StatCard
             title="Processing Rate"
             value={
-              overview?.totalDocuments && overview.totalDocuments > 0
-                ? `${Math.round(((overview.processingStatus?.completed || 0) / overview.totalDocuments) * 100)}%`
+              overview?.summary.total_documents && overview.summary.total_documents > 0
+                ? `${Math.round(((overview.summary.processing_status?.completed || 0) / overview.summary.total_documents) * 100)}%`
                 : '0%'
             }
             icon={TrendingUp}
@@ -106,19 +98,19 @@ const Dashboard = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Documents by Type</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">{overview.documentsByType.invoice}</p>
+                <p className="text-2xl font-bold text-blue-600">{overview.summary.documents_by_type.invoice}</p>
                 <p className="text-sm text-gray-600 mt-1">Invoices</p>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg">
-                <p className="text-2xl font-bold text-green-600">{overview.documentsByType.receipt}</p>
+                <p className="text-2xl font-bold text-green-600">{overview.summary.documents_by_type.receipt}</p>
                 <p className="text-sm text-gray-600 mt-1">Receipts</p>
               </div>
               <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <p className="text-2xl font-bold text-purple-600">{overview.documentsByType.resume}</p>
+                <p className="text-2xl font-bold text-purple-600">{overview.summary.documents_by_type.resume}</p>
                 <p className="text-sm text-gray-600 mt-1">Resumes</p>
               </div>
               <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                <p className="text-2xl font-bold text-yellow-600">{overview.documentsByType.contract}</p>
+                <p className="text-2xl font-bold text-yellow-600">{overview.summary.documents_by_type.contract}</p>
                 <p className="text-sm text-gray-600 mt-1">Contracts</p>
               </div>
             </div>
@@ -143,10 +135,10 @@ const Dashboard = () => {
               data={
                 overview
                   ? [
-                      { name: 'Invoices', value: overview.documentsByType.invoice },
-                      { name: 'Receipts', value: overview.documentsByType.receipt },
-                      { name: 'Resumes', value: overview.documentsByType.resume },
-                      { name: 'Contracts', value: overview.documentsByType.contract },
+                      { name: 'Invoices', value: overview.summary.documents_by_type.invoice },
+                      { name: 'Receipts', value: overview.summary.documents_by_type.receipt },
+                      { name: 'Resumes', value: overview.summary.documents_by_type.resume },
+                      { name: 'Contracts', value: overview.summary.documents_by_type.contract },
                     ]
                   : []
               }
@@ -160,17 +152,17 @@ const Dashboard = () => {
           </div>
 
           {/* Financial Summary if available - Placeholder for future expansion */}
-          {overview && overview.documentsByType.invoice > 0 && (
+          {overview && overview.summary.documents_by_type.invoice > 0 && (
              <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-               <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial Snaphot</h3>
+               <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial Snapshot</h3>
                <div className="space-y-4">
                  <div className="flex justify-between items-center">
                    <span className="text-gray-600">Total Invoiced</span>
-                   <span className="font-bold text-blue-600">Pending Sync</span>
+                   <span className="font-bold text-blue-600">${overview.financial.invoices.total_amount.toFixed(2)}</span>
                  </div>
                  <div className="flex justify-between items-center">
                    <span className="text-gray-600">Active Contracts</span>
-                   <span className="font-bold text-purple-600">{overview.documentsByType.contract}</span>
+                   <span className="font-bold text-purple-600">{overview.summary.documents_by_type.contract}</span>
                  </div>
                </div>
              </div>

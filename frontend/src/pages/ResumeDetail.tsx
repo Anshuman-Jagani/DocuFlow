@@ -37,10 +37,13 @@ const ResumeDetail: React.FC = () => {
   };
 
   const handleDownload = async () => {
-    if (!resume?.document?.filename) return;
+    if (!resume?.document?.id || !resume?.document?.original_filename) {
+      showToast('No document available for download', 'error');
+      return;
+    }
     
     try {
-      await resumeApi.downloadResume(id!, resume.document.filename);
+      await resumeApi.downloadResume(resume.document.id, resume.document.original_filename);
       showToast('Resume downloaded successfully', 'success');
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Failed to download resume', 'error');

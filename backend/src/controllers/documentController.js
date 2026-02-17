@@ -1,5 +1,5 @@
 const { Document, Invoice, Receipt, Resume, Contract } = require('../models');
-const { extractFileMetadata, deleteFile, fileExists } = require('../services/fileService');
+const { extractFileMetadata, deleteFile, fileExists, getAbsolutePath } = require('../services/fileService');
 const { successResponse, errorResponse } = require('../utils/responses');
 const { getPaginationParams } = require('../utils/pagination');
 const logger = require('../utils/logger');
@@ -197,10 +197,13 @@ const downloadDocument = async (req, res) => {
       );
     }
     
+    // Get absolute path
+    const absolutePath = getAbsolutePath(document.file_path);
+    
     // Check if file exists
-    const exists = await fileExists(document.file_path);
+    const exists = await fileExists(absolutePath);
     if (!exists) {
-      logger.error(`File not found on disk: ${document.file_path}`);
+      logger.error(`File not found on disk: ${absolutePath}`);
       return res.status(404).json(
         errorResponse('FILE_NOT_FOUND', 'File not found on server')
       );
@@ -211,10 +214,9 @@ const downloadDocument = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${document.original_filename}"`);
     
     // Stream file to response
-    const path = require('path');
-    res.sendFile(path.resolve(document.file_path), (err) => {
+    res.sendFile(absolutePath, (err) => {
       if (err) {
-        logger.error('Error sending file:', err);
+        logger.error(`Error sending file ${absolutePath}:`, err);
         if (!res.headersSent) {
           return res.status(500).json(
             errorResponse('DOWNLOAD_FAILED', 'Failed to download file')

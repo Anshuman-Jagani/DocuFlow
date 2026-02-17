@@ -2,21 +2,59 @@ import api from './api';
 import type { ApiResponse } from '../types';
 
 export interface DashboardOverview {
-  totalDocuments: number;
-  documentsByType: {
-    invoice: number;
-    receipt: number;
-    resume: number;
-    contract: number;
+  summary: {
+    total_documents: number;
+    documents_by_type: {
+      invoice: number;
+      receipt: number;
+      resume: number;
+      contract: number;
+    };
+    processing_status: {
+      pending: number;
+      processing: number;
+      completed: number;
+      failed: number;
+    };
   };
-  processingStatus: {
-    pending: number;
-    completed: number;
-    failed: number;
+  financial: {
+    invoices: {
+      total_count: number;
+      total_amount: number;
+      by_status: {
+        pending: number;
+        paid: number;
+        overdue: number;
+      };
+      pending_amount: number;
+      paid_amount: number;
+    };
+    receipts: {
+      total_count: number;
+      total_amount: number;
+      business_expenses: number;
+      personal_expenses: number;
+      top_categories: Array<{
+        category: string;
+        amount: number;
+      }>;
+    };
   };
-  thisMonth: {
-    uploaded: number;
-    processed: number;
+  recent_activity: Array<{
+    id: string;
+    type: string;
+    document_type: string;
+    filename: string;
+    status: string;
+    created_at: string;
+  }>;
+  trends: {
+    uploads_last_7_days: number;
+    uploads_last_30_days: number;
+    documents_by_date: Array<{
+      date: string;
+      count: number;
+    }>;
   };
 }
 

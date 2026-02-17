@@ -53,6 +53,23 @@ const ReceiptDetail: React.FC = () => {
     }
   };
 
+  const handleDownload = async () => {
+    if (!receipt?.document?.id || !receipt?.document?.original_filename) {
+      showToast('No document available for download', 'error');
+      return;
+    }
+    
+    try {
+      // Need to import documentService or use receiptApi if it has a download method.
+      // Since documentService has a generic download, I'll use that.
+      const documentService = (await import('../../services/documentService')).default;
+      await documentService.downloadDocument(receipt.document.id, receipt.document.original_filename);
+      showToast('Receipt downloaded successfully', 'success');
+    } catch (error: any) {
+      showToast('Failed to download receipt', 'error');
+    }
+  };
+
   const formatCurrency = (amount: number | null, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -82,7 +99,7 @@ const ReceiptDetail: React.FC = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Receipts
         </button>
-
+ 
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -94,7 +111,11 @@ const ReceiptDetail: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="p-2 text-gray-400 hover:text-gray-600 bg-white border border-gray-200 rounded-lg shadow-sm">
+            <button 
+              onClick={handleDownload}
+              className="p-2 text-gray-400 hover:text-gray-600 bg-white border border-gray-200 rounded-lg shadow-sm"
+              title="Download Scan"
+            >
               <Download className="w-5 h-5" />
             </button>
             <button 

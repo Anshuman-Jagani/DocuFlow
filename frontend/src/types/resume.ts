@@ -18,7 +18,7 @@ export interface Resume {
   updated_at: string;
   document?: {
     id: string;
-    filename: string;
+    original_filename: string;
     file_path: string;
     file_url?: string;
   };

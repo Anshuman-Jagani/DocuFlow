@@ -122,7 +122,7 @@ export const resumeApi = {
   },
 
   downloadResume: async (id: string, filename: string) => {
-    const response = await api.get(`/api/resumes/${id}/download`, {
+    const response = await api.get(`/api/documents/${id}/download`, {
       responseType: 'blob',
     });
     

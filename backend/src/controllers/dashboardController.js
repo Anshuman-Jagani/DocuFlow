@@ -9,35 +9,137 @@ const { Op } = require('sequelize');
 exports.getDashboardOverview = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const { start_date, end_date, period } = req.query;
+    
+    // Build date filter
+    let dateFilter = {};
+    if (start_date && end_date) {
+      dateFilter = {
+        createdAt: {
+          [Op.between]: [new Date(start_date), new Date(end_date + 'T23:59:59')]
+        }
+      };
+    } else if (period) {
+      const now = new Date();
+      const periodDays = period === 'week' ? 7 : period === 'month' ? 30 : period === 'year' ? 365 : 7;
+      const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+      dateFilter = {
+        createdAt: { [Op.gte]: startDate }
+      };
+    }
     
     // Get all documents for this user
     const documents = await Document.findAll({
-      where: { user_id: userId }
+      where: { user_id: userId, ...dateFilter }
     });
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Get invoices and receipts
+    const [invoices, receipts] = await Promise.all([
+      Invoice.findAll({ where: { user_id: userId } }),
+      Receipt.findAll({ where: { user_id: userId } })
+    ]);
 
-    const stats = {
-      totalDocuments: documents.length,
-      documentsByType: {
+    // Calculate summary
+    const summary = {
+      total_documents: documents.length,
+      documents_by_type: {
         invoice: documents.filter(d => d.document_type === 'invoice').length,
         receipt: documents.filter(d => d.document_type === 'receipt').length,
         resume: documents.filter(d => d.document_type === 'resume').length,
         contract: documents.filter(d => d.document_type === 'contract').length,
       },
-      processingStatus: {
+      processing_status: {
         pending: documents.filter(d => d.processing_status === 'pending').length,
+        processing: documents.filter(d => d.processing_status === 'processing').length,
         completed: documents.filter(d => d.processing_status === 'completed').length,
         failed: documents.filter(d => d.processing_status === 'failed').length,
-      },
-      thisMonth: {
-        uploaded: documents.filter(d => new Date(d.createdAt || d.created_at || d.upload_date) >= startOfMonth).length,
-        processed: documents.filter(d => d.processing_status === 'completed' && new Date(d.createdAt || d.created_at || d.upload_date) >= startOfMonth).length,
       }
     };
+
+    // Calculate financial statistics
+    const financial = {
+      invoices: {
+        total_count: invoices.length,
+        total_amount: invoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0),
+        by_status: {
+          pending: invoices.filter(inv => inv.status === 'pending').length,
+          paid: invoices.filter(inv => inv.status === 'paid').length,
+          overdue: invoices.filter(inv => inv.status === 'overdue').length,
+        },
+        pending_amount: invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0),
+        paid_amount: invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0),
+      },
+      receipts: {
+        total_count: receipts.length,
+        total_amount: receipts.reduce((sum, rec) => sum + parseFloat(rec.total_amount || 0), 0),
+        business_expenses: receipts.filter(rec => rec.is_business_expense).length,
+        personal_expenses: receipts.filter(rec => !rec.is_business_expense).length,
+        top_categories: Object.entries(
+          receipts.reduce((acc, rec) => {
+            const cat = rec.expense_category || 'uncategorized';
+            acc[cat] = (acc[cat] || 0) + parseFloat(rec.total_amount || 0);
+            return acc;
+          }, {})
+        )
+          .map(([category, amount]) => ({ category, amount }))
+          .sort((a, b) => b.amount - a.amount)
+      }
+    };
+
+    // Get recent activity (last 10 documents)
+    const recentDocs = await Document.findAll({
+      where: { user_id: userId },
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
+
+    const recent_activity = recentDocs.map(doc => ({
+      id: doc.id,
+      type: 'upload',
+      document_type: doc.document_type,
+      filename: doc.original_filename,
+      status: doc.processing_status,
+      created_at: doc.createdAt || doc.created_at
+    }));
+
+    // Calculate trends
+    const now = new Date();
+    const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const allDocs = await Document.findAll({
+      where: { user_id: userId }
+    });
+
+    const uploads_last_7_days = allDocs.filter(d => new Date(d.createdAt || d.created_at) >= last7Days).length;
+    const uploads_last_30_days = allDocs.filter(d => new Date(d.createdAt || d.created_at) >= last30Days).length;
+
+    // Group by date for last 30 days
+    const documents_by_date = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateStr = date.toISOString().split('T')[0];
+      const count = allDocs.filter(d => {
+        const docDate = new Date(d.createdAt || d.created_at).toISOString().split('T')[0];
+        return docDate === dateStr;
+      }).length;
+      documents_by_date.push({ date: dateStr, count });
+    }
+
+    const trends = {
+      uploads_last_7_days,
+      uploads_last_30_days,
+      documents_by_date
+    };
+
+    const data = {
+      summary,
+      financial,
+      recent_activity,
+      trends
+    };
     
-    res.json(successResponse(stats, 'Dashboard overview retrieved successfully'));
+    res.json(successResponse(data, 'Dashboard overview retrieved successfully'));
   } catch (error) {
     next(error);
   }

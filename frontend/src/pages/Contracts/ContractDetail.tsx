@@ -35,6 +35,21 @@ const ContractDetail: React.FC = () => {
     }
   };
 
+  const handleDownload = async () => {
+    if (!contract?.document?.id || !contract?.document?.original_filename) {
+      showToast('No document available for download', 'error');
+      return;
+    }
+    
+    try {
+      const documentService = (await import('../../services/documentService')).default;
+      await documentService.downloadDocument(contract.document.id, contract.document.original_filename);
+      showToast('Contract downloaded successfully', 'success');
+    } catch (error: any) {
+      showToast('Failed to download contract', 'error');
+    }
+  };
+
   const handleDelete = async () => {
     try {
       await contractApi.deleteContract(id!);
@@ -101,12 +116,20 @@ const ContractDetail: React.FC = () => {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Delete Contract
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownload}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Download
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete Contract
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

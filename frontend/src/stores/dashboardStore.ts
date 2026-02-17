@@ -31,52 +31,54 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const overview = await dashboardService.getOverview();
-      set({ overview, isLoading: false });
+      
+      // Extract activities and trends from the overview response
+      const activities = overview.recent_activity.map(activity => ({
+        id: activity.id,
+        type: activity.type as 'upload' | 'process' | 'delete' | 'export',
+        documentType: activity.document_type as 'invoice' | 'resume' | 'contract' | 'receipt',
+        documentName: activity.filename,
+        timestamp: activity.created_at,
+        status: activity.status
+      }));
+      
+      const trends = overview.trends.documents_by_date.map(item => ({
+        date: item.date,
+        uploads: item.count,
+        processed: 0 // Not provided in current API
+      }));
+      
+      set({ overview, activities, trends, isLoading: false });
     } catch (error: any) {
       set({ error: error.message || 'Failed to fetch overview', isLoading: false });
     }
   },
 
-  fetchActivities: async (limit = 10) => {
-    try {
-      const activities = await dashboardService.getActivity(limit);
-      set({ activities });
-    } catch (error: any) {
-      set({ error: error.message || 'Failed to fetch activities' });
-    }
+  fetchActivities: async () => {
+    // Activities are now fetched as part of overview
+    // This method is kept for backwards compatibility
+    return;
   },
 
-  fetchTrends: async (period) => {
-    try {
-      const trendPeriod = period || get().trendPeriod;
-      const trends = await dashboardService.getTrends(trendPeriod);
-      set({ trends, trendPeriod });
-    } catch (error: any) {
-      set({ error: error.message || 'Failed to fetch trends' });
-    }
+  fetchTrends: async () => {
+    // Trends are now fetched as part of overview
+    // This method is kept for backwards compatibility
+    return;
   },
 
   fetchFinancial: async () => {
-    try {
-      const financial = await dashboardService.getFinancialSummary();
-      set({ financial });
-    } catch (error: any) {
-      set({ error: error.message || 'Failed to fetch financial data' });
-    }
+    // Financial data is now part of overview
+    // This method is kept for backwards compatibility
+    return;
   },
 
   setTrendPeriod: (period: 7 | 30) => {
     set({ trendPeriod: period });
-    get().fetchTrends(period);
+    // Could potentially refetch with period parameter if needed
   },
 
   refreshAll: async () => {
-    const { fetchOverview, fetchActivities, fetchTrends, fetchFinancial } = get();
-    await Promise.all([
-      fetchOverview(),
-      fetchActivities(),
-      fetchTrends(),
-      fetchFinancial(),
-    ]);
+    // Now we only need to fetch overview since it contains everything
+    await get().fetchOverview();
   },
 }));
