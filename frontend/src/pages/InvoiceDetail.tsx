@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { invoiceApi } from '../services/documentApi';
+import api from '../services/api';
 import type { Invoice } from '../types/invoice';
 import PDFViewer from '../components/PDFViewer';
 import Modal from '../components/ui/Modal';
@@ -17,6 +18,8 @@ const InvoiceDetail: React.FC = () => {
   const [editing, setEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editedInvoice, setEditedInvoice] = useState<Partial<Invoice>>({});
+  const [documentBlobUrl, setDocumentBlobUrl] = useState<string | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -28,8 +31,27 @@ const InvoiceDetail: React.FC = () => {
     try {
       setLoading(true);
       const response = await invoiceApi.getInvoiceById(id!);
-      setInvoice(response.data);
-      setEditedInvoice(response.data);
+      const invoiceData: Invoice = response.data;
+      setInvoice(invoiceData);
+      setEditedInvoice(invoiceData);
+
+      // Fetch document as blob for preview (iframe can't send auth headers)
+      if (invoiceData.document?.id) {
+        try {
+          const docResponse = await api.get(`/api/documents/${invoiceData.document.id}/download`, {
+            responseType: 'blob',
+          });
+          const blobUrl = URL.createObjectURL(docResponse.data);
+          // Revoke previous blob URL if any
+          if (blobUrlRef.current) {
+            URL.revokeObjectURL(blobUrlRef.current);
+          }
+          blobUrlRef.current = blobUrl;
+          setDocumentBlobUrl(blobUrl);
+        } catch {
+          // Document preview unavailable, silently ignore
+        }
+      }
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Failed to fetch invoice', 'error');
       navigate('/invoices');
@@ -37,6 +59,15 @@ const InvoiceDetail: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+      }
+    };
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -158,9 +189,9 @@ const InvoiceDetail: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* PDF Viewer */}
         <div className="lg:col-span-1">
-          {invoice.document?.file_url ? (
+          {documentBlobUrl && invoice.document ? (
             <PDFViewer
-              fileUrl={invoice.document.file_url}
+              fileUrl={documentBlobUrl}
               filename={invoice.document.original_filename}
             />
           ) : (
@@ -168,7 +199,7 @@ const InvoiceDetail: React.FC = () => {
               <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <p className="text-gray-500">No document available</p>
+              <p className="text-gray-500">{invoice.document ? 'Loading preview...' : 'No document available'}</p>
             </div>
           )}
         </div>
