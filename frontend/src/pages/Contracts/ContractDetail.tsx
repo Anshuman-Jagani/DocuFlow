@@ -217,9 +217,36 @@ const ContractDetail: React.FC = () => {
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                       Red Flags
                     </h3>
-                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                      {contract.red_flags.map((flag, i) => <li key={i}>{flag}</li>)}
-                    </ul>
+                    <div className="space-y-3">
+                      {contract.red_flags.map((flag, i) => {
+                        const isObject = typeof flag === 'object' && flag !== null;
+                        const description = isObject ? (flag as any).description : String(flag);
+                        const severity = isObject ? (flag as any).severity : null;
+                        const category = isObject ? (flag as any).category : null;
+
+                        return (
+                          <div key={i} className="text-sm border-l-2 border-red-200 pl-3 py-1">
+                            <div className="flex flex-wrap gap-2 mb-1">
+                              {severity && (
+                                <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                  severity.toLowerCase() === 'critical' || severity.toLowerCase() === 'high' 
+                                    ? 'bg-red-100 text-red-700' 
+                                    : 'bg-yellow-100 text-yellow-700'
+                                }`}>
+                                  {severity}
+                                </span>
+                              )}
+                              {category && (
+                                <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                                  {category}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-700">{description}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
                 {contract.key_obligations && contract.key_obligations.length > 0 && (
@@ -228,8 +255,10 @@ const ContractDetail: React.FC = () => {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                       Key Obligations
                     </h3>
-                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                      {contract.key_obligations.map((ob, i) => <li key={i}>{ob}</li>)}
+                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1 pl-1">
+                      {contract.key_obligations.map((ob, i) => (
+                        <li key={i}>{typeof ob === 'object' ? (ob as any).description || JSON.stringify(ob) : String(ob)}</li>
+                      ))}
                     </ul>
                   </div>
                 )}
