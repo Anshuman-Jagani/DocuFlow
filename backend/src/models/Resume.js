@@ -77,8 +77,16 @@ module.exports = (sequelize) => {
       allowNull: true,
       defaultValue: []
     },
+    current_position: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
     total_years_experience: {
       type: DataTypes.DECIMAL(4, 1),
+      allowNull: true
+    },
+    confidence_score: {
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     job_id: {
