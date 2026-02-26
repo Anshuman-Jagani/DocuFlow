@@ -246,15 +246,36 @@ const contractAnalyzed = async (req, res) => {
       updateData.contract_value = processed_data.contract_value;
     }
     if (processed_data.currency) updateData.currency = processed_data.currency;
-    if (processed_data.start_date) updateData.effective_date = new Date(processed_data.start_date);
-    if (processed_data.end_date) updateData.expiration_date = new Date(processed_data.end_date);
-    // Contract model doesn't have a status field based on our schema
+    
+    // Support both start_date/end_date (n8n) and effective_date/expiration_date (DB)
+    const startDate = processed_data.effective_date || processed_data.start_date;
+    const endDate = processed_data.expiration_date || processed_data.end_date;
+    if (startDate) updateData.effective_date = new Date(startDate);
+    if (endDate) updateData.expiration_date = new Date(endDate);
+
     if (processed_data.risk_score !== undefined) updateData.risk_score = processed_data.risk_score;
+    if (processed_data.auto_renewal !== undefined) updateData.auto_renewal = processed_data.auto_renewal;
+    if (processed_data.governing_law) updateData.governing_law = processed_data.governing_law;
+    if (processed_data.summary) updateData.summary = processed_data.summary;
+    
+    // Support requires_legal_review from payload or derived from risk
+    if (processed_data.requires_legal_review !== undefined) {
+      updateData.requires_legal_review = processed_data.requires_legal_review;
+    }
 
     // Update JSONB fields
     if (processed_data.parties) updateData.parties = processed_data.parties;
     if (processed_data.payment_terms) updateData.payment_terms = processed_data.payment_terms;
-    if (processed_data.obligations) updateData.key_obligations = processed_data.obligations;
+    
+    // Support both 'obligations' (legacy) and 'key_obligations' (direct)
+    const obligations = processed_data.key_obligations || processed_data.obligations;
+    if (obligations) updateData.key_obligations = obligations;
+
+    if (processed_data.termination_clauses) updateData.termination_clauses = processed_data.termination_clauses;
+    if (processed_data.penalties) updateData.penalties = processed_data.penalties;
+    if (processed_data.confidentiality_terms) updateData.confidentiality_terms = processed_data.confidentiality_terms;
+    if (processed_data.liability_limitations) updateData.liability_limitations = processed_data.liability_limitations;
+    if (processed_data.special_conditions) updateData.special_conditions = processed_data.special_conditions;
     if (processed_data.red_flags) updateData.red_flags = processed_data.red_flags;
 
     // Update contract
