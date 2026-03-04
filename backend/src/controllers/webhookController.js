@@ -101,7 +101,7 @@ const invoiceProcessed = async (req, res) => {
     // Update parent document status
     await Document.update(
       { 
-        processing_status: validation?.status === 'valid' ? 'completed' : 'failed',
+        processing_status: validation?.status === 'valid' || validation?.status === 'needs_review' ? 'completed' : 'failed',
         processed_at: new Date()
       },
       { where: { id: document_id } }
@@ -181,7 +181,7 @@ const resumeProcessed = async (req, res) => {
     // Update parent document status
     await Document.update(
       { 
-        processing_status: validation?.status === 'valid' ? 'completed' : 'failed',
+        processing_status: validation?.status === 'valid' || validation?.status === 'needs_review' ? 'completed' : 'failed',
         processed_at: new Date()
       },
       { where: { id: document_id } }
@@ -365,7 +365,7 @@ const receiptProcessed = async (req, res) => {
     // Update parent document status
     await Document.update(
       { 
-        processing_status: validation?.status === 'valid' ? 'completed' : 'failed',
+        processing_status: validation?.status === 'valid' || validation?.status === 'needs_review' ? 'completed' : 'failed',
         processed_at: new Date()
       },
       { where: { id: document_id } }
