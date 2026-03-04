@@ -3,6 +3,16 @@ const logger = require('../utils/logger');
 const { successResponse, errorResponse } = require('../utils/responses');
 
 /**
+ * Safely parse a date value. Returns null if the value is missing or invalid
+ * so that PostgreSQL never receives an "Invalid date" string.
+ */
+const safeDate = (value) => {
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+/**
  * Webhook handler for document upload notifications
  * Updates document status to 'processing'
  */
@@ -84,8 +94,8 @@ const invoiceProcessed = async (req, res) => {
     if (processed_data.vendor_name) updateData.vendor_name = processed_data.vendor_name;
     if (processed_data.total_amount !== undefined) updateData.total_amount = processed_data.total_amount;
     if (processed_data.currency) updateData.currency = processed_data.currency;
-    if (processed_data.issue_date) updateData.invoice_date = new Date(processed_data.issue_date);
-    if (processed_data.due_date) updateData.due_date = new Date(processed_data.due_date);
+    if (processed_data.issue_date) { const d = safeDate(processed_data.issue_date); if (d) updateData.invoice_date = d; }
+    if (processed_data.due_date) { const d = safeDate(processed_data.due_date); if (d) updateData.due_date = d; }
     if (processed_data.status && ['valid', 'needs_review', 'invalid'].includes(processed_data.status)) {
       updateData.validation_status = processed_data.status;
     }
@@ -250,8 +260,8 @@ const contractAnalyzed = async (req, res) => {
     // Support both start_date/end_date (n8n) and effective_date/expiration_date (DB)
     const startDate = processed_data.effective_date || processed_data.start_date;
     const endDate = processed_data.expiration_date || processed_data.end_date;
-    if (startDate) updateData.effective_date = new Date(startDate);
-    if (endDate) updateData.expiration_date = new Date(endDate);
+    if (startDate) { const d = safeDate(startDate); if (d) updateData.effective_date = d; }
+    if (endDate) { const d = safeDate(endDate); if (d) updateData.expiration_date = d; }
 
     if (processed_data.risk_score !== undefined) updateData.risk_score = processed_data.risk_score;
     if (processed_data.auto_renewal !== undefined) updateData.auto_renewal = processed_data.auto_renewal;
@@ -348,7 +358,7 @@ const receiptProcessed = async (req, res) => {
     if (processed_data.merchant_name) updateData.merchant_name = processed_data.merchant_name;
     if (processed_data.total_amount !== undefined) updateData.total_amount = processed_data.total_amount;
     if (processed_data.currency) updateData.currency = processed_data.currency;
-    if (processed_data.purchase_date) updateData.purchase_date = new Date(processed_data.purchase_date);
+    if (processed_data.purchase_date) { const d = safeDate(processed_data.purchase_date); if (d) updateData.purchase_date = d; }
     if (processed_data.category) updateData.expense_category = processed_data.category;
     if (processed_data.tax_amount !== undefined) updateData.tax = processed_data.tax_amount;
     if (processed_data.payment_method) updateData.payment_method = processed_data.payment_method;
