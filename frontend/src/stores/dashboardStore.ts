@@ -32,7 +32,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       set({ isLoading: true, error: null });
       const overview = await dashboardService.getOverview();
       
-      // Extract activities and trends from the overview response
+      // Extract activities from the overview response
       const activities = overview.recent_activity.map(activity => ({
         id: activity.id,
         type: activity.type as 'upload' | 'process' | 'delete' | 'export',
@@ -42,13 +42,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         status: activity.status
       }));
       
-      const trends = overview.trends.documents_by_date.map(item => ({
-        date: item.date,
-        uploads: item.count,
-        processed: 0 // Not provided in current API
-      }));
-      
-      set({ overview, activities, trends, isLoading: false });
+      set({ overview, activities, isLoading: false });
     } catch (error: any) {
       set({ error: error.message || 'Failed to fetch overview', isLoading: false });
     }
@@ -56,29 +50,30 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   fetchActivities: async () => {
     // Activities are now fetched as part of overview
-    // This method is kept for backwards compatibility
     return;
   },
 
   fetchTrends: async () => {
-    // Trends are now fetched as part of overview
-    // This method is kept for backwards compatibility
-    return;
+    try {
+      const period = get().trendPeriod;
+      const trends = await dashboardService.getTrends(period);
+      set({ trends });
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to fetch trends' });
+    }
   },
 
   fetchFinancial: async () => {
     // Financial data is now part of overview
-    // This method is kept for backwards compatibility
     return;
   },
 
   setTrendPeriod: (period: 7 | 30) => {
     set({ trendPeriod: period });
-    // Could potentially refetch with period parameter if needed
+    get().fetchTrends();
   },
 
   refreshAll: async () => {
-    // Now we only need to fetch overview since it contains everything
-    await get().fetchOverview();
+    await Promise.all([get().fetchOverview(), get().fetchTrends()]);
   },
 }));
