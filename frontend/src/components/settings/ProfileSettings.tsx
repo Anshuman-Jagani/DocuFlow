@@ -50,20 +50,6 @@ const ProfileSettings = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Avatar Section */}
-        <div className="flex items-center gap-6">
-          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-2xl font-bold">
-            {user?.full_name?.charAt(0).toUpperCase() || 'U'}
-          </div>
-          <div>
-            <Button type="button" variant="outline" size="sm" disabled>
-              Change Avatar
-            </Button>
-            <p className="text-xs text-gray-500 mt-1">
-              JPG, GIF or PNG. Max size of 2MB
-            </p>
-          </div>
-        </div>
 
         {/* Name Field */}
         <Input
