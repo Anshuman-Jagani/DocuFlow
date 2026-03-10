@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Tabs from '../components/ui/Tabs';
 import ProfileSettings from '../components/settings/ProfileSettings';
@@ -6,7 +7,7 @@ import NotificationSettings from '../components/settings/NotificationSettings';
 import ApiKeySettings from '../components/settings/ApiKeySettings';
 
 const SettingsPage = () => {
-  const tabs = [
+  const tabs = useMemo(() => [
     {
       id: 'profile',
       label: 'Profile',
@@ -67,7 +68,7 @@ const SettingsPage = () => {
       ),
       content: <ApiKeySettings />,
     },
-  ];
+  ], []);
 
   return (
     <DashboardLayout>

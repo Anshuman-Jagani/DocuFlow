@@ -136,7 +136,8 @@ app.use('/api/contracts', require('./src/routes/contracts'));
 app.use('/api/receipts', require('./src/routes/receipts'));
 app.use('/api/jobs', require('./src/routes/jobPostings'));
 app.use('/api/dashboard', require('./src/routes/dashboard'));
-// app.use('/api/settings', require('./src/routes/settings'));
+// User settings routes
+app.use('/api/users', apiLimiter, require('./src/routes/user'));
 
 // 404 handler
 app.use(notFoundHandler);

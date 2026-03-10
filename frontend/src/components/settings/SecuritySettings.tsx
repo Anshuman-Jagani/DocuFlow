@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useToast } from '../ui/Toast';
+import api from '../../services/api';
+
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 
@@ -45,8 +47,10 @@ const SecuritySettings = () => {
     setLoading(true);
     
     try {
-      // TODO: Implement API call to change password
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+      await api.patch('/api/users/password', {
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword
+      });
       
       showToast('Password changed successfully', 'success');
       setFormData({
@@ -55,8 +59,9 @@ const SecuritySettings = () => {
         confirmPassword: '',
       });
       setPasswordStrength(0);
-    } catch (error) {
-      showToast('Failed to change password', 'error');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error?.message || 'Failed to change password';
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }

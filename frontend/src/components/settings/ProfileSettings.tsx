@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useToast } from '../ui/Toast';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import api from '../../services/api';
 
 const ProfileSettings = () => {
   const user = useAuthStore((state) => state.user);
@@ -11,22 +12,44 @@ const ProfileSettings = () => {
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    name: user?.full_name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
   });
+
+  // Sync form data with user store (only when not editing)
+  useEffect(() => {
+    console.log('[ProfileSettings] User or isEditing changed:', { 
+      hasUser: !!user, 
+      userName: user?.full_name,
+      isEditing 
+    });
+    if (user && !isEditing) {
+      setFormData({
+        name: user.full_name || '',
+        email: user.email || '',
+      });
+    }
+  }, [user, isEditing]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[ProfileSettings] Submitting form:', formData);
     setLoading(true);
     
     try {
-      // TODO: Implement API call to update profile
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+      const response = await api.patch('/api/users/profile', {
+        name: formData.name,
+        email: formData.email
+      });
+      
+      const updatedUser = response.data.data;
+      useAuthStore.getState().setUser(updatedUser);
       
       showToast('Profile updated successfully', 'success');
       setIsEditing(false);
-    } catch (error) {
-      showToast('Failed to update profile', 'error');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error?.message || 'Failed to update profile';
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -73,18 +96,34 @@ const ProfileSettings = () => {
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4 border-t">
           {!isEditing ? (
-            <Button type="button" onClick={() => setIsEditing(true)}>
+            <Button 
+              key="edit-btn"
+              type="button" 
+              onClick={(e) => {
+                e.preventDefault();
+                console.log('[ProfileSettings] Entering edit mode');
+                setIsEditing(true);
+              }}
+            >
               Edit Profile
             </Button>
           ) : (
             <>
-              <Button type="submit" isLoading={loading}>
+              <Button 
+                key="save-btn"
+                type="submit" 
+                isLoading={loading}
+              >
                 Save Changes
               </Button>
               <Button 
+                key="cancel-btn"
                 type="button" 
                 variant="outline" 
-                onClick={handleCancel}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleCancel();
+                }}
                 disabled={loading}
               >
                 Cancel
