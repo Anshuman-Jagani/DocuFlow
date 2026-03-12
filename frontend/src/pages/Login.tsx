@@ -8,7 +8,7 @@ import { useToast } from "../components/ui/Toast";
 import api from "../services/api";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { FileText, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
+import { FileText, CheckCircle2, Zap } from "lucide-react";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
