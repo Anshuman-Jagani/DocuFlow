@@ -64,10 +64,10 @@ const ProfileSettings = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <h3 className="text-lg font-semibold text-white">Profile Information</h3>
+        <p className="text-sm text-[#444444] mt-1">
           Update your account's profile information and email address.
         </p>
       </div>
@@ -94,7 +94,7 @@ const ProfileSettings = () => {
         />
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t">
+        <div className="flex gap-3 pt-4 border-t border-[#111111]">
           {!isEditing ? (
             <Button 
               key="edit-btn"

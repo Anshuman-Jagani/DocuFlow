@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, Link } from 'react-router-dom';
-import { registerSchema, type RegisterFormData } from '../utils/validation';
-import { useToast } from '../components/ui/Toast';
-import api from '../services/api';
-import Input from '../components/ui/Input';
-import Button from '../components/ui/Button';
-import { FileText } from 'lucide-react';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate, Link } from "react-router-dom";
+import { registerSchema, type RegisterFormData } from "../utils/validation";
+import { useToast } from "../components/ui/Toast";
+import api from "../services/api";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import { FileText, ShieldCheck, Zap, ArrowRight } from "lucide-react";
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -23,11 +23,11 @@ const Register: React.FC = () => {
     resolver: zodResolver(registerSchema),
   });
 
-  const password = watch('password', '');
+  const password = watch("password", "");
 
   // Password strength indicator
   const getPasswordStrength = (pwd: string) => {
-    if (!pwd) return { strength: 0, label: '', color: '' };
+    if (!pwd) return { strength: 0, label: "", color: "" };
     let strength = 0;
     if (pwd.length >= 6) strength++;
     if (pwd.length >= 10) strength++;
@@ -35,13 +35,19 @@ const Register: React.FC = () => {
     if (/\d/.test(pwd)) strength++;
     if (/[^a-zA-Z\d]/.test(pwd)) strength++;
 
-    const labels = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
-    const colors = ['bg-danger', 'bg-warning', 'bg-warning', 'bg-success', 'bg-success'];
-    
+    const labels = ["Weak", "Fair", "Good", "Strong", "Very Strong"];
+    const colors = [
+      "bg-danger",
+      "bg-warning",
+      "bg-warning",
+      "bg-success",
+      "bg-success",
+    ];
+
     return {
       strength: (strength / 5) * 100,
-      label: labels[Math.min(strength - 1, 4)] || '',
-      color: colors[Math.min(strength - 1, 4)] || '',
+      label: labels[Math.min(strength - 1, 4)] || "",
+      color: colors[Math.min(strength - 1, 4)] || "",
     };
   };
 
@@ -50,18 +56,19 @@ const Register: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await api.post('/api/auth/register', {
+      await api.post("/api/auth/register", {
         full_name: data.full_name,
         email: data.email,
         password: data.password,
       });
-      
-      showToast('Registration successful! Please login.', 'success');
-      setTimeout(() => navigate('/login'), 1500);
+
+      showToast("Registration successful! Please login.", "success");
+      setTimeout(() => navigate("/login"), 1500);
     } catch (error: any) {
       showToast(
-        error.response?.data?.message || 'Registration failed. Please try again.',
-        'error'
+        error.response?.data?.message ||
+          "Registration failed. Please try again.",
+        "error",
       );
     } finally {
       setIsLoading(false);
@@ -69,88 +76,189 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8">
-        {/* Logo and Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
-            <FileText className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex items-center justify-center p-4 md:p-8 bg-black relative overflow-hidden">
+      {/* Background Ambience */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-tr from-black via-black to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(245,197,66,0.05),transparent)]" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-[1000px] flex flex-col md:flex-row items-stretch gap-0 bg-[#0A0A0A] border border-[#111111] rounded-3xl shadow-2xl overflow-hidden">
+        {/* Branding Side */}
+        <div className="hidden md:flex md:w-[45%] flex-col justify-between p-12 lg:p-16 relative bg-black">
+          <div className="absolute right-0 top-1/4 bottom-1/4 w-[1px] bg-gradient-to-b from-transparent via-[#282828] to-transparent" />
+
+          <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#0A0A0A] rounded-xl flex items-center justify-center border border-white/20">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold tracking-tight text-white">
+                DocuFlow
+              </span>
+            </Link>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">DocuFlow</h1>
-          <p className="text-gray-600 mt-2">Create your account</p>
+
+          <div className="space-y-8">
+            <h2 className="text-4xl lg:text-5xl font-bold leading-tight text-white">
+              Unlock <span className="text-white">Intelligence</span> in
+              seconds.
+            </h2>
+            <p className="text-lg text-[#444444] leading-relaxed">
+              Sign up today and start automating your document workflows with
+              our enterprise-grade AI engine.
+            </p>
+
+            <div className="space-y-6">
+              {[
+                {
+                  icon: Zap,
+                  label: "Smart Extraction",
+                  sub: "Automatic data pick-up",
+                },
+                {
+                  icon: ShieldCheck,
+                  label: "Advanced Security",
+                  sub: "Encrypted and private",
+                },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center gap-4 group">
+                  <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] flex items-center justify-center border border-[#111111] group-hover:border-white/30 transition-all">
+                    <item.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white group-hover:text-white transition-colors">
+                      {item.label}
+                    </p>
+                    <p className="text-xs text-[#444444]">{item.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] text-[#444444] uppercase tracking-widest font-semibold">
+            <span>© 2026 DocuFlow</span>
+            <div className="flex gap-4">
+              <Link
+                to="/terms"
+                className="hover:text-white transition-colors"
+              >
+                Terms
+              </Link>
+              <Link
+                to="/privacy"
+                className="hover:text-white transition-colors"
+              >
+                Privacy
+              </Link>
+            </div>
+          </div>
         </div>
 
-        {/* Register Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            label="Full Name"
-            type="text"
-            placeholder="John Doe"
-            error={errors.full_name?.message}
-            {...register('full_name')}
-          />
-
-          <Input
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            error={errors.email?.message}
-            {...register('email')}
-          />
-
-          <div>
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              error={errors.password?.message}
-              {...register('password')}
-            />
-            
-            {/* Password Strength Indicator */}
-            {password && (
-              <div className="mt-2">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-gray-600">Password strength:</span>
-                  <span className={`font-medium ${passwordStrength.color.replace('bg-', 'text-')}`}>
-                    {passwordStrength.label}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                  <div
-                    className={`h-1.5 rounded-full transition-all ${passwordStrength.color}`}
-                    style={{ width: `${passwordStrength.strength}%` }}
-                  />
-                </div>
+        {/* Form Side */}
+        <div className="flex-1 flex flex-col justify-center p-8 lg:p-16 bg-[#0A0A0A] overflow-y-auto">
+          <div className="w-full max-w-sm mx-auto">
+            {/* Mobile Logo */}
+            <div className="md:hidden flex items-center justify-center gap-3 mb-10">
+              <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center border border-white/20">
+                <FileText className="w-6 h-6 text-white" />
               </div>
-            )}
+              <span className="text-2xl font-bold text-white tracking-tight">
+                DocuFlow
+              </span>
+            </div>
+
+            <div className="mb-10">
+              <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
+                Create Account
+              </h1>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <Input
+                label="Full Name"
+                type="text"
+                placeholder="John Doe"
+                error={errors.full_name?.message}
+                {...register("full_name")}
+              />
+
+              <Input
+                label="Email Address"
+                type="email"
+                placeholder="you@example.com"
+                error={errors.email?.message}
+                {...register("email")}
+              />
+
+              <div className="space-y-3">
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="••••••••"
+                  error={errors.password?.message}
+                  {...register("password")}
+                />
+
+                {password && (
+                  <div className="bg-[#0A0A0A] p-4 rounded-xl border border-[#111111] transition-all animate-fade-in">
+                    <div className="flex items-center justify-between text-[10px] mb-2 uppercase tracking-wide">
+                      <span className="text-[#444444] font-bold">
+                        Security Level
+                      </span>
+                      <span
+                        className={`font-bold ${passwordStrength.color.replace("bg-", "text-")}`}
+                      >
+                        {passwordStrength.label}
+                      </span>
+                    </div>
+                    <div className="w-full bg-black rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${passwordStrength.color}`}
+                        style={{ width: `${passwordStrength.strength}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4">
+                <Button
+                  type="submit"
+                  variant="gray"
+                  className="w-full py-4 h-14 font-bold rounded-xl uppercase tracking-widest text-sm shadow-glow-white-sm/10"
+                  isLoading={isLoading}
+                >
+                  Initialize Account
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </div>
+
+              <p className="text-[10px] text-[#444444] text-center leading-relaxed px-4 uppercase tracking-tight font-bold">
+                By clicking "Initialize Account", you agree to our{" "}
+                <a href="#" className="underline hover:text-white">
+                  Terms
+                </a>{" "}
+                and{" "}
+                <a href="#" className="underline hover:text-white">
+                  Privacy
+                </a>
+                .
+              </p>
+            </form>
+
+            <p className="text-center text-sm text-[#444444] mt-10 font-medium">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="text-white hover:underline font-bold transition-colors"
+              >
+                Sign In
+              </Link>
+            </p>
           </div>
-
-          <Input
-            label="Confirm Password"
-            type="password"
-            placeholder="••••••••"
-            error={errors.confirmPassword?.message}
-            {...register('confirmPassword')}
-          />
-
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full"
-            isLoading={isLoading}
-          >
-            Create Account
-          </Button>
-        </form>
-
-        {/* Login Link */}
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Already have an account?{' '}
-          <Link to="/login" className="text-primary hover:text-primary-700 font-medium">
-            Sign in
-          </Link>
-        </p>
+        </div>
       </div>
     </div>
   );

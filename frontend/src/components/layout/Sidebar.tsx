@@ -1,67 +1,61 @@
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Upload,
-  FileText,
-  Receipt,
-  FileCheck,
-  Briefcase,
-  Users,
-  Settings,
-  Menu,
-  X,
-} from 'lucide-react';
-import { cn } from '../../utils/helpers';
+  LayoutDashboard, Upload, FileText, Receipt,
+  FileCheck, Briefcase, Users, Settings, Menu, X,
+} from "lucide-react";
+import { cn } from "../../utils/helpers";
+
+const navigation = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Upload",    href: "/upload",    icon: Upload },
+  { name: "Invoices",  href: "/invoices",  icon: FileText },
+  { name: "Receipts",  href: "/receipts",  icon: Receipt },
+  { name: "Resumes",   href: "/resumes",   icon: Users },
+  { name: "Contracts", href: "/contracts", icon: FileCheck },
+  { name: "Jobs",      href: "/jobs",      icon: Briefcase },
+  { name: "Settings",  href: "/settings",  icon: Settings },
+];
 
 const Sidebar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Upload', href: '/upload', icon: Upload },
-    { name: 'Invoices', href: '/invoices', icon: FileText },
-    { name: 'Receipts', href: '/receipts', icon: Receipt },
-    { name: 'Resumes', href: '/resumes', icon: Users },
-    { name: 'Contracts', href: '/contracts', icon: FileCheck },
-    { name: 'Jobs', href: '/jobs', icon: Briefcase },
-    { name: 'Settings', href: '/settings', icon: Settings },
-  ];
-
   return (
     <>
-      {/* Mobile menu button */}
+      {/* Mobile toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-[#0A0A0A] text-white border border-[#222] shadow-lg hover:border-white/20 transition-all"
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
-      {/* Backdrop for mobile */}
+      {/* Backdrop */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          className="lg:hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar panel */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-40 transition-transform duration-300',
-          'w-64 flex flex-col',
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          "fixed top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out",
+          "w-64 flex flex-col bg-[#000000] border-r border-[#111111]",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center px-6 border-b border-gray-200">
-          <FileText className="w-8 h-8 text-primary" />
-          <span className="ml-3 text-xl font-bold text-gray-900">DocuFlow</span>
+        <div className="h-16 flex items-center px-6 border-b border-[#111111]">
+          <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center mr-3 flex-shrink-0">
+            <FileText className="w-4 h-4 text-black" />
+          </div>
+          <span className="text-lg font-bold text-white tracking-tight font-heading">DocuFlow</span>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto scrollbar-hide">
           {navigation.map((item) => (
             <NavLink
               key={item.name}
@@ -69,24 +63,40 @@ const Sidebar: React.FC = () => {
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors',
+                  "group flex items-center px-3 py-2.5 text-sm font-semibold rounded-md transition-all duration-200 relative",
                   isActive
-                    ? 'bg-primary text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? "bg-white text-black"
+                    : "text-[#555555] hover:bg-[#0F0F0F] hover:text-white",
                 )
               }
             >
-              <item.icon className="w-5 h-5 mr-3" />
-              {item.name}
+              {({ isActive }) => (
+                <>
+                  <item.icon
+                    className={cn(
+                      "w-4 h-4 mr-3 flex-shrink-0 transition-all duration-200",
+                      isActive ? "text-black" : "text-[#444444] group-hover:text-white",
+                    )}
+                  />
+                  <span className="tracking-tight">{item.name}</span>
+                  {/* Active indicator dot */}
+                  {isActive && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-black" />
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center">
-            DocuFlow v1.0.0
-          </p>
+        <div className="p-4 border-t border-[#111111]">
+          <div className="flex items-center gap-2 px-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse" />
+            <p className="text-[10px] text-[#333333] uppercase tracking-widest font-bold">
+              DocuFlow v1.0
+            </p>
+          </div>
         </div>
       </aside>
     </>

@@ -8,7 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import clsx from 'clsx';
 
 const documentTypeColors = {
-  invoice: 'bg-blue-100 text-blue-700',
+  invoice: 'bg-white text-white',
   receipt: 'bg-green-100 text-green-700',
   resume: 'bg-purple-100 text-purple-700',
   contract: 'bg-yellow-100 text-yellow-700',
@@ -16,7 +16,7 @@ const documentTypeColors = {
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-700',
-  processing: 'bg-blue-100 text-blue-700',
+  processing: 'bg-white text-white',
   completed: 'bg-green-100 text-green-700',
   failed: 'bg-red-100 text-red-700',
 };
@@ -99,12 +99,12 @@ export default function Documents() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
-            <p className="text-gray-600 mt-1">Manage and view all your uploaded documents</p>
+            <h1 className="text-3xl font-bold text-[#555555]">Documents</h1>
+            <p className="text-[#555555] mt-1">Manage and view all your uploaded documents</p>
           </div>
           <button
             onClick={() => navigate('/upload')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-white text-white rounded-lg hover:bg-white transition-colors"
           >
             Upload Document
           </button>
@@ -114,25 +114,25 @@ export default function Documents() {
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <form onSubmit={handleSearch} className="flex items-center space-x-3 mb-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#555555]" />
               <input
                 type="text"
                 placeholder="Search documents..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-[#111111] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-white text-white rounded-lg hover:bg-white transition-colors"
             >
               Search
             </button>
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+              className="px-4 py-2 border border-[#111111] text-[#555555] rounded-lg hover:bg-[#0A0A0A] transition-colors flex items-center"
             >
               <Filter className="h-4 w-4 mr-2" />
               Filters
@@ -141,16 +141,16 @@ export default function Documents() {
 
           {/* Filter Options */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-[#111111]">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Document Type</label>
+                <label className="block text-sm font-medium text-[#555555] mb-2">Document Type</label>
                 <select
                   value={filterType}
                   onChange={(e) => {
                     setFilterType(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[#111111] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Types</option>
                   <option value="invoice">Invoices</option>
@@ -160,14 +160,14 @@ export default function Documents() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Processing Status</label>
+                <label className="block text-sm font-medium text-[#555555] mb-2">Processing Status</label>
                 <select
                   value={filterStatus}
                   onChange={(e) => {
                     setFilterStatus(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[#111111] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Statuses</option>
                   <option value="pending">Pending</option>
@@ -185,49 +185,49 @@ export default function Documents() {
           {isLoading ? (
             <div className="p-12 text-center">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-              <p className="mt-4 text-gray-600">Loading documents...</p>
+              <p className="mt-4 text-[#555555]">Loading documents...</p>
             </div>
           ) : documents.length === 0 ? (
             <div className="p-12 text-center">
-              <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">No documents found</p>
-              <p className="text-gray-500 text-sm mt-2">Upload your first document to get started</p>
+              <FileText className="h-16 w-16 text-[#555555] mx-auto mb-4" />
+              <p className="text-[#555555] text-lg">No documents found</p>
+              <p className="text-[#555555] text-sm mt-2">Upload your first document to get started</p>
             </div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-[#0A0A0A] border-b border-[#111111]">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555555] uppercase tracking-wider">
                         Document
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555555] uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555555] uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555555] uppercase tracking-wider">
                         Size
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555555] uppercase tracking-wider">
                         Uploaded
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-[#555555] uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {documents.map((doc) => (
-                      <tr key={doc.id} className="hover:bg-gray-50">
+                      <tr key={doc.id} className="hover:bg-[#0A0A0A]">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <FileText className="h-8 w-8 text-gray-400 mr-3" />
+                            <FileText className="h-8 w-8 text-[#555555] mr-3" />
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{doc.original_filename}</p>
-                              <p className="text-xs text-gray-500">{doc.mime_type}</p>
+                              <p className="text-sm font-medium text-[#555555]">{doc.original_filename}</p>
+                              <p className="text-xs text-[#555555]">{doc.mime_type}</p>
                             </div>
                           </div>
                         </td>
@@ -247,16 +247,16 @@ export default function Documents() {
                             {doc.processing_status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
+                        <td className="px-6 py-4 text-sm text-[#555555]">
                           {formatFileSize(doc.file_size)}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-[#555555]">
                           {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
                         </td>
                         <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
                           <button
                             onClick={() => handleDownload(doc)}
-                            className="text-blue-600 hover:text-blue-900 inline-flex items-center"
+                            className="text-white hover:text-white inline-flex items-center"
                             title="Download"
                           >
                             <Download className="h-4 w-4" />
@@ -277,15 +277,15 @@ export default function Documents() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
+                <div className="px-6 py-4 border-t border-[#111111] flex items-center justify-between">
+                  <div className="text-sm text-[#555555]">
                     Page {currentPage} of {totalPages}
                   </div>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      className="px-3 py-1 border border-[#111111] rounded-lg hover:bg-[#0A0A0A] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
                       Previous
@@ -293,7 +293,7 @@ export default function Documents() {
                     <button
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      className="px-3 py-1 border border-[#111111] rounded-lg hover:bg-[#0A0A0A] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                     >
                       Next
                       <ChevronRight className="h-4 w-4 ml-1" />

@@ -49,7 +49,7 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A] px-4">
           <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
@@ -67,16 +67,16 @@ class ErrorBoundary extends Component<Props, State> {
                   />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-[#555555] mb-2">
                 Oops! Something went wrong
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-[#555555] mb-6">
                 We're sorry, but something unexpected happened. Please try again.
               </p>
               
               {import.meta.env.DEV && this.state.error && (
-                <details className="text-left mb-6 bg-gray-50 rounded p-4">
-                  <summary className="cursor-pointer font-medium text-sm text-gray-700 mb-2">
+                <details className="text-left mb-6 bg-[#0A0A0A] rounded p-4">
+                  <summary className="cursor-pointer font-medium text-sm text-[#555555] mb-2">
                     Error Details
                   </summary>
                   <pre className="text-xs text-red-600 overflow-auto">

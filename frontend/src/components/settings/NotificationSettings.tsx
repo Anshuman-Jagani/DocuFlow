@@ -10,6 +10,31 @@ interface NotificationPreferences {
   processingThreshold: number;
 }
 
+const ToggleSwitch = ({
+  enabled,
+  onChange,
+  disabled = false,
+}: {
+  enabled: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+}) => (
+  <button
+    type="button"
+    onClick={onChange}
+    disabled={disabled}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+      enabled ? 'bg-[#A0A0A0]' : 'bg-[#1A1A1A]'
+    } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+        enabled ? 'translate-x-6' : 'translate-x-1'
+      }`}
+    />
+  </button>
+);
+
 const NotificationSettings = () => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -40,9 +65,7 @@ const NotificationSettings = () => {
     setLoading(true);
     
     try {
-      // TODO: Implement API call to save preferences
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
-      
+      await new Promise(resolve => setTimeout(resolve, 1000));
       showToast('Notification preferences saved', 'success');
     } catch (error) {
       showToast('Failed to save preferences', 'error');
@@ -52,120 +75,72 @@ const NotificationSettings = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Notification Preferences</h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <h3 className="text-lg font-semibold text-white">Notification Preferences</h3>
+        <p className="text-sm text-[#444444] mt-1">
           Manage how you receive notifications and alerts.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Email Notifications Master Toggle */}
-        <div className="flex items-center justify-between py-4 border-b">
+        <div className="flex items-center justify-between py-4 border-b border-[#111111]">
           <div>
-            <h4 className="font-medium text-gray-900">Email Notifications</h4>
-            <p className="text-sm text-gray-600">Receive notifications via email</p>
+            <h4 className="font-medium text-white">Email Notifications</h4>
+            <p className="text-sm text-[#444444]">Receive notifications via email</p>
           </div>
-          <button
-            type="button"
-            onClick={() => handleToggle('emailNotifications')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.emailNotifications ? 'bg-primary' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                preferences.emailNotifications ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <ToggleSwitch
+            enabled={preferences.emailNotifications}
+            onChange={() => handleToggle('emailNotifications')}
+          />
         </div>
 
         {/* Individual Notification Settings */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-medium text-gray-900">Document Processed</h4>
-              <p className="text-sm text-gray-600">Get notified when a document is processed</p>
+              <h4 className="font-medium text-white">Document Processed</h4>
+              <p className="text-sm text-[#444444]">Get notified when a document is processed</p>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggle('documentProcessed')}
+            <ToggleSwitch
+              enabled={preferences.documentProcessed && preferences.emailNotifications}
+              onChange={() => handleToggle('documentProcessed')}
               disabled={!preferences.emailNotifications}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.documentProcessed && preferences.emailNotifications
-                  ? 'bg-primary'
-                  : 'bg-gray-200'
-              } ${!preferences.emailNotifications ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  preferences.documentProcessed && preferences.emailNotifications
-                    ? 'translate-x-6'
-                    : 'translate-x-1'
-                }`}
-              />
-            </button>
+            />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-medium text-gray-900">Weekly Report</h4>
-              <p className="text-sm text-gray-600">Receive a weekly summary of your documents</p>
+              <h4 className="font-medium text-white">Weekly Report</h4>
+              <p className="text-sm text-[#444444]">Receive a weekly summary of your documents</p>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggle('weeklyReport')}
+            <ToggleSwitch
+              enabled={preferences.weeklyReport && preferences.emailNotifications}
+              onChange={() => handleToggle('weeklyReport')}
               disabled={!preferences.emailNotifications}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.weeklyReport && preferences.emailNotifications
-                  ? 'bg-primary'
-                  : 'bg-gray-200'
-              } ${!preferences.emailNotifications ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  preferences.weeklyReport && preferences.emailNotifications
-                    ? 'translate-x-6'
-                    : 'translate-x-1'
-                }`}
-              />
-            </button>
+            />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-medium text-gray-900">Security Alerts</h4>
-              <p className="text-sm text-gray-600">Important security and account updates</p>
+              <h4 className="font-medium text-white">Security Alerts</h4>
+              <p className="text-sm text-[#444444]">Important security and account updates</p>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggle('securityAlerts')}
+            <ToggleSwitch
+              enabled={preferences.securityAlerts && preferences.emailNotifications}
+              onChange={() => handleToggle('securityAlerts')}
               disabled={!preferences.emailNotifications}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.securityAlerts && preferences.emailNotifications
-                  ? 'bg-primary'
-                  : 'bg-gray-200'
-              } ${!preferences.emailNotifications ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  preferences.securityAlerts && preferences.emailNotifications
-                    ? 'translate-x-6'
-                    : 'translate-x-1'
-                }`}
-              />
-            </button>
+            />
           </div>
         </div>
 
         {/* Processing Threshold */}
-        <div className="pt-4 border-t">
-          <label className="block font-medium text-gray-900 mb-2">
+        <div className="pt-4 border-t border-[#111111]">
+          <label className="block font-medium text-white mb-2">
             Processing Threshold
           </label>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-[#444444] mb-4">
             Get notified when monthly processing exceeds this limit
           </p>
           <div className="flex items-center gap-4">
@@ -176,17 +151,17 @@ const NotificationSettings = () => {
               step="50"
               value={preferences.processingThreshold}
               onChange={(e) => handleThresholdChange(Number(e.target.value))}
-              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+              className="flex-1 h-1.5 bg-[#1A1A1A] rounded-lg appearance-none cursor-pointer accent-[#A0A0A0]"
             />
-            <span className="font-medium text-gray-900 min-w-[80px]">
+            <span className="font-medium text-white min-w-[80px] text-sm">
               {preferences.processingThreshold} docs
             </span>
           </div>
         </div>
 
         {/* Submit Button */}
-        <div className="pt-4 border-t">
-          <Button type="submit" isLoading={loading}>
+        <div className="pt-4 border-t border-[#111111]">
+          <Button type="submit" variant="gray" isLoading={loading}>
             Save Preferences
           </Button>
         </div>

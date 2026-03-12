@@ -1,32 +1,19 @@
 import React from 'react';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
-} from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-interface CategoryData {
-  name: string;
-  value: number;
-}
+interface CategoryData { name: string; value: number; }
+interface CategoryChartProps { data: CategoryData[]; isLoading?: boolean; }
 
-interface CategoryChartProps {
-  data: CategoryData[];
-  isLoading?: boolean;
-}
-
-const COLORS = ['#3b82f6', '#10b981', '#a855f7', '#f59e0b', '#ef4444'];
+// Pure monochrome palette — white shades only
+const COLORS = ['#FFFFFF', '#888888', '#444444', '#222222', '#111111'];
 
 const CategoryChart: React.FC<CategoryChartProps> = ({ data, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[400px] flex flex-col">
-        <div className="h-6 w-48 bg-gray-200 animate-pulse rounded mb-6" />
+      <div className="bg-[#0A0A0A] border border-[#111111] p-6 rounded-lg h-[380px] flex flex-col animate-pulse">
+        <div className="h-2.5 w-40 bg-[#1A1A1A] rounded mb-6" />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-48 h-48 bg-gray-200 animate-pulse rounded-full" />
+          <div className="w-44 h-44 bg-[#050505] rounded-full" />
         </div>
       </div>
     );
@@ -34,29 +21,19 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ data, isLoading }) => {
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
-
-
   const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0];
-      const percentage = ((data.value / total) * 100).toFixed(1);
+    if (active && payload?.length) {
+      const item = payload[0];
+      const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0';
       return (
-        <div
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.98)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)',
-            padding: '12px'
-          }}
-        >
-          <p className="text-gray-900 font-semibold text-sm mb-1">{data.name}</p>
-          <p className="text-gray-700 text-sm">
-            <span className="font-bold">{data.value}</span> document{data.value !== 1 ? 's' : ''}
+        <div style={{ backgroundColor: '#0A0A0A', border: '1px solid #1A1A1A', borderRadius: '6px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.9)', padding: '10px 14px' }}>
+          <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{item.name}</p>
+          <p style={{ color: '#555555', fontSize: 11 }}>
+            <span style={{ color: '#FFFFFF', fontWeight: 700 }}>{item.value}</span> doc{item.value !== 1 ? 's' : ''}
           </p>
-          <p className="text-gray-600 text-sm">
-            <span className="font-bold">{percentage}%</span> of total
+          <p style={{ color: '#333333', fontSize: 11 }}>
+            <span style={{ color: '#888888', fontWeight: 700 }}>{pct}%</span> of total
           </p>
         </div>
       );
@@ -65,55 +42,39 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ data, isLoading }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-[400px] flex flex-col transition-all hover:shadow-md">
-      <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-        <span className="w-1 h-6 bg-primary rounded-full mr-3" />
-        Document Distribution
-      </h3>
+    <div className="bg-[#0A0A0A] border border-[#111111] p-6 rounded-lg h-[380px] flex flex-col hover:border-white/10 transition-all duration-300">
+      <p className="text-[10px] font-bold text-[#333333] uppercase tracking-[0.18em] mb-6">Distribution</p>
       <div className="flex-1 min-h-0 relative">
         {total === 0 ? (
-          <div className="h-full flex items-center justify-center flex-col text-gray-400">
-            <div className="w-24 h-24 rounded-full border-4 border-dashed border-gray-200 mb-4" />
-            <p className="text-sm font-medium">No documents yet</p>
+          <div className="h-full flex items-center justify-center flex-col gap-3 text-[#1E1E1E]">
+            <div className="w-20 h-20 rounded-full border-2 border-dashed border-[#1A1A1A]" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#222222]">No documents</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={65}
-                outerRadius={100}
-                paddingAngle={0}
-                dataKey="value"
-                stroke="none"
-                animationBegin={0}
-                animationDuration={1000}
-                startAngle={90}
-                endAngle={450}
-              >
-                {data.map((_, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]}
-                    className="hover:opacity-90 transition-opacity cursor-pointer outline-none"
-                  />
+              <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={90}
+                paddingAngle={3} dataKey="value" stroke="none"
+                animationBegin={0} animationDuration={800} startAngle={90} endAngle={450}>
+                {data.map((_, i) => (
+                  <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]}
+                    className="hover:opacity-75 transition-opacity cursor-pointer outline-none" />
                 ))}
               </Pie>
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ fill: 'transparent' }}
-              />
-              <Legend 
-                verticalAlign="bottom" 
-                height={36} 
-                iconType="circle"
-                wrapperStyle={{ paddingTop: '24px', fontSize: '13px', fontWeight: 500 }}
-                formatter={(value) => <span className="text-gray-700">{value}</span>}
-              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+              <Legend verticalAlign="bottom" height={36} iconType="circle"
+                wrapperStyle={{ paddingTop: '20px', fontSize: '9px', fontWeight: 700,
+                  color: '#333333', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                formatter={(v) => <span style={{ color: '#333333' }}>{v}</span>} />
             </PieChart>
           </ResponsiveContainer>
+        )}
+        {/* Center label */}
+        {total > 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ paddingBottom: 36 }}>
+            <p className="text-[9px] font-bold text-[#333333] uppercase tracking-widest">Total</p>
+            <p className="text-2xl font-bold text-white mt-1">{total}</p>
+          </div>
         )}
       </div>
     </div>

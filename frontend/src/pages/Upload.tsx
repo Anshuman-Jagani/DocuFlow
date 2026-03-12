@@ -8,66 +8,49 @@ import clsx from 'clsx';
 
 type DocumentType = 'invoice' | 'resume' | 'contract' | 'receipt';
 
+// Selected accent per type
+const DOC_TYPE_COLORS: Record<DocumentType, string> = {
+  invoice:  'border-[#22D3EE] bg-[#22D3EE]/10 text-[#22D3EE]',
+  receipt:  'border-[#4ADE80] bg-[#4ADE80]/10 text-[#4ADE80]',
+  resume:   'border-[#A78BFA] bg-[#A78BFA]/10 text-[#A78BFA]',
+  contract: 'border-[#FBBF24] bg-[#FBBF24]/10 text-[#FBBF24]',
+};
+
 export default function Upload() {
   const navigate = useNavigate();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [documentType, setDocumentType] = useState<DocumentType>('invoice');
   const [uploadProgress, setUploadProgress] = useState<Map<string, UploadProgress>>(new Map());
   const [isUploading, setIsUploading] = useState(false);
-
   const [resetKey, setResetKey] = useState(0);
 
-  const handleFilesSelected = (files: File[]) => {
-    setSelectedFiles(files);
-  };
+  const handleFilesSelected = (files: File[]) => setSelectedFiles(files);
 
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
-
     setIsUploading(true);
     const progressMap = new Map<string, UploadProgress>();
-
-    // Initialize progress for all files
     selectedFiles.forEach((file) => {
-      progressMap.set(file.name, {
-        fileName: file.name,
-        progress: 0,
-        status: 'uploading',
-      });
+      progressMap.set(file.name, { fileName: file.name, progress: 0, status: 'uploading' });
     });
     setUploadProgress(new Map(progressMap));
 
-    // Upload files sequentially
     for (const file of selectedFiles) {
       try {
         await documentService.uploadDocument(file as File, documentType, (progress) => {
-          progressMap.set(file.name, {
-            fileName: file.name,
-            progress,
-            status: 'uploading',
-          });
+          progressMap.set(file.name, { fileName: file.name, progress, status: 'uploading' });
           setUploadProgress(new Map(progressMap));
         });
-
-        // Mark as success
-        progressMap.set(file.name, {
-          fileName: file.name,
-          progress: 100,
-          status: 'success',
-        });
+        progressMap.set(file.name, { fileName: file.name, progress: 100, status: 'success' });
         setUploadProgress(new Map(progressMap));
       } catch (error: any) {
-        // Mark as error
         progressMap.set(file.name, {
-          fileName: file.name,
-          progress: 0,
-          status: 'error',
+          fileName: file.name, progress: 0, status: 'error',
           error: error.response?.data?.message || 'Upload failed',
         });
         setUploadProgress(new Map(progressMap));
       }
     }
-
     setIsUploading(false);
   };
 
@@ -77,9 +60,8 @@ export default function Upload() {
     setResetKey(prev => prev + 1);
   };
 
-  const allUploadsComplete = uploadProgress.size > 0 && 
+  const allUploadsComplete = uploadProgress.size > 0 &&
     Array.from(uploadProgress.values()).every(p => p.status !== 'uploading');
-
   const successCount = Array.from(uploadProgress.values()).filter(p => p.status === 'success').length;
   const errorCount = Array.from(uploadProgress.values()).filter(p => p.status === 'error').length;
 
@@ -87,15 +69,15 @@ export default function Upload() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Upload Documents</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-white tracking-tight">Upload Documents</h1>
+          <p className="text-[#444444] mt-2">
             Upload your documents for processing. Supported formats: PDF, DOCX, PNG, JPEG
           </p>
         </div>
 
         {/* Document Type Selector */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+        <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6 mb-6">
+          <label className="block text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-3">
             Document Type
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -105,10 +87,10 @@ export default function Upload() {
                 onClick={() => setDocumentType(type)}
                 disabled={isUploading}
                 className={clsx(
-                  'px-4 py-3 rounded-lg border-2 font-medium transition-all capitalize',
+                  'px-4 py-3 rounded-lg border-2 font-medium transition-all capitalize text-sm',
                   documentType === type
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300',
+                    ? DOC_TYPE_COLORS[type]
+                    : 'border-[#111111] bg-black text-[#444444] hover:border-[#5A5A5A] hover:text-white',
                   isUploading && 'opacity-50 cursor-not-allowed'
                 )}
               >
@@ -119,7 +101,7 @@ export default function Upload() {
         </div>
 
         {/* File Uploader */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6 mb-6">
           <FileUploader
             key={resetKey}
             onFilesSelected={handleFilesSelected}
@@ -131,50 +113,46 @@ export default function Upload() {
 
         {/* Upload Progress */}
         {uploadProgress.size > 0 && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Progress</h3>
+          <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6 mb-6">
+            <h3 className="text-[10px] font-bold text-[#444444] uppercase tracking-[0.2em] mb-4">Upload Progress</h3>
             <div className="space-y-3">
               {Array.from(uploadProgress.values()).map((progress) => (
-                <div key={progress.fileName} className="border border-gray-200 rounded-lg p-4">
+                <div key={progress.fileName} className="border border-[#111111] bg-black rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-900 truncate flex-1">
+                    <span className="text-sm font-medium text-white truncate flex-1">
                       {progress.fileName}
                     </span>
                     {progress.status === 'uploading' && (
-                      <Loader className="h-5 w-5 text-blue-500 animate-spin ml-2" />
+                      <Loader className="h-5 w-5 text-[#888888] animate-spin ml-2" />
                     )}
                     {progress.status === 'success' && (
-                      <CheckCircle className="h-5 w-5 text-green-500 ml-2" />
+                      <CheckCircle className="h-5 w-5 text-success ml-2" />
                     )}
                     {progress.status === 'error' && (
-                      <AlertCircle className="h-5 w-5 text-red-500 ml-2" />
+                      <AlertCircle className="h-5 w-5 text-danger ml-2" />
                     )}
                   </div>
                   {progress.status === 'uploading' && (
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-[#1A1A1A] rounded-full h-1.5">
                       <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        className="bg-[#A0A0A0] h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${progress.progress}%` }}
-                      ></div>
+                      />
                     </div>
                   )}
                   {progress.status === 'error' && progress.error && (
-                    <p className="text-sm text-red-600 mt-1">{progress.error}</p>
+                    <p className="text-sm text-danger mt-1">{progress.error}</p>
                   )}
                 </div>
               ))}
             </div>
 
-            {/* Summary */}
             {allUploadsComplete && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-700">
-                  <span className="font-semibold text-green-600">{successCount} successful</span>
+              <div className="mt-4 p-4 bg-black border border-[#111111] rounded-lg">
+                <p className="text-sm text-[#888888]">
+                  <span className="font-semibold text-success">{successCount} successful</span>
                   {errorCount > 0 && (
-                    <>
-                      {' • '}
-                      <span className="font-semibold text-red-600">{errorCount} failed</span>
-                    </>
+                    <>{' • '}<span className="font-semibold text-danger">{errorCount} failed</span></>
                   )}
                 </p>
               </div>
@@ -188,13 +166,13 @@ export default function Upload() {
             <>
               <button
                 onClick={handleReset}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-[#111111] text-[#888888] rounded-lg hover:bg-[#111111] hover:text-white transition-colors"
               >
                 Upload More
               </button>
               <button
                 onClick={() => navigate('/documents')}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-6 py-2 bg-[#0A0A0A] border border-[#A0A0A0] text-[#888888] rounded-lg hover:bg-[#111111] hover:shadow-glow-white-sm transition-colors font-medium"
               >
                 View Documents
               </button>
@@ -204,14 +182,14 @@ export default function Upload() {
               <button
                 onClick={handleReset}
                 disabled={isUploading}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 border border-[#111111] text-[#444444] rounded-lg hover:bg-[#111111] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Clear
               </button>
               <button
                 onClick={handleUpload}
                 disabled={selectedFiles.length === 0 || isUploading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-6 py-2 bg-[#0A0A0A] border border-[#A0A0A0] text-[#888888] rounded-lg hover:bg-[#111111] hover:shadow-glow-white-sm transition-colors font-medium flex items-center disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isUploading && <Loader className="h-4 w-4 mr-2 animate-spin" />}
                 {isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} File${selectedFiles.length !== 1 ? 's' : ''}`}

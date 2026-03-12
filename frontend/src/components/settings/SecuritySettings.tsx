@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '../ui/Toast';
 import api from '../../services/api';
-
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 
@@ -68,9 +67,9 @@ const SecuritySettings = () => {
   };
 
   const getStrengthColor = () => {
-    if (passwordStrength <= 2) return 'bg-red-500';
-    if (passwordStrength <= 3) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (passwordStrength <= 2) return 'bg-danger';
+    if (passwordStrength <= 3) return 'bg-warning';
+    return 'bg-success';
   };
 
   const getStrengthText = () => {
@@ -81,10 +80,10 @@ const SecuritySettings = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Change Password</h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <h3 className="text-lg font-semibold text-white">Change Password</h3>
+        <p className="text-sm text-[#444444] mt-1">
           Ensure your account is using a long, random password to stay secure.
         </p>
       </div>
@@ -117,14 +116,19 @@ const SecuritySettings = () => {
                 {[1, 2, 3, 4, 5].map((level) => (
                   <div
                     key={level}
-                    className={`h-1 flex-1 rounded ${
-                      level <= passwordStrength ? getStrengthColor() : 'bg-gray-200'
+                    className={`h-1 flex-1 rounded transition-colors ${
+                      level <= passwordStrength ? getStrengthColor() : 'bg-[#1A1A1A]'
                     }`}
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-600">
-                Password strength: <span className="font-medium">{getStrengthText()}</span>
+              <p className="text-xs text-[#444444]">
+                Password strength:{' '}
+                <span className={`font-medium ${
+                  passwordStrength <= 2 ? 'text-danger' : passwordStrength <= 3 ? 'text-warning' : 'text-success'
+                }`}>
+                  {getStrengthText()}
+                </span>
               </p>
             </div>
           )}
@@ -145,8 +149,8 @@ const SecuritySettings = () => {
         />
 
         {/* Submit Button */}
-        <div className="pt-4 border-t">
-          <Button type="submit" isLoading={loading}>
+        <div className="pt-4 border-t border-[#111111]">
+          <Button type="submit" variant="gray" isLoading={loading}>
             Update Password
           </Button>
         </div>

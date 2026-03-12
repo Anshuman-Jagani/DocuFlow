@@ -2,44 +2,32 @@ import { type InputHTMLAttributes, forwardRef } from 'react';
 import { cn } from '../../utils/helpers';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  helperText?: string;
+  label?: string; error?: string; helperText?: string;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, helperText, type = 'text', ...props }, ref) => {
-    return (
-      <div className="w-full">
-        {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
-            {props.required && <span className="text-danger ml-1">*</span>}
-          </label>
+  ({ className, label, error, helperText, type = 'text', ...props }, ref) => (
+    <div className="w-full">
+      {label && (
+        <label className="block text-[10px] font-bold text-[#333333] tracking-[0.15em] uppercase mb-1.5">
+          {label}
+          {props.required && <span className="text-[#F87171] ml-1">*</span>}
+        </label>
+      )}
+      <input type={type} ref={ref}
+        className={cn(
+          'w-full px-3 py-2.5 bg-[#0A0A0A] border rounded-md text-white placeholder-[#333333] outline-none transition-all duration-200 text-sm',
+          'focus:border-white/30 focus:shadow-glow-white-sm disabled:opacity-40 disabled:cursor-not-allowed',
+          error ? 'border-[#F87171]/40 focus:border-[#F87171]/60' : 'border-[#1A1A1A]',
+          className
         )}
-        <input
-          type={type}
-          ref={ref}
-          className={cn(
-            'w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed',
-            error
-              ? 'border-danger focus:ring-danger'
-              : 'border-gray-300 hover:border-gray-400',
-            className
-          )}
-          {...props}
-        />
-        {error && (
-          <p className="mt-1 text-sm text-danger">{error}</p>
-        )}
-        {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-500">{helperText}</p>
-        )}
-      </div>
-    );
-  }
+        {...props}
+      />
+      {error && <p className="mt-1.5 text-[11px] text-[#F87171]">{error}</p>}
+      {helperText && !error && <p className="mt-1.5 text-[11px] text-[#333333]">{helperText}</p>}
+    </div>
+  )
 );
 
 Input.displayName = 'Input';
-
 export default Input;

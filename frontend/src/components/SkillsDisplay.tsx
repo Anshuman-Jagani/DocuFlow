@@ -69,7 +69,7 @@ const SkillsDisplay: React.FC<SkillsDisplayProps> = ({ skills }) => {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'Programming & Frameworks':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-white text-white border-blue-200';
       case 'Databases':
         return 'bg-green-50 text-green-700 border-green-200';
       case 'Cloud & DevOps':
@@ -77,7 +77,7 @@ const SkillsDisplay: React.FC<SkillsDisplayProps> = ({ skills }) => {
       case 'Soft Skills':
         return 'bg-pink-50 text-pink-700 border-pink-200';
       default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
+        return 'bg-[#0A0A0A] text-[#555555] border-[#111111]';
     }
   };
 
@@ -85,8 +85,8 @@ const SkillsDisplay: React.FC<SkillsDisplayProps> = ({ skills }) => {
     <div className="space-y-6">
       {categories.map((category, index) => (
         <div key={index}>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <span className="w-1 h-4 bg-indigo-600 rounded-full"></span>
+          <h3 className="text-sm font-semibold text-[#555555] mb-3 flex items-center gap-2">
+            <span className="w-1 h-4 bg-white rounded-full"></span>
             {category.category}
           </h3>
           <div className="flex flex-wrap gap-2">

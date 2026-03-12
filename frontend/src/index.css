@@ -1,70 +1,170 @@
+@import "@fontsource/plus-jakarta-sans";
+@import "@fontsource/space-grotesk";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Base ──────────────────────────────────────────────── */
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: "Plus Jakarta Sans", "system-ui", sans-serif;
     margin: 0;
     min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Text selection — white highlight */
+  ::selection {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Space Grotesk", "system-ui", sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  /* Scrollbar — ultra thin, near invisible */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #222222; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #444444; }
+
+  /* Global smooth radius reset */
+  button, input, select, textarea { border-radius: 6px; }
+}
+
+/* ─── Components ─────────────────────────────────────────── */
+@layer components {
+
+  /* Primary button — white outline, white glow on hover */
+  .btn-primary {
+    @apply bg-white text-black font-bold px-5 py-2.5 rounded-md
+           transition-all duration-200 hover:bg-white/90
+           active:scale-[0.97] tracking-tight;
+  }
+
+  /* Ghost button — white border, no fill */
+  .btn-ghost {
+    @apply bg-transparent border border-white/20 text-white/70 font-semibold px-5 py-2.5 rounded-md
+           transition-all duration-200
+           hover:border-white/60 hover:text-white hover:shadow-glow-white-sm
+           active:scale-[0.97];
+  }
+
+  /* Card — dark surface with animated white border glow on hover */
+  .card-base {
+    @apply bg-[#0A0A0A] border border-[#1E1E1E] rounded-lg
+           transition-all duration-300
+           hover:border-white/10 hover:shadow-card-hover;
+  }
+
+  /* Input — razor dark, white focus ring */
+  .input-base {
+    @apply bg-[#0A0A0A] border border-[#222222] text-white rounded-md px-4 py-2.5
+           outline-none transition-all duration-200
+           focus:border-white/30 focus:shadow-glow-white-sm
+           placeholder:text-[#444444] text-sm;
+  }
+
+  /* Subtle divider */
+  .divider { @apply border-t border-[#1A1A1A]; }
+
+  /* Badge */
+  .badge-white {
+    @apply px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest
+           bg-white/5 border border-white/10 text-white/60 rounded;
   }
 }
 
+/* ─── Utilities ──────────────────────────────────────────── */
 @layer utilities {
+  /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  /* White glow hover — attach to any element */
+  .hover-glow {
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
   }
-  
-  @keyframes slide-in {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(255,255,255,0.07), 0 0 1px rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.15) !important;
   }
 
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  /* Lift on hover */
+  .hover-lift {
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
   }
-  
-  .animate-slide-in {
-    animation: slide-in 0.3s ease-out;
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.9);
   }
 
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
+  /* Floating vector icon base style */
+  .float-icon {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.035;
+    color: #ffffff;
   }
 
-  .animate-slide-up {
-    animation: slide-up 0.3s ease-out;
+  /* White text label — tracked uppercase */
+  .label-xs {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #555555;
   }
 }
 
-/* Smooth transitions for interactive elements */
+/* ─── Keyframes ──────────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-14px) rotate(3deg); }
+  66%       { transform: translateY(-7px) rotate(-2deg); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0px rgba(255,255,255,0); }
+  50%       { box-shadow: 0 0 18px rgba(255,255,255,0.1); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ─── Global interactive feel ────────────────────────────── */
 button, a, input, select, textarea {
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
 }

@@ -108,8 +108,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   return (
     <div className="relative">
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center gap-2 bg-white border border-[#111111] rounded-lg px-3 py-2">
+          <svg className="w-5 h-5 text-[#555555]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           
@@ -121,7 +121,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             placeholder="Start date"
           />
           
-          <span className="text-gray-400">→</span>
+          <span className="text-[#555555]">→</span>
           
           <input
             type="date"
@@ -134,7 +134,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
         <button
           onClick={() => setShowPresets(!showPresets)}
-          className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="px-3 py-2 text-sm font-medium text-[#555555] bg-white border border-[#111111] rounded-lg hover:bg-[#0A0A0A] transition-colors"
         >
           Presets
         </button>
@@ -142,7 +142,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         {(startDate || endDate) && (
           <button
             onClick={clearDates}
-            className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-3 py-2 text-sm font-medium text-[#555555] bg-white border border-[#111111] rounded-lg hover:bg-[#0A0A0A] transition-colors"
           >
             Clear
           </button>
@@ -155,12 +155,12 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             className="fixed inset-0 z-10"
             onClick={() => setShowPresets(false)}
           />
-          <div className="absolute z-20 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+          <div className="absolute z-20 mt-2 w-48 bg-white rounded-lg shadow-lg border border-[#111111] py-1">
             {presets.map((preset) => (
               <button
                 key={preset.label}
                 onClick={() => handlePresetClick(preset)}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                className="w-full text-left px-4 py-2 text-sm text-[#555555] hover:bg-[#0A0A0A] transition-colors"
               >
                 {preset.label}
               </button>

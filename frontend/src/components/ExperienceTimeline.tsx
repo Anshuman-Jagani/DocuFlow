@@ -34,20 +34,20 @@ const ExperienceTimeline: React.FC<ExperienceTimelineProps> = ({ experiences }) 
         <div key={index} className="relative pl-8 pb-6 last:pb-0">
           {/* Timeline line */}
           {index !== experiences.length - 1 && (
-            <div className="absolute left-2 top-6 bottom-0 w-0.5 bg-gray-200"></div>
+            <div className="absolute left-2 top-6 bottom-0 w-0.5 bg-[#0A0A0A]"></div>
           )}
 
           {/* Timeline dot */}
           <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 ${
-            exp.is_current ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300'
+            exp.is_current ? 'bg-white border-white' : 'bg-white border-[#111111]'
           }`}></div>
 
           {/* Content */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+          <div className="bg-white rounded-lg border border-[#111111] p-4 hover:shadow-sm transition-shadow">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">{exp.position}</h3>
-                <p className="text-sm font-medium text-indigo-600">{exp.company}</p>
+                <h3 className="text-lg font-semibold text-[#555555]">{exp.position}</h3>
+                <p className="text-sm font-medium text-white">{exp.company}</p>
               </div>
               {exp.is_current && (
                 <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
@@ -56,7 +56,7 @@ const ExperienceTimeline: React.FC<ExperienceTimelineProps> = ({ experiences }) 
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+            <div className="flex items-center gap-4 text-sm text-[#555555] mb-3">
               <div className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -74,16 +74,16 @@ const ExperienceTimeline: React.FC<ExperienceTimelineProps> = ({ experiences }) 
             </div>
 
             {exp.description && (
-              <p className="text-sm text-gray-700 mb-3">{exp.description}</p>
+              <p className="text-sm text-[#555555] mb-3">{exp.description}</p>
             )}
 
             {exp.responsibilities && exp.responsibilities.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-gray-900 mb-2">Key Responsibilities:</p>
+                <p className="text-sm font-medium text-[#555555] mb-2">Key Responsibilities:</p>
                 <ul className="space-y-1">
                   {exp.responsibilities.map((resp, idx) => (
-                    <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
-                      <span className="text-indigo-600 mt-1.5">•</span>
+                    <li key={idx} className="text-sm text-[#555555] flex items-start gap-2">
+                      <span className="text-white mt-1.5">•</span>
                       <span>{resp}</span>
                     </li>
                   ))}

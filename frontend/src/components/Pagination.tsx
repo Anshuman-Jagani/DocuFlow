@@ -1,164 +1,84 @@
 import React from 'react';
 
 interface PaginationProps {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  itemsPerPage: number;
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange: (itemsPerPage: number) => void;
+  currentPage: number; totalPages: number; totalItems: number;
+  itemsPerPage: number; onPageChange: (page: number) => void; onItemsPerPageChange: (itemsPerPage: number) => void;
 }
 
-const Pagination: React.FC<PaginationProps> = ({
-  currentPage,
-  totalPages,
-  totalItems,
-  itemsPerPage,
-  onPageChange,
-  onItemsPerPageChange,
-}) => {
+const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, totalItems, itemsPerPage, onPageChange, onItemsPerPageChange }) => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
-    const maxVisible = 7;
-
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 4) {
-        for (let i = 1; i <= 5; i++) pages.push(i);
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 3) {
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-
+    if (totalPages <= 7) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
+    else if (currentPage <= 4) { for (let i = 1; i <= 5; i++) pages.push(i); pages.push('...'); pages.push(totalPages); }
+    else if (currentPage >= totalPages - 3) { pages.push(1); pages.push('...'); for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i); }
+    else { pages.push(1); pages.push('...'); for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i); pages.push('...'); pages.push(totalPages); }
     return pages;
   };
 
+  const navBtn = 'relative inline-flex items-center px-2 py-2 text-[#333333] bg-black border-r border-[#111111] hover:bg-[#0A0A0A] hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed';
+
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-b-lg">
+    <div className="flex items-center justify-between border-t border-[#111111] bg-black px-4 py-3 sm:px-6 rounded-b-lg">
+      {/* Mobile */}
       <div className="flex flex-1 justify-between sm:hidden">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Previous
-        </button>
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Next
-        </button>
+        {[['Previous', currentPage - 1, currentPage === 1], ['Next', currentPage + 1, currentPage === totalPages]].map(([label, page, disabled]) => (
+          <button key={label as string} onClick={() => onPageChange(page as number)} disabled={disabled as boolean}
+            className="inline-flex items-center rounded-md border border-[#111111] bg-[#0A0A0A] px-4 py-2 text-xs font-medium text-[#555555] hover:bg-[#111111] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+            {label}
+          </button>
+        ))}
       </div>
 
+      {/* Desktop */}
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{startItem}</span> to{' '}
-            <span className="font-medium">{endItem}</span> of{' '}
-            <span className="font-medium">{totalItems}</span> results
+          <p className="text-[11px] text-[#333333]">
+            Showing <span className="font-bold text-white">{startItem}</span> — <span className="font-bold text-white">{endItem}</span> of <span className="font-bold text-white">{totalItems}</span>
           </p>
-          
           <div className="flex items-center gap-2">
-            <label htmlFor="itemsPerPage" className="text-sm text-gray-700">
-              Per page:
-            </label>
-            <select
-              id="itemsPerPage"
-              value={itemsPerPage}
-              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-              className="rounded-md border-gray-300 py-1 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
+            <label className="text-[10px] font-bold text-[#222222] uppercase tracking-widest">Per page</label>
+            <select value={itemsPerPage} onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              className="rounded-md border border-[#111111] bg-[#0A0A0A] text-white py-1 pl-3 pr-6 text-xs focus:border-white/20 focus:outline-none transition-colors">
+              {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
         </div>
 
-        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-          <button
-            onClick={() => onPageChange(1)}
-            disabled={currentPage === 1}
-            className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="sr-only">First</span>
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M15.79 14.77a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L11.832 10l3.938 3.71a.75.75 0 01.02 1.06zm-6 0a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L5.832 10l3.938 3.71a.75.75 0 01.02 1.06z" clipRule="evenodd" />
-            </svg>
-          </button>
-
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="sr-only">Previous</span>
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-            </svg>
-          </button>
+        <nav className="isolate inline-flex -space-x-px rounded-md overflow-hidden border border-[#111111]">
+          {/* First, Prev, Pages, Next, Last */}
+          {[
+            { label: '«', page: 1, disabled: currentPage === 1 },
+            { label: '‹', page: currentPage - 1, disabled: currentPage === 1 },
+          ].map(({ label, page, disabled }) => (
+            <button key={label} onClick={() => onPageChange(page)} disabled={disabled} className={navBtn}>
+              <span className="text-xs font-bold px-1">{label}</span>
+            </button>
+          ))}
 
           {getPageNumbers().map((page, index) => (
             <React.Fragment key={index}>
               {page === '...' ? (
-                <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">
-                  ...
-                </span>
+                <span className="relative inline-flex items-center px-4 py-2 text-[10px] text-[#222222] bg-black border-r border-[#111111]">···</span>
               ) : (
-                <button
-                  onClick={() => onPageChange(page as number)}
-                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                    currentPage === page
-                      ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                      : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
-                  }`}
-                >
+                <button onClick={() => onPageChange(page as number)}
+                  className={`relative inline-flex items-center px-4 py-2 text-xs font-bold border-r border-[#111111] transition-colors ${currentPage === page ? 'bg-white text-black' : 'bg-black text-[#444444] hover:bg-[#0A0A0A] hover:text-white'}`}>
                   {page}
                 </button>
               )}
             </React.Fragment>
           ))}
 
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="sr-only">Next</span>
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-            </svg>
-          </button>
-
-          <button
-            onClick={() => onPageChange(totalPages)}
-            disabled={currentPage === totalPages}
-            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="sr-only">Last</span>
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.21 14.77a.75.75 0 01.02-1.06L14.168 10 10.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02zm-6 0a.75.75 0 01.02-1.06L8.168 10 4.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-            </svg>
-          </button>
+          {[
+            { label: '›', page: currentPage + 1, disabled: currentPage === totalPages },
+            { label: '»', page: totalPages, disabled: currentPage === totalPages },
+          ].map(({ label, page, disabled }) => (
+            <button key={label} onClick={() => onPageChange(page)} disabled={disabled} className={navBtn}>
+              <span className="text-xs font-bold px-1">{label}</span>
+            </button>
+          ))}
         </nav>
       </div>
     </div>
