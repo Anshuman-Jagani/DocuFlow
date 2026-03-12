@@ -6,6 +6,9 @@ import ExperienceTimeline from '../components/ExperienceTimeline';
 import SkillsDisplay from '../components/SkillsDisplay';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../hooks/useToast';
+import PDFViewer from '../components/PDFViewer';
+import api from '../services/api';
+import { useRef } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 
 const ResumeDetail: React.FC = () => {
@@ -16,6 +19,8 @@ const ResumeDetail: React.FC = () => {
   const [resume, setResume] = useState<Resume | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [documentBlobUrl, setDocumentBlobUrl] = useState<string | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => { if (id) fetchResume(); }, [id]);
 
@@ -23,7 +28,20 @@ const ResumeDetail: React.FC = () => {
     try {
       setLoading(true);
       const response = await resumeApi.getResumeById(id!);
-      setResume(response.data);
+      const resumeData = response.data;
+      setResume(resumeData);
+
+      if (resumeData.document?.id) {
+        try {
+          const docResponse = await api.get(`/api/documents/${resumeData.document.id}/download`, {
+            responseType: 'blob',
+          });
+          const blobUrl = URL.createObjectURL(docResponse.data);
+          if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+          blobUrlRef.current = blobUrl;
+          setDocumentBlobUrl(blobUrl);
+        } catch { /* ignore */ }
+      }
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Failed to fetch resume', 'error');
       navigate('/resumes');
@@ -55,6 +73,10 @@ const ResumeDetail: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    return () => { if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current); };
+  }, []);
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -82,18 +104,18 @@ const ResumeDetail: React.FC = () => {
           <div className="flex items-center gap-4">
             <button onClick={() => navigate('/resumes')}
               className="p-2 hover:bg-[#111111] rounded-lg transition-colors">
-              <svg className="w-6 h-6 text-[#444444]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-[#888888]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
               <h1 className="text-3xl font-bold text-white tracking-tight">{resume.candidate_name}</h1>
-              <p className="mt-1 text-sm text-[#444444]">{resume.email}</p>
+              <p className="mt-1 text-sm text-[#888888]">{resume.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={handleDownload}
-              className="px-4 py-2 text-sm font-medium text-[#888888] bg-[#0A0A0A] border border-[#111111] rounded-lg hover:bg-[#111111] hover:text-white transition-colors">
+              className="px-4 py-2 text-sm font-medium text-[#888888] bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg hover:bg-[#111111] hover:text-white transition-colors">
               Download
             </button>
             <button onClick={() => setShowDeleteModal(true)}
@@ -105,11 +127,11 @@ const ResumeDetail: React.FC = () => {
 
         {/* Match Score Banner */}
         {resume.match_score !== undefined && resume.match_score !== null && (
-          <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
+          <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-[#444444] uppercase tracking-widest mb-1">Overall Match Score</h2>
-                <p className="text-xs text-[#444444]">Based on skills, experience, and education</p>
+                <h2 className="text-sm font-bold text-[#888888] uppercase tracking-widest mb-1">Overall Match Score</h2>
+                <p className="text-xs text-[#888888]">Based on skills, experience, and education</p>
               </div>
               <div className="text-right">
                 <div className={`text-5xl font-bold ${scoreColor}`}>{resume.match_score}%</div>
@@ -121,31 +143,45 @@ const ResumeDetail: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Document Preview */}
+          <div className="lg:col-span-1">
+            {documentBlobUrl && resume.document ? (
+              <PDFViewer fileUrl={documentBlobUrl} filename={resume.document.original_filename} />
+            ) : (
+              <div className="bg-[#0A0A0A] rounded-lg border border-[#1A1A1A] p-12 text-center aspect-[3/4] flex flex-col items-center justify-center">
+                <svg className="w-16 h-16 mx-auto text-[#444444] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-[#888888]">{resume.document ? 'Processing preview...' : 'No document scan available'}</p>
+              </div>
+            )}
+          </div>
+
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-1 space-y-6">
             {resume.summary && (
-              <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
-                <h2 className="text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-4">Professional Summary</h2>
+              <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
+                <h2 className="text-[10px] font-bold text-[#888888] uppercase tracking-widest mb-4">Professional Summary</h2>
                 <p className="text-[#888888] leading-relaxed">{resume.summary}</p>
               </div>
             )}
             {resume.experience && resume.experience.length > 0 && (
-              <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
-                <h2 className="text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-4">Work Experience</h2>
+              <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
+                <h2 className="text-[10px] font-bold text-[#888888] uppercase tracking-widest mb-4">Work Experience</h2>
                 <ExperienceTimeline experiences={resume.experience} />
               </div>
             )}
             {resume.education && resume.education.length > 0 && (
-              <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
-                <h2 className="text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-4">Education</h2>
+              <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
+                <h2 className="text-[10px] font-bold text-[#888888] uppercase tracking-widest mb-4">Education</h2>
                 <div className="space-y-4">
                   {resume.education.map((edu, index) => (
                     <div key={index} className="border-l-2 border-[#A0A0A0] pl-4">
                       <h3 className="text-base font-semibold text-white">{edu.degree}</h3>
                       <p className="text-sm font-medium text-[#888888]">{edu.institution}</p>
-                      {edu.field_of_study && <p className="text-sm text-[#444444] mt-1">{edu.field_of_study}</p>}
-                      <div className="flex items-center gap-4 mt-2 text-xs text-[#444444]">
+                      {edu.field_of_study && <p className="text-sm text-[#888888] mt-1">{edu.field_of_study}</p>}
+                      <div className="flex items-center gap-4 mt-2 text-xs text-[#888888]">
                         {edu.graduation_year && <span>{edu.graduation_year}</span>}
                         {edu.gpa && <span>GPA: {edu.gpa}</span>}
                       </div>
@@ -155,8 +191,8 @@ const ResumeDetail: React.FC = () => {
               </div>
             )}
             {resume.certifications && resume.certifications.length > 0 && (
-              <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
-                <h2 className="text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-4">Certifications</h2>
+              <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
+                <h2 className="text-[10px] font-bold text-[#888888] uppercase tracking-widest mb-4">Certifications</h2>
                 <div className="flex flex-wrap gap-2">
                   {resume.certifications.map((cert, index) => (
                     <span key={index} className="px-3 py-1.5 bg-success/10 text-success text-sm font-medium rounded-lg border border-success/20">
@@ -170,39 +206,39 @@ const ResumeDetail: React.FC = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
-              <h2 className="text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-4">Contact Information</h2>
+            <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
+              <h2 className="text-[10px] font-bold text-[#888888] uppercase tracking-widest mb-4">Contact Information</h2>
               <div className="space-y-4">
                 {resume.email && (
                   <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-[#444444] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-[#888888] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    <div><p className="text-xs text-[#444444]">Email</p><p className="text-sm text-white">{resume.email}</p></div>
+                    <div><p className="text-xs text-[#888888]">Email</p><p className="text-sm text-white">{resume.email}</p></div>
                   </div>
                 )}
                 {resume.phone && (
                   <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-[#444444] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-[#888888] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
-                    <div><p className="text-xs text-[#444444]">Phone</p><p className="text-sm text-white">{resume.phone}</p></div>
+                    <div><p className="text-xs text-[#888888]">Phone</p><p className="text-sm text-white">{resume.phone}</p></div>
                   </div>
                 )}
                 {resume.location && (
                   <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-[#444444] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-[#888888] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <div><p className="text-xs text-[#444444]">Location</p><p className="text-sm text-white">{resume.location}</p></div>
+                    <div><p className="text-xs text-[#888888]">Location</p><p className="text-sm text-white">{resume.location}</p></div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
-              <h2 className="text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-4">Experience Summary</h2>
+            <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
+              <h2 className="text-[10px] font-bold text-[#888888] uppercase tracking-widest mb-4">Experience Summary</h2>
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-purple-400/10 border border-purple-400/20 rounded-lg">
                   <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,25 +247,25 @@ const ResumeDetail: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-white">{resume.total_experience_years}</p>
-                  <p className="text-sm text-[#444444]">Years of Experience</p>
+                  <p className="text-sm text-[#888888]">Years of Experience</p>
                 </div>
               </div>
             </div>
 
             {resume.languages && resume.languages.length > 0 && (
-              <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
-                <h2 className="text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-4">Languages</h2>
+              <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
+                <h2 className="text-[10px] font-bold text-[#888888] uppercase tracking-widest mb-4">Languages</h2>
                 <div className="flex flex-wrap gap-2">
                   {resume.languages.map((lang, index) => (
-                    <span key={index} className="px-3 py-1.5 bg-black border border-[#111111] text-[#888888] text-sm font-medium rounded-lg">{lang}</span>
+                    <span key={index} className="px-3 py-1.5 bg-[#111111] border border-[#1A1A1A] text-[#888888] text-sm font-medium rounded-lg">{lang}</span>
                   ))}
                 </div>
               </div>
             )}
 
             {resume.skills && resume.skills.length > 0 && (
-              <div className="bg-[#0A0A0A] border border-[#111111] rounded-lg p-6">
-                <h2 className="text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-4">Skills</h2>
+              <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg p-6">
+                <h2 className="text-[10px] font-bold text-[#888888] uppercase tracking-widest mb-4">Skills</h2>
                 <SkillsDisplay skills={resume.skills} />
               </div>
             )}
@@ -239,10 +275,10 @@ const ResumeDetail: React.FC = () => {
         {/* Delete Modal */}
         <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Resume">
           <div className="space-y-4">
-            <p className="text-[#444444]">Are you sure you want to delete this resume? This action cannot be undone.</p>
+            <p className="text-[#888888]">Are you sure you want to delete this resume? This action cannot be undone.</p>
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-sm font-medium text-[#444444] border border-[#111111] rounded-lg hover:bg-[#111111] hover:text-white transition-colors">
+                className="px-4 py-2 text-sm font-medium text-[#888888] border border-[#1A1A1A] rounded-lg hover:bg-[#111111] hover:text-white transition-colors">
                 Cancel
               </button>
               <button onClick={handleDelete}

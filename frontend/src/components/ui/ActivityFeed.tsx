@@ -13,9 +13,9 @@ const activityColors = {
   export:  'text-white/40 bg-white/5',
 };
 const docTypeColors = {
-  invoice:  'bg-white/5 text-white/50',
+  invoice:  'bg-[#22D3EE]/10 text-[#22D3EE]',
   receipt:  'bg-[#4ADE80]/10 text-[#4ADE80]',
-  resume:   'bg-white/5 text-white/40',
+  resume:   'bg-[#A78BFA]/10 text-[#A78BFA]',
   contract: 'bg-[#FBBF24]/10 text-[#FBBF24]',
 };
 

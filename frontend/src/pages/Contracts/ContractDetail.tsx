@@ -5,6 +5,8 @@ import type { Contract } from '../../types/contract';
 import PDFViewer from '../../components/PDFViewer';
 import Modal from '../../components/ui/Modal';
 import { useToast } from '../../hooks/useToast';
+import api from '../../services/api';
+import { useRef } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 
 const ContractDetail: React.FC = () => {
@@ -15,6 +17,8 @@ const ContractDetail: React.FC = () => {
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [documentBlobUrl, setDocumentBlobUrl] = useState<string | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -26,7 +30,20 @@ const ContractDetail: React.FC = () => {
     try {
       setLoading(true);
       const response = await contractApi.getContractById(id!);
-      setContract(response.data);
+      const contractData = response.data;
+      setContract(contractData);
+
+      if (contractData.document?.id) {
+        try {
+          const docResponse = await api.get(`/api/documents/${contractData.document.id}/download`, {
+            responseType: 'blob',
+          });
+          const blobUrl = URL.createObjectURL(docResponse.data);
+          if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+          blobUrlRef.current = blobUrl;
+          setDocumentBlobUrl(blobUrl);
+        } catch { /* ignore */ }
+      }
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Failed to fetch contract', 'error');
       navigate('/contracts');
@@ -69,11 +86,15 @@ const ContractDetail: React.FC = () => {
     });
   };
 
+  useEffect(() => {
+    return () => { if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current); };
+  }, []);
+
   const getRiskColor = (score: number | null) => {
-    if (score === null) return 'text-[#555555]';
-    if (score > 70) return 'text-red-600';
-    if (score > 40) return 'text-yellow-600';
-    return 'text-green-600';
+    if (score === null) return 'text-white';
+    if (score > 70) return 'text-[#F87171]';
+    if (score > 40) return 'text-[#FBBF24]';
+    return 'text-[#4ADE80]';
   };
 
   if (loading) {
@@ -98,14 +119,14 @@ const ContractDetail: React.FC = () => {
               onClick={() => navigate('/contracts')}
               className="p-2 hover:bg-[#0A0A0A] rounded-lg transition-colors"
             >
-              <svg className="w-6 h-6 text-[#555555]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-[#555555]">{contract.contract_title || 'Untitled Contract'}</h1>
+              <h1 className="text-3xl font-bold text-white">{contract.contract_title || 'Untitled Contract'}</h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="px-2 py-0.5 bg-white text-white text-xs font-medium rounded-full">
+                <span className="px-2 py-0.5 bg-[#0A0A0A] text-white text-xs font-medium rounded-full">
                   {contract.contract_type || 'General Contract'}
                 </span>
                 {contract.requires_legal_review && (
@@ -119,7 +140,7 @@ const ContractDetail: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleDownload}
-              className="px-4 py-2 text-sm font-medium text-[#555555] bg-white border border-[#111111] rounded-lg hover:bg-[#0A0A0A] transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg hover:bg-[#0A0A0A] transition-colors"
             >
               Download
             </button>
@@ -135,14 +156,14 @@ const ContractDetail: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* PDF Viewer */}
           <div className="lg:col-span-1">
-            {contract.document?.file_url ? (
-              <PDFViewer fileUrl={contract.document.file_url} filename={contract.document.original_filename} />
+            {documentBlobUrl ? (
+              <PDFViewer fileUrl={documentBlobUrl} filename={contract.document?.original_filename || ''} />
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-[#111111] p-12 text-center h-full flex flex-col items-center justify-center">
-                <svg className="w-16 h-16 text-[#555555] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-12 text-center h-full flex flex-col items-center justify-center min-h-[600px]">
+                <svg className="w-16 h-16 text-white mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p className="text-[#555555]">Document preview unavailable</p>
+                <p className="text-white">Document preview unavailable</p>
               </div>
             )}
           </div>
@@ -150,13 +171,13 @@ const ContractDetail: React.FC = () => {
           {/* Analysis Details */}
           <div className="lg:col-span-1 space-y-6">
             {/* Risk Overview */}
-            <div className="bg-white rounded-lg shadow-sm border border-[#111111] p-6">
-              <h2 className="text-lg font-semibold text-[#555555] mb-4">Risk Assessment</h2>
+            <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Risk Assessment</h2>
               <div className="flex items-center gap-6">
                 <div className="relative w-24 h-24">
                   <svg className="w-full h-full" viewBox="0 0 36 36">
                     <path
-                      className="text-[#555555]"
+                      className="text-white"
                       strokeDasharray="100, 100"
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
@@ -177,29 +198,29 @@ const ContractDetail: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-[#555555]">Overall risk score calculated by AI based on clauses, durations, and obligations identified in the document.</p>
+                  <p className="text-sm text-white">Overall risk score calculated by AI based on clauses, durations, and obligations identified in the document.</p>
                 </div>
               </div>
             </div>
 
             {/* Contract Dates & Parties */}
-            <div className="bg-white rounded-lg shadow-sm border border-[#111111] p-6">
+            <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-xs font-semibold text-[#555555] uppercase tracking-wider mb-2">Effective Date</h3>
-                  <p className="text-sm font-medium text-[#555555]">{formatDate(contract.effective_date)}</p>
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-2">Effective Date</h3>
+                  <p className="text-sm font-medium text-white">{formatDate(contract.effective_date)}</p>
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-[#555555] uppercase tracking-wider mb-2">Expiration Date</h3>
-                  <p className="text-sm font-medium text-[#555555]">{formatDate(contract.expiration_date)}</p>
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-2">Expiration Date</h3>
+                  <p className="text-sm font-medium text-white">{formatDate(contract.expiration_date)}</p>
                 </div>
                 <div className="col-span-2">
-                  <h3 className="text-xs font-semibold text-[#555555] uppercase tracking-wider mb-2">Parties Involved</h3>
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-2">Parties Involved</h3>
                   <div className="space-y-2">
                     {contract.parties.map((party, idx) => (
                       <div key={idx} className="flex justify-between items-center bg-[#0A0A0A] px-3 py-2 rounded-lg">
-                        <span className="text-sm font-medium text-[#555555]">{party.name}</span>
-                        <span className="text-xs text-[#555555] bg-[#0A0A0A] px-2 py-0.5 rounded uppercase">{party.role}</span>
+                        <span className="text-sm font-medium text-white">{party.name}</span>
+                        <span className="text-xs text-white bg-[#0A0A0A] px-2 py-0.5 rounded uppercase">{party.role}</span>
                       </div>
                     ))}
                   </div>
@@ -208,8 +229,8 @@ const ContractDetail: React.FC = () => {
             </div>
 
             {/* Red Flags & Obligations */}
-            <div className="bg-white rounded-lg shadow-sm border border-[#111111] p-6">
-              <h2 className="text-lg font-semibold text-[#555555] mb-4">Key AI Insights</h2>
+            <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Key AI Insights</h2>
               <div className="space-y-4">
                 {contract.red_flags && contract.red_flags.length > 0 && (
                   <div>
@@ -237,12 +258,12 @@ const ContractDetail: React.FC = () => {
                                 </span>
                               )}
                               {category && (
-                                <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#0A0A0A] text-[#555555]">
+                                <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#0A0A0A] text-white">
                                   {category}
                                 </span>
                               )}
                             </div>
-                            <p className="text-[#555555]">{description}</p>
+                            <p className="text-white">{description}</p>
                           </div>
                         );
                       })}
@@ -255,7 +276,7 @@ const ContractDetail: React.FC = () => {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                       Key Obligations
                     </h3>
-                    <ul className="list-disc list-inside text-sm text-[#555555] space-y-1 pl-1">
+                    <ul className="list-disc list-inside text-sm text-white space-y-1 pl-1">
                       {contract.key_obligations.map((ob, i) => (
                         <li key={i}>{typeof ob === 'object' ? (ob as any).description || JSON.stringify(ob) : String(ob)}</li>
                       ))}
@@ -267,9 +288,9 @@ const ContractDetail: React.FC = () => {
             
             {/* Summary */}
             {contract.summary && (
-              <div className="bg-white rounded-lg shadow-sm border border-[#111111] p-6">
-                <h2 className="text-lg font-semibold text-[#555555] mb-4">Executive Summary</h2>
-                <p className="text-sm text-[#555555] leading-relaxed">{contract.summary}</p>
+              <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Executive Summary</h2>
+                <p className="text-sm text-white leading-relaxed">{contract.summary}</p>
               </div>
             )}
           </div>
@@ -278,9 +299,9 @@ const ContractDetail: React.FC = () => {
         {/* Delete Modal */}
         <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Contract">
           <div className="space-y-4">
-            <p className="text-[#555555]">Are you sure you want to delete this contract? This action will permanently remove all analyzed data.</p>
+            <p className="text-white">Are you sure you want to delete this contract? This action will permanently remove all analyzed data.</p>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 text-sm font-medium text-[#555555] bg-white border border-[#111111] rounded-lg">Cancel</button>
+              <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 text-sm font-medium text-white bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg">Cancel</button>
               <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg">Delete Permanently</button>
             </div>
           </div>
