@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import Button from '../components/ui/Button';
 import documentService from '../services/documentService';
 import type { Document } from '../types';
 import { FileText, Download, Trash2, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -102,12 +103,14 @@ export default function Documents() {
             <h1 className="text-3xl font-bold text-[#555555]">Documents</h1>
             <p className="text-[#555555] mt-1">Manage and view all your uploaded documents</p>
           </div>
-          <button
+          <Button
             onClick={() => navigate('/upload')}
-            className="px-4 py-2 bg-white text-white rounded-lg hover:bg-white transition-colors"
+            variant="primary"
+            size="md"
+            className="font-bold uppercase tracking-widest"
           >
             Upload Document
-          </button>
+          </Button>
         </div>
 
         {/* Search and Filters */}

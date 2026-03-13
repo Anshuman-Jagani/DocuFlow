@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import Button from '../components/ui/Button';
 import FileUploader from '../components/ui/FileUploader';
 import documentService, { type UploadProgress } from '../services/documentService';
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
@@ -164,36 +165,40 @@ export default function Upload() {
         <div className="flex justify-end space-x-3">
           {allUploadsComplete ? (
             <>
-              <button
+              <Button
                 onClick={handleReset}
-                className="px-6 py-2 border border-[#111111] text-[#888888] rounded-lg hover:bg-[#111111] hover:text-white transition-colors"
+                variant="gray"
+                className="px-6 py-2"
               >
                 Upload More
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => navigate('/documents')}
-                className="px-6 py-2 bg-[#0A0A0A] border border-[#A0A0A0] text-[#888888] rounded-lg hover:bg-[#111111] hover:shadow-glow-white-sm transition-colors font-medium"
+                variant="primary"
+                className="px-6 py-2"
               >
                 View Documents
-              </button>
+              </Button>
             </>
           ) : (
             <>
-              <button
+              <Button
                 onClick={handleReset}
                 disabled={isUploading}
-                className="px-6 py-2 border border-[#111111] text-[#444444] rounded-lg hover:bg-[#111111] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                variant="gray"
+                className="px-6 py-2"
               >
                 Clear
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleUpload}
                 disabled={selectedFiles.length === 0 || isUploading}
-                className="px-6 py-2 bg-[#0A0A0A] border border-[#A0A0A0] text-[#888888] rounded-lg hover:bg-[#111111] hover:shadow-glow-white-sm transition-colors font-medium flex items-center disabled:opacity-40 disabled:cursor-not-allowed"
+                variant="primary"
+                className="px-6 py-2"
+                isLoading={isUploading}
               >
-                {isUploading && <Loader className="h-4 w-4 mr-2 animate-spin" />}
                 {isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} File${selectedFiles.length !== 1 ? 's' : ''}`}
-              </button>
+              </Button>
             </>
           )}
         </div>
