@@ -6,6 +6,8 @@ import type { SortOrder } from '../../types/invoice';
 import Pagination from '../../components/Pagination';
 import { useToast } from '../../hooks/useToast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import documentService from '../../services/documentService';
+import { Download, FileDown } from 'lucide-react';
 
 const inputClass = 'w-full px-3 py-2 bg-[#0A0A0A] border border-[#111111] rounded-lg text-white placeholder-[#5A5A5A] focus:outline-none focus:border-[#A0A0A0] transition-colors text-sm';
 const labelClass = 'block text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-1';
@@ -33,6 +35,33 @@ const ContractList: React.FC = () => {
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Failed to fetch contracts', 'error');
     } finally { setLoading(false); }
+  };
+  const handleExport = async () => {
+    try {
+      showToast('Preparing export...', 'info');
+      const response = await contractApi.getContracts(filters, 1, 1000, sortField, sortOrder);
+      const data = response.data || [];
+      const csvContent = "data:text/csv;charset=utf-8," + 
+        ["Title,Type,Expiry Date,Risk Score,Status"].join(",") + "\n" +
+        data.map((c: any) => [
+          `"${c.contract_title}"`, c.contract_type, c.expiration_date, c.risk_score, c.status
+        ].join(",")).join("\n");
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `contracts_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showToast('Contracts exported successfully', 'success');
+    } catch { showToast('Failed to export contracts', 'error'); }
+  };
+  const handleDownload = async (id: string, fileName: string) => {
+    try {
+      await documentService.downloadDocument(id, fileName);
+      showToast('File downloaded successfully', 'success');
+    } catch { showToast('Failed to download document', 'error'); }
   };
 
   const handleSort = (field: ContractSortField) => {
@@ -86,9 +115,15 @@ const ContractList: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Contracts</h1>
-          <p className="mt-1 text-sm text-[#444444]">Monitor contract durations, renewal dates, and risk assessments.</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Contracts</h1>
+            <p className="mt-1 text-sm text-[#444444]">Monitor contract durations, renewal dates, and risk assessments.</p>
+          </div>
+          <button onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0A0A0A] border border-[#111111] text-[#888888] font-medium rounded-lg hover:bg-[#111111] hover:text-white transition-colors text-sm">
+            <FileDown className="w-4 h-4" /> Export CSV
+          </button>
         </div>
 
         {/* Filters */}
@@ -183,10 +218,16 @@ const ContractList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">{getRiskBadge(contract.risk_score)}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(contract)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${contract.id}`); }}
-                            className="text-[#888888] hover:text-white transition-colors font-bold uppercase tracking-wider text-xs">
-                            Analyze
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button onClick={(e) => { e.stopPropagation(); handleDownload(contract.document_id, `contract_${contract.id}.pdf`); }}
+                              className="text-[#888888] hover:text-white transition-colors p-1" title="Download Original">
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${contract.id}`); }}
+                              className="text-[#888888] hover:text-white transition-colors font-bold uppercase tracking-wider text-xs">
+                              Analyze
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

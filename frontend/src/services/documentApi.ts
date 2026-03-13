@@ -58,7 +58,7 @@ export const invoiceApi = {
     if (filters.minAmount) params.append('minAmount', filters.minAmount);
     if (filters.maxAmount) params.append('maxAmount', filters.maxAmount);
 
-    const response = await api.get(`/api/invoices/export?${params.toString()}`, {
+    const response = await api.get(`/api/invoices/export/csv?${params.toString()}`, {
       responseType: 'blob',
     });
     
@@ -213,6 +213,28 @@ export const receiptApi = {
   deleteReceipt: async (id: string) => {
     const response = await api.delete(`/api/receipts/${id}`);
     return response.data;
+  },
+  
+  exportReceipts: async (filters: Partial<ReceiptFilters> = {}) => {
+    const params = new URLSearchParams();
+    if (filters.search) params.append('merchant_name', filters.search);
+    if (filters.category) params.append('expense_category', filters.category);
+    if (filters.dateFrom) params.append('start_date', filters.dateFrom);
+    if (filters.dateTo) params.append('end_date', filters.dateTo);
+    if (filters.isBusiness !== undefined) params.append('is_business_expense', filters.isBusiness.toString());
+
+    const response = await api.get(`/api/receipts/export/csv?${params.toString()}`, {
+      responseType: 'blob',
+    });
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `receipts_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 };
 

@@ -6,6 +6,8 @@ import Pagination from '../components/Pagination';
 import DateRangePicker from '../components/DateRangePicker';
 import { useToast } from '../hooks/useToast';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import documentService from '../services/documentService';
+import { Download } from 'lucide-react';
 
 const inputClass = 'w-full px-3 py-2 bg-[#0A0A0A] border border-[#111111] rounded-lg text-white placeholder-[#5A5A5A] focus:outline-none focus:border-[#A0A0A0] transition-colors text-sm';
 const labelClass = 'block text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-1';
@@ -52,6 +54,14 @@ const InvoiceList: React.FC = () => {
   const handleExport = async () => {
     try { await invoiceApi.exportInvoices(filters); showToast('Invoices exported successfully', 'success'); }
     catch (error: any) { showToast(error.response?.data?.message || 'Failed to export invoices', 'error'); }
+  };
+  const handleDownload = async (id: string, fileName: string) => {
+    try {
+      await documentService.downloadDocument(id, fileName);
+      showToast('File downloaded successfully', 'success');
+    } catch (error: any) {
+      showToast('Failed to download document', 'error');
+    }
   };
 
   const formatCurrency = (amount: number | null, currency: string) => {
@@ -173,7 +183,11 @@ const InvoiceList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#444444]">{invoice.due_date ? formatDate(invoice.due_date) : '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{formatCurrency(invoice.total_amount, invoice.currency)}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(invoice.status)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                          <button onClick={(e) => { e.stopPropagation(); handleDownload(invoice.document_id, `invoice_${invoice.invoice_number || invoice.id}.pdf`); }}
+                            className="text-[#888888] hover:text-white transition-colors p-1" title="Download Original">
+                            <Download className="w-4 h-4" />
+                          </button>
                           <button onClick={(e) => { e.stopPropagation(); navigate(`/invoices/${invoice.id}`); }}
                             className="text-[#888888] hover:text-white transition-colors font-bold uppercase tracking-wider text-xs">
                             View
