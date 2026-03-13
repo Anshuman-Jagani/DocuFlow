@@ -6,8 +6,6 @@ import ResumeCard from '../components/ResumeCard';
 import Pagination from '../components/Pagination';
 import { useToast } from '../hooks/useToast';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import documentService from '../services/documentService';
-import { Download, FileDown } from 'lucide-react';
 
 const inputClass = 'w-full px-3 py-2 bg-[#0A0A0A] border border-[#111111] rounded-lg text-white placeholder-[#5A5A5A] focus:outline-none focus:border-[#A0A0A0] transition-colors';
 const labelClass = 'block text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-1';
@@ -43,33 +41,6 @@ const ResumeList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-  const handleExport = async () => {
-    try {
-      showToast('Preparing export...', 'info');
-      const response = await resumeApi.getResumes(filters, 1, 1000, sortField, sortOrder);
-      const data = response.data || [];
-      const csvContent = "data:text/csv;charset=utf-8," + 
-        ["Name,Email,Phone,Experience,Score,Skills"].join(",") + "\n" +
-        data.map((r: any) => [
-          `"${r.candidate_name}"`, r.email, r.phone, r.total_experience_years, r.match_score, `"${(r.skills || []).join(', ')}"`
-        ].join(",")).join("\n");
-      
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `resumes_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      showToast('Resumes exported successfully', 'success');
-    } catch { showToast('Failed to export resumes', 'error'); }
-  };
-  const handleDownload = async (id: string, fileName: string) => {
-    try {
-      await documentService.downloadDocument(id, fileName);
-      showToast('File downloaded successfully', 'success');
-    } catch { showToast('Failed to download document', 'error'); }
   };
 
   const handleSort = (field: ResumeSortField) => {
@@ -126,21 +97,14 @@ const ResumeList: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">Resumes</h1>
             <p className="mt-1 text-sm text-[#444444]">Browse and filter candidate resumes</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-[#0A0A0A] border border-[#111111] text-[#888888] font-medium rounded-lg hover:bg-[#111111] hover:text-white transition-colors text-sm">
-              <FileDown className="w-4 h-4" /> Export CSV
-            </button>
-          </div>
-        </div>
 
-        {/* View Toggle */}
-        <div className="flex items-center justify-end">
+          {/* View Toggle */}
           <div className="flex items-center gap-1 bg-[#0A0A0A] border border-[#111111] rounded-lg p-1">
             <button
               onClick={() => setViewMode('grid')}
@@ -298,16 +262,10 @@ const ResumeList: React.FC = () => {
                             ) : <span className="text-sm text-[#444444]">-</span>}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
-                              <button onClick={(e) => { e.stopPropagation(); handleDownload(resume.document_id, `resume_${resume.candidate_name}.pdf`); }}
-                                className="text-[#888888] hover:text-white transition-colors p-1" title="Download Original">
-                                <Download className="w-4 h-4" />
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); navigate(`/resumes/${resume.id}`); }}
-                                className="text-[#888888] hover:text-white transition-colors font-bold uppercase tracking-wider text-xs">
-                                View
-                              </button>
-                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); navigate(`/resumes/${resume.id}`); }}
+                              className="text-[#888888] hover:text-white transition-colors font-bold uppercase tracking-wider text-xs">
+                              View
+                            </button>
                           </td>
                         </tr>
                       ))}

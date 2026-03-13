@@ -5,8 +5,7 @@ import type { Receipt, ReceiptFilters, ReceiptStats } from '../../types/receipt'
 import Pagination from '../../components/Pagination';
 import { useToast } from '../../hooks/useToast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import documentService from '../../services/documentService';
-import { Search, Calendar, DollarSign, Tag, Receipt as ReceiptIcon, ShoppingBag, TrendingUp, Download, FileDown } from 'lucide-react';
+import { Search, Calendar, DollarSign, Tag, Receipt as ReceiptIcon, ShoppingBag, TrendingUp } from 'lucide-react';
 
 const ReceiptList: React.FC = () => {
   const navigate = useNavigate();
@@ -35,18 +34,6 @@ const ReceiptList: React.FC = () => {
     try { const r = await receiptApi.getReceiptStats(); setStats(r.data); }
     catch { console.error('Error fetching receipt stats'); }
   };
-  const handleExport = async () => {
-    try {
-      await receiptApi.exportReceipts(filters);
-      showToast('Receipts exported successfully', 'success');
-    } catch { showToast('Failed to export receipts', 'error'); }
-  };
-  const handleDownload = async (id: string, fileName: string) => {
-    try {
-      await documentService.downloadDocument(id, fileName);
-      showToast('File downloaded successfully', 'success');
-    } catch { showToast('Failed to download document', 'error'); }
-  };
 
   const handleFilterChange = (key: keyof ReceiptFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -73,10 +60,6 @@ const ReceiptList: React.FC = () => {
             <p className="mt-1 text-sm text-[#444444]">Track and categorize your expenses with AI assistance.</p>
           </div>
           <div className="flex gap-3">
-            <button onClick={handleExport}
-              className="px-4 py-2 bg-[#0A0A0A] border border-[#111111] text-[#888888] rounded-lg hover:bg-[#111111] hover:text-white transition-colors flex items-center gap-2 font-medium text-sm">
-              <FileDown className="w-4 h-4" /> Export CSV
-            </button>
             <button onClick={() => navigate('/receipts/analytics')}
               className="px-4 py-2 bg-[#0A0A0A] border border-[#111111] text-[#888888] rounded-lg hover:bg-[#111111] hover:text-white transition-colors flex items-center gap-2 font-medium text-sm">
               <TrendingUp className="w-4 h-4" /> View Analytics
@@ -150,11 +133,7 @@ const ReceiptList: React.FC = () => {
                       <ReceiptIcon className="w-12 h-12" />
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); handleDownload(receipt.document_id, `receipt_${receipt.id}.pdf`); }}
-                      className="p-1.5 bg-black/50 backdrop-blur rounded border border-white/20 text-white hover:bg-black/70 transition-colors" title="Download">
-                      <Download className="w-3.5 h-3.5" />
-                    </button>
+                  <div className="absolute top-2 right-2">
                     <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded backdrop-blur border ${receipt.is_business_expense ? 'bg-white/10 border-white/30 text-white' : 'bg-[#0A0A0A]/80 border-[#111111] text-[#444444]'}`}>
                       {receipt.is_business_expense ? 'Business' : 'Personal'}
                     </span>
