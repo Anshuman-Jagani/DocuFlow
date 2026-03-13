@@ -8,17 +8,17 @@ import { formatDistanceToNow } from 'date-fns';
 import clsx from 'clsx';
 
 const documentTypeColors = {
-  invoice: 'bg-white text-white',
-  receipt: 'bg-green-100 text-green-700',
-  resume: 'bg-purple-100 text-purple-700',
-  contract: 'bg-yellow-100 text-yellow-700',
+  invoice: 'bg-blue-900/40 text-blue-300 border border-blue-500/30',
+  receipt: 'bg-pink-900/40 text-pink-300 border border-pink-500/30',
+  resume: 'bg-purple-900/40 text-purple-300 border border-purple-500/30',
+  contract: 'bg-yellow-900/40 text-yellow-300 border border-yellow-500/30',
 };
 
 const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  processing: 'bg-white text-white',
-  completed: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
+  pending: 'bg-amber-900/40 text-amber-300 border border-amber-500/30',
+  processing: 'bg-blue-900/40 text-blue-300 border border-blue-500/30 animate-pulse',
+  completed: 'bg-emerald-900/40 text-emerald-300 border border-emerald-500/30',
+  failed: 'bg-rose-900/40 text-rose-300 border border-rose-500/30',
 };
 
 export default function Documents() {

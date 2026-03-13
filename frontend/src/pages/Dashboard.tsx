@@ -16,8 +16,8 @@ const Dashboard = () => {
   useEffect(() => { refreshAll(); }, []);
 
   const docTypes = overview ? [
-    { label: 'Invoices',  value: overview.summary.documents_by_type.invoice,  color: 'text-[#22D3EE]' },
-    { label: 'Receipts',  value: overview.summary.documents_by_type.receipt,  color: 'text-[#4ADE80]' },
+    { label: 'Invoices',  value: overview.summary.documents_by_type.invoice,  color: 'text-[#0EA5E9]' },
+    { label: 'Receipts',  value: overview.summary.documents_by_type.receipt,  color: 'text-[#D946EF]' },
     { label: 'Resumes',   value: overview.summary.documents_by_type.resume,   color: 'text-[#A78BFA]' },
     { label: 'Contracts', value: overview.summary.documents_by_type.contract, color: 'text-[#FBBF24]' },
   ] : [];
