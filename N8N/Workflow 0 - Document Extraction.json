@@ -1,0 +1,571 @@
+{
+  "name": "Workflow 0 - Document Extraction",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  d.id, \n  d.user_id, \n  d.document_type, \n  d.original_filename, \n  d.file_path, \n  d.mime_type,\n  u.access_token\nFROM documents d\nINNER JOIN users u ON d.user_id = u.id\nWHERE d.processing_status = 'pending'\nORDER BY d.upload_date ASC\nLIMIT 10;",
+        "options": {}
+      },
+      "id": "ada472cf-33a6-43b5-aa14-0076d58c3345",
+      "name": "Get Pending Documents",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1504,
+        240
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id }}",
+              "operator": {
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6a63d71f-3a75-4c6e-b4fe-fb80bd61153a",
+      "name": "IF Documents Exist",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1280,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE documents \nSET processing_status = 'processing' \nWHERE id = '{{ $json.id }}';",
+        "options": {
+          "queryReplacement": "="
+        }
+      },
+      "id": "c493175a-dbe7-4fd5-92a8-afca946b4def",
+      "name": "Set Processing",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1056,
+        144
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://docuflow-api-r9y6.onrender.com/api/documents/{{ $('IF Documents Exist').item.json.id }}/download",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get Pending Documents').item.json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "1bc95932-d415-4b1d-9bbc-b73df194b182",
+      "name": "Download File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -832,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Get Pending Documents').item.json;\nconst mimeType = data.mime_type || '';\nconst filename = data.original_filename || '';\n\nlet needsOCR = false;\n\nif (mimeType.startsWith('image/') || filename.match(/\\.(png|jpg|jpeg)$/i)) {\n  needsOCR = true;\n}\n\nreturn {\n  json: {\n    document_id: data.id,\n    needs_ocr: needsOCR\n  }\n};"
+      },
+      "id": "e647b50d-a1e9-4f9b-b1ed-9d8e7dd193f7",
+      "name": "Detect File Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.needs_ocr }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "8ef5e94c-0f50-4a9f-b216-60a01bc6be12"
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "3b5916c1-98d7-4ec9-b850-1bc9881cab20",
+      "name": "IF Needs OCR",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "={{ $('Download File').item.binary.data}}",
+        "options": {}
+      },
+      "id": "b33c9d0e-87dd-44d0-a7f1-18759bc53895",
+      "name": "Extract PDF/DOCX",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a",
+              "name": "extracted_text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e201f054-0a3b-4c47-8272-f3add56b1adb",
+      "name": "Set Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        288,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ocr.space/parse/image",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "K81342601288957"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "base64Image",
+              "inputDataFieldName": "={{ $('Download File').item.binary.data}}"
+            },
+            {
+              "name": "language",
+              "value": "eng"
+            },
+            {
+              "name": "scale",
+              "value": "true"
+            },
+            {
+              "name": "detectOrientation",
+              "value": "true"
+            },
+            {
+              "name": "isTable",
+              "value": "true"
+            },
+            {
+              "name": "OCREngine",
+              "value": "2"
+            },
+            {
+              "name": "filetype",
+              "value": "pdf"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "e87b5f85-3fd6-4d8a-92d5-cbe23dd0b04f",
+      "name": "OCR Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const data = item.json;\n\n  let text = \"\";\n\n  // Case 1 — ParsedText at root (your current response)\n  if (data.ParsedText) {\n    text = data.ParsedText;\n  }\n\n  // Case 2 — Standard OCR.space structure\n  else if (data.ParsedResults && data.ParsedResults.length > 0) {\n    text = data.ParsedResults[0].ParsedText || \"\";\n  }\n\n  // Case 3 — error message\n  else if (data.ErrorMessage) {\n    text = `[OCR ERROR: ${data.ErrorMessage}]`;\n  }\n\n  else {\n    text = \"[OCR FAILED]\";\n  }\n\n  // clean formatting\n  text = text\n    .replace(/\\r\\n/g, \"\\n\")\n    .replace(/\\n{3,}/g, \"\\n\\n\")\n    .trim();\n\n  return {\n    json: {\n      extracted_text: text\n    }\n  };\n});"
+      },
+      "id": "8d5922d6-e089-4ffe-9b5c-0c1a640ae3ee",
+      "name": "Parse OCR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE documents\nSET extracted_text = $1,\n    processing_status = 'processing'\nWHERE id = $2;",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify($json.extracted_text)}}, {{$ ('Get Pending Documents').item.json.id }}"
+        }
+      },
+      "id": "0741439a-03cb-4db3-981c-49218f0f1d95",
+      "name": "Save to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        512,
+        144
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "79168eaa-3d66-4d18-9d04-18195f0431e9",
+      "name": "No Documents",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1056,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Download File').item.binary.data.fileExtension}}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "76d5847b-ce1e-4ae8-a091-22434a815446"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4d896343-3d0f-4bac-8c85-f6c2ea725842",
+                    "leftValue": "={{ $('Download File').item.binary.data.fileExtension}}",
+                    "rightValue": "docx",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        48
+      ],
+      "id": "b1ee7896-ba94-481b-a155-3d0cefe4f19b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        64,
+        144
+      ],
+      "id": "28dea69b-0ac6-4f80-866e-7392468a5681",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "549a9d25-8171-4e8c-a84f-22dc6c7c8450",
+      "name": "Every 1 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1728,
+        240
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Pending Documents": {
+      "main": [
+        [
+          {
+            "node": "IF Documents Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Documents Exist": {
+      "main": [
+        [
+          {
+            "node": "Set Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Processing": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Detect File Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect File Type": {
+      "main": [
+        [
+          {
+            "node": "IF Needs OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Needs OCR": {
+      "main": [
+        [
+          {
+            "node": "OCR Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF/DOCX": {
+      "main": [
+        [
+          {
+            "node": "Set Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Text": {
+      "main": [
+        [
+          {
+            "node": "Save to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OCR Image": {
+      "main": [
+        [
+          {
+            "node": "Parse OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse OCR": {
+      "main": [
+        [
+          {
+            "node": "Save to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF/DOCX",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Set Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 1 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3ca1450d-c0fd-4fc4-8d6c-9a3d5aa4b4f0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae5f943fd07d49f2070c4a24bb2e5d781e1b58fb656b12bf392c28258184fb4b"
+  },
+  "id": "DL52L9v7-oi1Wv4umyo4X",
+  "tags": []
+}

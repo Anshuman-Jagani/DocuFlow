@@ -1,0 +1,366 @@
+{
+  "name": "Workflow 1 - Invoice Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT d.id, d.user_id, d.document_type, d.extracted_text\nFROM documents d\nWHERE d.processing_status = 'processing'\nAND d.document_type = 'invoice'\nAND d.extracted_text IS NOT NULL\nAND d.extracted_text != ''\nORDER BY d.upload_date ASC\nLIMIT 5;",
+        "options": {}
+      },
+      "id": "4af244bc-df6b-4965-9f85-18cf76af6b51",
+      "name": "Get Pending Invoices",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -544,
+        48
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id }}",
+              "operator": {
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9502b54b-90e7-4d87-b1b6-2ad21b1f8de0",
+      "name": "IF Invoices Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE documents SET processing_status = 'processing' WHERE id = '{{ $json.id }}';",
+        "options": {}
+      },
+      "id": "563b2919-c49c-471f-b9fc-385056a71713",
+      "name": "Set Processing",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -96,
+        -48
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\n\nlet invoiceData;\n\ntry {\n  // remove markdown if model added ```json ```\n  const cleaned = raw.replace(/```json|```/g, \"\").trim();\n\n  invoiceData = JSON.parse(cleaned);\n\n} catch (error) {\n  throw new Error(\"Failed to parse LLM JSON: \" + error.message);\n}\n\nreturn {\n  json: {\n    invoice_data: invoiceData,\n    document_id: $('Get Pending Invoices').item.json.id,\n    user_id: $('Get Pending Invoices').item.json.user_id\n  }\n};"
+      },
+      "id": "40193f30-9870-4e18-8781-5eecacc87195",
+      "name": "Parse LLM Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate invoice data\nconst data = $input.item.json.invoice_data;\nconst errors = [];\nconst warnings = [];\n\n// Required fields check\nif (!data.invoice_number) errors.push('Missing invoice number');\nif (!data.vendor_name) errors.push('Missing vendor name');\nif (!data.total_amount) errors.push('Missing total amount');\n\n// Validate line items calculations\nif (data.line_items && data.line_items.length > 0) {\n  let calculatedSubtotal = 0;\n  data.line_items.forEach((item, idx) => {\n    const itemTotal = item.quantity * item.unit_price;\n    if (Math.abs(itemTotal - item.amount) > 0.01) {\n      warnings.push(`Line item ${idx + 1} amount mismatch`);\n    }\n    calculatedSubtotal += item.amount;\n  });\n  \n  // Check subtotal\n  if (data.subtotal && Math.abs(calculatedSubtotal - data.subtotal) > 0.01) {\n    warnings.push('Subtotal does not match line items sum');\n  }\n  \n  // Check total = subtotal + tax\n  const calculatedTotal = (data.subtotal || 0) + (data.tax || 0);\n  if (data.total_amount && Math.abs(calculatedTotal - data.total_amount) > 0.01) {\n    warnings.push('Total amount does not match subtotal + tax');\n  }\n}\n\n// Calculate confidence score\nlet confidenceScore = 100;\nconfidenceScore -= errors.length * 20;\nconfidenceScore -= warnings.length * 10;\nconfidenceScore = Math.max(0, Math.min(100, confidenceScore));\n\n// Determine validation status\nlet validationStatus = 'valid';\nif (confidenceScore < 50) validationStatus = 'invalid';\nelse if (confidenceScore < 80) validationStatus = 'needs_review';\n\nreturn {\n  json: {\n    invoice_data: data,\n    document_id: $input.item.json.document_id,\n    user_id: $input.item.json.user_id,\n    validation: {\n      status: validationStatus,\n      confidence_score: confidenceScore,\n      errors: errors,\n      warnings: warnings\n    }\n  }\n};"
+      },
+      "id": "dccc365f-a9f4-4247-9927-ed7205e53ef6",
+      "name": "Validate Invoice Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO invoices (\n  id, user_id, document_id, invoice_number, invoice_date, due_date,\n  vendor_name, vendor_address, vendor_email,\n  customer_name, customer_address,\n  line_items, subtotal, tax, total_amount, currency,\n  payment_terms, status, validation_status, validation_errors, confidence_score\n) VALUES (\n  gen_random_uuid(),\n  '{{ $json.user_id }}',\n  '{{ $json.document_id }}',\n  '{{ $json.invoice_data.invoice_number }}',\n  {{ $json.invoice_data.invoice_date ? \"'\" + $json.invoice_data.invoice_date + \"'\" : \"NULL\" }},\n  {{ $json.invoice_data.due_date ? \"'\" + $json.invoice_data.due_date + \"'\" : \"NULL\" }},\n  '{{ $json.invoice_data.vendor_name.replace(/'/g, \"''\") }}',\n  {{ $json.invoice_data.vendor_address ? \"'\" + $json.invoice_data.vendor_address.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $json.invoice_data.vendor_email ? \"'\" + $json.invoice_data.vendor_email + \"'\" : \"NULL\" }},\n  {{ $json.invoice_data.customer_name ? \"'\" + $json.invoice_data.customer_name.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $json.invoice_data.customer_address ? \"'\" + $json.invoice_data.customer_address.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  '{{ JSON.stringify($json.invoice_data.line_items || []) }}'::jsonb,\n  {{ $json.invoice_data.subtotal || 0 }},\n  {{ $json.invoice_data.tax || 0 }},\n  {{ $json.invoice_data.total_amount || 0 }},\n  '{{ $json.invoice_data.currency || \"USD\" }}',\n  {{ $json.invoice_data.payment_terms ? \"'\" + $json.invoice_data.payment_terms.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  'pending',\n  '{{ $json.validation.status }}',\n  '{{ JSON.stringify($json.validation.errors.concat($json.validation.warnings)) }}'::jsonb,\n  {{ $json.validation.confidence_score }}\n);",
+        "options": {}
+      },
+      "id": "0ded88c0-4e90-49eb-b09a-52759f8fa1a2",
+      "name": "Insert Invoice to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        928,
+        -48
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://docuflow-api-r9y6.onrender.com/api/webhooks/invoice-processed",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  document_id: $('Validate Invoice Data').item.json.document_id,\n  processed_data: {\n    invoice_number: $('Validate Invoice Data').item.json.invoice_data.invoice_number,\n    vendor_name: $('Validate Invoice Data').item.json.invoice_data.vendor?.name || $('Validate Invoice Data').item.json.invoice_data.vendor_name,\n    total_amount: parseFloat($('Validate Invoice Data').item.json.invoice_data.totals?.total || $('Validate Invoice Data').item.json.invoice_data.total_amount || 0),\n    currency: $('Validate Invoice Data').item.json.invoice_data.currency || 'USD',\n    issue_date: $('Validate Invoice Data').item.json.invoice_data.invoice_date || $('Validate Invoice Data').item.json.invoice_data.date,\n    due_date: $('Validate Invoice Data').item.json.invoice_data.due_date,\n    status: $('Validate Invoice Data').item.json.validation.status || 'needs_review',\n    tax_amount: parseFloat($('Validate Invoice Data').item.json.invoice_data.totals?.tax || $('Validate Invoice Data').item.json.invoice_data.tax || 0),\n    line_items: $('Validate Invoice Data').item.json.invoice_data.line_items || []\n  },\n  validation: {\n    confidence_score: $('Validate Invoice Data').item.json.validation.status === 'valid' ? 95 : ($('Validate Invoice Data').item.json.validation.status === 'invalid' ? 50 : 75),\n    status: $('Validate Invoice Data').item.json.validation.status || 'needs_review',\n    errors: $('Validate Invoice Data').item.json.validation.errors || []\n  },\n  timestamp: new Date().toISOString()\n}) }}",
+        "options": {}
+      },
+      "id": "ef41835e-2926-4ffc-a8bc-b33050211e75",
+      "name": "Send to Backend Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1152,
+        -48
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "repoPXXztd1eybbw",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE documents SET processing_status = 'completed', processed_at = NOW() WHERE id = '{{ $('Get Pending Invoices').item.json.id }}';",
+        "options": {}
+      },
+      "id": "7f3ed70c-eb28-4da9-acb5-cea3395faef9",
+      "name": "Set Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1376,
+        -48
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "56aa7c3c-7c22-4a9c-825e-91c46cf2ed04",
+      "name": "No Invoices",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('IF Invoices Found').item.json.extracted_text }}",
+        "options": {
+          "systemMessage": "=You are a highly accurate invoice data extraction agent.\nYour task is to extract structured invoice information from unstructured text.\nOutput Requirements\nReturn ONLY valid JSON.\nDo NOT include markdown, explanations, comments, or extra text.\nEnsure the JSON is syntactically correct and properly formatted.\nUse exactly the field names and structure defined below.\nIf a value is missing or not found:\nUse null for unknown scalar values.\nUse an empty array [] for missing line items.\nDates must be formatted as YYYY-MM-DD.\nAll numeric values must be numbers (not strings).\nCurrency must always be \"USD\" unless explicitly stated otherwise.\nRequired JSON Schema\n{\n\"invoice_number\": \"string\",\n\"invoice_date\": \"YYYY-MM-DD\",\n\"due_date\": \"YYYY-MM-DD\",\n\"vendor_name\": \"string\",\n\"vendor_address\": \"string\",\n\"vendor_email\": \"string or null\",\n\"customer_name\": \"string\",\n\"customer_address\": \"string\",\n\"line_items\": [\n{\n\"description\": \"string\",\n\"quantity\": number,\n\"unit_price\": number,\n\"amount\": number\n}\n],\n\"subtotal\": number,\n\"tax\": number,\n\"total_amount\": number,\n\"currency\": \"USD\",\n\"payment_terms\": \"string\"\n}\nExtraction Rules\nPreserve text exactly where applicable (names, addresses, descriptions).\nCalculate nothing unless explicitly present.\nDo not infer missing financial values.\nLine item amounts must match the document values.\nIf multiple emails appear, select the vendor’s email.\nInput\nExtract invoice data from the following text:\n{{ $json.extracted_text }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        128,
+        -48
+      ],
+      "id": "1376a9a1-0285-435c-9673-97b9b8b8d471",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.1-8b-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        208,
+        176
+      ],
+      "id": "c22f3575-d083-46b4-becb-9ffcf0fc6c40",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NpzfO7Xh947muyKs",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "7df3aacc-769c-499a-96bf-5b1c4f37fa36",
+      "name": "Every 1 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -768,
+        48
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Pending Invoices": {
+      "main": [
+        [
+          {
+            "node": "IF Invoices Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Invoices Found": {
+      "main": [
+        [
+          {
+            "node": "Set Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Processing": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Response": {
+      "main": [
+        [
+          {
+            "node": "Validate Invoice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "Insert Invoice to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Invoice to DB": {
+      "main": [
+        [
+          {
+            "node": "Send to Backend Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Backend Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 1 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "92ff9551-403d-468e-be00-393756688afa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae5f943fd07d49f2070c4a24bb2e5d781e1b58fb656b12bf392c28258184fb4b"
+  },
+  "id": "1Eo1lgYWk0IQXblmhQrsx",
+  "tags": []
+}

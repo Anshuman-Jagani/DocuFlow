@@ -1,0 +1,449 @@
+{
+  "name": "Workflow 3 - Contract Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/1 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "944f9c3d-40a1-4e46-9c5d-8193d934f1f2",
+      "name": "Every 1 Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        7264,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT d.id, d.user_id, d.document_type, d.extracted_text\nFROM documents d\nWHERE d.processing_status = 'processing'\nAND d.document_type = 'contract'\nAND d.extracted_text IS NOT NULL\nAND d.extracted_text != ''\nORDER BY d.upload_date ASC\nLIMIT 5;",
+        "options": {}
+      },
+      "id": "166eb419-e542-4279-875a-7a319e380497",
+      "name": "Get Pending Contracts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        7488,
+        832
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id }}",
+              "operator": {
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ad97575b-e6d3-4473-99db-0c5004914777",
+      "name": "IF Contracts Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        7712,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE documents SET processing_status = 'processing' WHERE id = '{{ $json.id }}';",
+        "options": {}
+      },
+      "id": "ef1f05c0-7edc-436c-be6b-3980995bcdb4",
+      "name": "Set Processing",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        7936,
+        736
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\n\nlet contractData;\n\ntry {\n  const cleaned = raw.replace(/```json|```/g, \"\").trim();\n  contractData = JSON.parse(cleaned);\n} catch (error) {\n  throw new Error(\"Failed to parse contract LLM JSON: \" + error.message);\n}\n\nreturn {\n  json: {\n    contract_data: contractData,\n    document_id: $('Get Pending Contracts').item.json.id,\n    user_id: $('Get Pending Contracts').item.json.user_id\n  }\n};"
+      },
+      "id": "c8a47319-73f6-4271-818d-1f25611073ad",
+      "name": "Parse Contract Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8512,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\nconst contractInfo = $('Parse Contract Response').item.json;\n\nlet riskAnalysis;\n\ntry {\n  const cleaned = raw.replace(/```json|```/g, \"\").trim();\n  riskAnalysis = JSON.parse(cleaned);\n} catch (error) {\n  // Safe fallback if risk LLM fails\n  riskAnalysis = {\n    risk_score: 60,\n    overall_assessment: 'medium_risk',\n    red_flags: [],\n    missing_clauses: [],\n    favorable_terms: [],\n    unfavorable_terms: [],\n    compliance_concerns: [],\n    recommendations: [],\n    status: 'needs_review'\n  };\n}\n\n// Validate risk score range\nif (riskAnalysis.risk_score < 0 || riskAnalysis.risk_score > 100) {\n  riskAnalysis.risk_score = Math.max(0, Math.min(100, riskAnalysis.risk_score));\n}\n\nreturn {\n  json: {\n    contract_data: contractInfo.contract_data,\n    risk_analysis: riskAnalysis,\n    document_id: contractInfo.document_id,\n    user_id: contractInfo.user_id\n  }\n};"
+      },
+      "id": "670e0378-d3cd-434d-b07c-b023a08be59d",
+      "name": "Parse Risk Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9088,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const contract = $input.item.json.contract_data || {};\nconst risk = $input.item.json.risk_analysis || {};\nconst document_id = $input.item.json.document_id;\nconst user_id = $input.item.json.user_id;\n\n// Helper: filter placeholder names\nconst isValid = (v) => v && String(v).trim() !== '' && !/^_+$/.test(String(v).trim());\n\n// Helper: safe date - returns YYYY-MM-DD or null\nconst safeDate = (d) => {\n  if (!d || d === 'null') return null;\n  const parsed = new Date(d);\n  return isNaN(parsed.getTime()) ? null : parsed.toISOString().split('T')[0];\n};\n\n// Clean parties\nconst parties = (contract.parties || []).filter(p => isValid(p.name));\n\n// Clean obligations\nconst key_obligations = (contract.obligations || []).filter(o => isValid(o.party));\n\n// Clean red flags - remove fallback error entries\nconst red_flags = (risk.red_flags || []).filter(f =>\n  !(f.clause_reference === 'N/A' && f.description === 'Risk analysis failed - manual review required')\n);\n\n// Risk values\nconst risk_score = risk.risk_score ?? null;\nconst requires_legal_review = (risk_score !== null && risk_score > 70) ||\n  red_flags.some(f => f.severity === 'critical');\n\n// Confidence score\nlet confidence_score = 80;\nif (risk_score < 30 && red_flags.length === 0) confidence_score = 95;\nelse if (risk_score > 70 || red_flags.length > 3) confidence_score = 60;\nelse if (risk_score < 50 && red_flags.length <= 2) confidence_score = 85;\n\n// Validation status\nlet status = 'needs_review';\nif (risk_score > 75 || red_flags.some(f => f.severity === 'critical')) status = 'requires_legal_counsel';\nelse if (risk_score !== null && risk_score < 30 && red_flags.length === 0) status = 'valid';\n\nreturn {\n  json: {\n    document_id,\n    user_id,\n    contract_data: contract,\n    risk_analysis: risk,\n    // Flattened for easy access in webhook + DB nodes\n    contract_title: contract.contract_title || null,\n    contract_type: contract.contract_type || null,\n    contract_value: (contract.contract_value > 0) ? contract.contract_value : null,\n    currency: contract.currency || 'USD',\n    effective_date: safeDate(contract.effective_date),\n    expiration_date: safeDate(contract.expiration_date),\n    auto_renewal: contract.auto_renewal || false,\n    risk_score,\n    requires_legal_review,\n    governing_law: contract.key_terms?.jurisdiction || null,\n    summary: risk.overall_assessment || null,\n    parties,\n    payment_terms: contract.payment_terms || [],\n    key_obligations,\n    termination_clauses: contract.key_terms?.termination_clause\n      ? [{ description: contract.key_terms.termination_clause }]\n      : [],\n    red_flags,\n    special_conditions: risk.compliance_concerns || [],\n    validation: {\n      confidence_score,\n      status,\n      errors: red_flags.filter(f => f.severity === 'critical').map(f => f.description),\n      warnings: red_flags.filter(f => f.severity !== 'critical').map(f => f.description)\n    }\n  }\n};"
+      },
+      "id": "9888cffb-cb8a-495b-adf9-d92af0502e47",
+      "name": "Validate Contract Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9312,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO contracts (\n  id, user_id, document_id,\n  contract_title, contract_type, contract_value, currency,\n  effective_date, expiration_date, auto_renewal,\n  parties, payment_terms, key_obligations, termination_clauses,\n  red_flags, special_conditions,\n  risk_score, requires_legal_review, governing_law, summary,\n  created_at, updated_at\n) VALUES (\n  gen_random_uuid(),\n  '{{ $json.user_id }}',\n  '{{ $json.document_id }}',\n  {{ $json.contract_title ? \"'\" + $json.contract_title.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $json.contract_type ? \"'\" + $json.contract_type.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $json.contract_value ?? \"NULL\" }},\n  '{{ $json.currency || \"USD\" }}',\n  {{ $json.effective_date ? \"'\" + $json.effective_date + \"'\" : \"NULL\" }},\n  {{ $json.expiration_date ? \"'\" + $json.expiration_date + \"'\" : \"NULL\" }},\n  {{ $json.auto_renewal || false }},\n  '{{ JSON.stringify($json.parties || []) }}'::jsonb,\n  '{{ JSON.stringify($json.payment_terms || []) }}'::jsonb,\n  '{{ JSON.stringify($json.key_obligations || []) }}'::jsonb,\n  '{{ JSON.stringify($json.termination_clauses || []) }}'::jsonb,\n  '{{ JSON.stringify($json.red_flags || []) }}'::jsonb,\n  '{{ JSON.stringify($json.special_conditions || []) }}'::jsonb,\n  {{ $json.risk_score ?? \"NULL\" }},\n  {{ $json.requires_legal_review || false }},\n  {{ $json.governing_law ? \"'\" + $json.governing_law.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $json.summary ? \"'\" + $json.summary.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  NOW(),\n  NOW()\n);",
+        "options": {}
+      },
+      "id": "de32b398-23ab-445d-9068-b7b42f78c79c",
+      "name": "Insert Contract to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        9536,
+        736
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.1-8b-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        8240,
+        960
+      ],
+      "id": "99594329-6cd6-4f72-8de2-cf691eb06baf",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NpzfO7Xh947muyKs",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.1-8b-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        8816,
+        960
+      ],
+      "id": "d591f46c-c036-4b15-be51-616112a65def",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NpzfO7Xh947muyKs",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('IF Contracts Found').item.json.extracted_text }}",
+        "options": {
+          "systemMessage": "=You are an expert contract analyst and legal document reviewer. Extract structured information from contracts with precision.\n\nExtract and return ONLY a valid JSON object. No markdown, no code blocks, no explanations - just raw JSON.\n\nSchema:\n{\n  \"contract_title\": \"Contract name/title\",\n  \"contract_type\": \"NDA|Service Agreement|Employment|Lease|Purchase Agreement|Partnership|License|Consulting|Vendor Agreement|SaaS Agreement|Master Service Agreement|Statement of Work|Other\",\n  \"contract_value\": <number or null>,\n  \"currency\": \"USD|EUR|GBP|etc or null\",\n  \"effective_date\": \"YYYY-MM-DD or null\",\n  \"expiration_date\": \"YYYY-MM-DD or null\",\n  \"auto_renewal\": true|false|null,\n  \"parties\": [\n    {\n      \"name\": \"Full party name\",\n      \"role\": \"party1|party2|vendor|client|service_provider|customer|employer|employee|landlord|tenant|licensor|licensee\",\n      \"address\": \"Full address or null\",\n      \"contact\": \"Email/phone or null\"\n    }\n  ],\n  \"key_terms\": {\n    \"payment_schedule\": \"Description or null\",\n    \"deliverables\": \"What's provided or null\",\n    \"termination_clause\": \"How to terminate or null\",\n    \"notice_period_days\": <number or null>,\n    \"jurisdiction\": \"State/Country or null\",\n    \"dispute_resolution\": \"Arbitration|Litigation|Mediation|Other or null\"\n  },\n  \"obligations\": [\n    {\n      \"party\": \"Party name\",\n      \"description\": \"Obligation description\",\n      \"deadline\": \"YYYY-MM-DD or description or null\",\n      \"recurring\": true|false\n    }\n  ],\n  \"payment_terms\": [\n    {\n      \"amount\": <number>,\n      \"currency\": \"USD|EUR|etc\",\n      \"due_date\": \"YYYY-MM-DD or description\",\n      \"description\": \"What payment is for\",\n      \"recurring\": true|false\n    }\n  ],\n  \"confidentiality_clause\": true|false,\n  \"non_compete_clause\": true|false,\n  \"non_solicitation_clause\": true|false,\n  \"intellectual_property_clause\": true|false,\n  \"indemnification_clause\": true|false,\n  \"liability_cap\": <number or null>,\n  \"liability_unlimited\": true|false,\n  \"insurance_requirements\": \"Description or null\",\n  \"warranties\": \"Description or null\",\n  \"force_majeure_clause\": true|false\n}\n\nCritical rules:\n1. Return ONLY valid JSON - no ```json``` wrapper\n2. Use null (not \"null\" string) for missing data\n3. Extract exact dates in YYYY-MM-DD format\n4. For ambiguous dates, use null\n5. Convert all monetary amounts to numbers\n6. Include all parties mentioned (minimum 2)\n7. For \"TBD\" or \"to be determined\" values, use null\n8. If multiple currencies, use the primary one\n9. Boolean fields must be true/false/null, not strings\n10. Empty arrays [] are acceptable if no data found\n\nCommon patterns to recognize:\n- Effective date: \"effective as of\", \"commencing on\", \"starting\"\n- Expiration: \"expires on\", \"term ending\", \"until\"\n- Payment: \"fee\", \"compensation\", \"amount\", \"$\", \"USD\"\n- Termination: \"either party may terminate\", \"notice period\"\n- Parties: Look for \"between\", \"by and between\", signature blocks\n\nContract text:\n{{ $json.extracted_text }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        8160,
+        736
+      ],
+      "id": "d71a95f5-943e-411c-9411-fb9ffd1124fa",
+      "name": "Extract Contract Data (LLM)"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.contract_data }}",
+        "options": {
+          "systemMessage": "=You are an expert legal risk analyst specializing in contract review. Analyze the provided contract data for risks, red flags, compliance concerns, and financial exposure.\n\nReturn ONLY a valid JSON object. No markdown, no code blocks, no explanations - just raw JSON.\n\nSchema:\n{\n  \"risk_score\": <0-100, where 0=no risk, 100=maximum risk>,\n  \"overall_assessment\": \"low_risk|medium_risk|high_risk|critical_risk\",\n  \"red_flags\": [\n    {\n      \"category\": \"financial|legal|operational|compliance|termination|liability|intellectual_property|data_privacy\",\n      \"severity\": \"critical|high|medium|low\",\n      \"description\": \"Clear description of the issue\",\n      \"clause_reference\": \"Specific clause/section or 'General' if not clause-specific\",\n      \"recommendation\": \"Specific actionable recommendation\",\n      \"impact\": \"Potential business impact if not addressed\"\n    }\n  ],\n  \"missing_clauses\": [\n    {\n      \"clause_type\": \"Specific clause name (e.g., 'Force Majeure', 'Limitation of Liability')\",\n      \"importance\": \"critical|high|medium|low\",\n      \"reason\": \"Why this clause is important for this contract type\",\n      \"standard_in_industry\": true|false\n    }\n  ],\n  \"favorable_terms\": [\n    {\n      \"term\": \"Description of favorable term\",\n      \"benefit\": \"How this benefits the reviewing party\"\n    }\n  ],\n  \"unfavorable_terms\": [\n    {\n      \"term\": \"Description of unfavorable term\",\n      \"risk\": \"How this creates risk or disadvantage\"\n    }\n  ],\n  \"compliance_concerns\": [\n    {\n      \"area\": \"GDPR|CCPA|Labor Law|Tax|Insurance|Industry Regulation|Export Control|Anti-Corruption|Other\",\n      \"concern\": \"Specific compliance issue\",\n      \"severity\": \"critical|high|medium|low\",\n      \"jurisdiction\": \"Where this applies (if known)\",\n      \"potential_penalty\": \"Fine|License Loss|Legal Action|Other or null\"\n    }\n  ],\n  \"renewal_risk\": \"auto_renewal_without_notice|auto_renewal_with_notice|favorable|standard|concerning|not_applicable\",\n  \"termination_risk\": \"difficult|standard|favorable|not_specified\",\n  \"financial_exposure\": {\n    \"maximum_liability\": <number or null>,\n    \"uncapped_liability\": true|false,\n    \"insurance_required\": true|false,\n    \"insurance_adequate\": true|false|unknown,\n    \"payment_risk\": \"low|medium|high\",\n    \"currency_risk\": true|false,\n    \"price_escalation_risk\": true|false\n  },\n  \"recommendations\": [\n    {\n      \"priority\": \"critical|high|medium|low\",\n      \"category\": \"negotiation|legal_review|compliance|financial|operational\",\n      \"action\": \"Specific action to take\",\n      \"rationale\": \"Why this action is needed\",\n      \"timeline\": \"immediate|before_signing|post_signing|periodic_review\"\n    }\n  ],\n  \"negotiation_leverage\": {\n    \"strong_points\": [\"Points favoring your position\"],\n    \"weak_points\": [\"Points where other party has advantage\"],\n    \"must_haves\": [\"Critical terms that must be changed\"],\n    \"nice_to_haves\": [\"Desirable but not critical changes\"]\n  },\n  \"status\": \"valid|needs_review|invalid|requires_legal_counsel\"\n}\n\nRISK SCORING GUIDELINES:\n- 0-25: Low risk - standard terms, well-protected\n- 26-50: Medium risk - some concerns, but manageable\n- 51-75: High risk - significant issues, needs attention\n- 76-100: Critical risk - major problems, strongly advise against\n\nASSESSMENT MAPPING:\n- low_risk: score 0-25, minor issues only\n- medium_risk: score 26-50, notable concerns but acceptable with awareness\n- high_risk: score 51-75, significant problems requiring remediation\n- critical_risk: score 76-100, deal-breaking issues or extreme exposure\n\nCRITICAL RED FLAGS (automatically high/critical severity):\n1. Unlimited liability without cap\n2. No termination clause or termination only for cause\n3. Auto-renewal without clear notice period\n4. One-sided indemnification favoring other party\n5. IP assignment without compensation\n6. Confidentiality with no time limit or overly broad scope\n7. Non-compete preventing business operations\n8. Payment terms entirely \"to be determined\"\n9. No limitation of consequential damages\n10. Jurisdiction in unfavorable territory\n\nMISSING CLAUSES - CHECK FOR:\nStandard clauses that should be present:\n- Force majeure\n- Limitation of liability\n- Indemnification (mutual)\n- Termination for convenience\n- Dispute resolution\n- Governing law\n- Notice provisions\n- Assignment restrictions\n- Severability\n- Entire agreement\n- Amendment procedures\n- Insurance requirements\n- Warranty disclaimers\n- Confidentiality (if applicable)\n- IP ownership (if applicable)\n\nCOMPLIANCE AREAS TO CHECK:\n- Data protection (GDPR, CCPA, etc.) if personal data involved\n- Labor law if employment/contractor agreement\n- Export controls if international\n- Industry-specific regulations (financial, healthcare, etc.)\n- Tax implications of payment structure\n- Insurance adequacy\n\nFINANCIAL RISK FACTORS:\n- Payment amounts missing (\"TBD\", \"____\")\n- No price cap or maximum\n- Unclear payment schedule\n- Penalties without limits\n- Foreign currency without hedge\n- Price escalation clauses\n- Uncapped reimbursable expenses\n\nSTATUS DETERMINATION:\n- \"valid\": Risk score 0-40, no critical red flags, standard terms\n- \"needs_review\": Risk score 41-70, or 1+ high severity red flags, needs attention before signing\n- \"requires_legal_counsel\": Risk score 71-100, or critical red flags, must have lawyer review\n- \"invalid\": Missing critical information (parties, consideration, legal capacity issues)\n\nIMPORTANT:\n- If key information is NULL (dates, amounts, parties), flag as red flag with high severity\n- Empty party names or \"__\" placeholders = critical red flag\n- Missing effective dates = high severity red flag\n- \"TBD\" for payment amounts = critical financial red flag\n- Consider contract type when assessing - NDA vs Service Agreement have different risk profiles\n\nContract data to analyze:\n{{ JSON.stringify($json.contract_data, null, 2) }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        8736,
+        736
+      ],
+      "id": "c8a8925c-9138-4fc7-b420-335d7394d865",
+      "name": "Risk Analysis (LLM)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://docuflow-api-r9y6.onrender.com/api/webhooks/contract-analyzed",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  document_id: $('Validate Contract Data').item.json.document_id,\n  processed_data: {\n    contract_title: $('Validate Contract Data').item.json.contract_title,\n    contract_type: $('Validate Contract Data').item.json.contract_type,\n    contract_value: $('Validate Contract Data').item.json.contract_value,\n    currency: $('Validate Contract Data').item.json.currency || 'USD',\n    effective_date: $('Validate Contract Data').item.json.effective_date || null,\n    expiration_date: $('Validate Contract Data').item.json.expiration_date || null,\n    auto_renewal: $('Validate Contract Data').item.json.auto_renewal || false,\n    risk_score: $('Validate Contract Data').item.json.risk_score,\n    requires_legal_review: $('Validate Contract Data').item.json.requires_legal_review || false,\n    governing_law: $('Validate Contract Data').item.json.governing_law || null,\n    summary: $('Validate Contract Data').item.json.summary || null,\n    parties: $('Validate Contract Data').item.json.parties || [],\n    payment_terms: $('Validate Contract Data').item.json.payment_terms || [],\n    key_obligations: $('Validate Contract Data').item.json.key_obligations || [],\n    termination_clauses: $('Validate Contract Data').item.json.termination_clauses || [],\n    red_flags: $('Validate Contract Data').item.json.red_flags || [],\n    special_conditions: $('Validate Contract Data').item.json.special_conditions || [],\n    penalties: []\n  },\n  validation: {\n    confidence_score: $('Validate Contract Data').item.json.validation.confidence_score || 0,\n    status: $('Validate Contract Data').item.json.validation.status || 'needs_review',\n    errors: $('Validate Contract Data').item.json.validation.errors || [],\n    warnings: $('Validate Contract Data').item.json.validation.warnings || []\n  },\n  timestamp: new Date().toISOString()\n}) }}",
+        "options": {}
+      },
+      "id": "eb958191-282b-4999-9cb0-8d634a6f0856",
+      "name": "Send to Backend Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9760,
+        736
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "repoPXXztd1eybbw",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE documents SET processing_status = 'completed', processed_at = NOW() WHERE id = '{{ $('Get Pending Contracts').item.json.id }}';",
+        "options": {}
+      },
+      "id": "92cbdd5c-a7c6-43a6-ac61-07fafb8bb686",
+      "name": "Set Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        9984,
+        736
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "bf1babe9-1855-493e-9a99-4811dbb03ba2",
+      "name": "No Contract",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        7936,
+        928
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 1 Minute": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Contracts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Contracts": {
+      "main": [
+        [
+          {
+            "node": "IF Contracts Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Contracts Found": {
+      "main": [
+        [
+          {
+            "node": "Set Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Contract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Processing": {
+      "main": [
+        [
+          {
+            "node": "Extract Contract Data (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Contract Response": {
+      "main": [
+        [
+          {
+            "node": "Risk Analysis (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Risk Response": {
+      "main": [
+        [
+          {
+            "node": "Validate Contract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Contract Data (LLM)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Risk Analysis (LLM)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Contract Data (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Parse Contract Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Risk Analysis (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Parse Risk Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Backend Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Contract Data": {
+      "main": [
+        [
+          {
+            "node": "Insert Contract to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Contract to DB": {
+      "main": [
+        [
+          {
+            "node": "Send to Backend Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e9f312cf-8526-4188-a537-835c3ce33da5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae5f943fd07d49f2070c4a24bb2e5d781e1b58fb656b12bf392c28258184fb4b"
+  },
+  "id": "NFXyQNxihec0lMzm",
+  "tags": []
+}

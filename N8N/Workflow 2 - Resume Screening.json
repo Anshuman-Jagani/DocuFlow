@@ -1,0 +1,449 @@
+{
+  "name": "Workflow 2 - Resume Screening",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/1 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "e001e6d0-1012-4627-97e3-719d4db96dc7",
+      "name": "Every 1 Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        64,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id }}",
+              "operator": {
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "63336e22-f132-47c3-93b4-3134f627d597",
+      "name": "IF Resumes Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE documents SET processing_status = 'processing' WHERE id = '{{ $json.id }}';",
+        "options": {}
+      },
+      "id": "c6d5afc3-5d0b-4bb2-9b07-1d46ca0817fe",
+      "name": "Set Processing",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        736,
+        -528
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\n\nlet resumeData;\n\ntry {\n  const cleaned = raw.replace(/```json|```/g, \"\").trim();\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  const jsonStr = (firstBrace !== -1 && lastBrace !== -1)\n    ? cleaned.substring(firstBrace, lastBrace + 1)\n    : cleaned;\n  resumeData = JSON.parse(jsonStr);\n} catch (error) {\n  throw new Error(\"Failed to parse resume LLM JSON: \" + error.message);\n}\n\nreturn {\n  json: {\n    resume_data: resumeData,\n    document_id: $('Get Processing Resumes').item.json.id,\n    user_id: $('Get Processing Resumes').item.json.user_id\n  }\n};"
+      },
+      "id": "255917d5-e0c4-4638-b11d-b7c2177c1791",
+      "name": "Parse LLM Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        -528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\nconst resumeInfo = $('Parse LLM Response').item.json;\n\nlet analysis;\n\ntry {\n  const cleaned = raw.replace(/```json|```/g, \"\").trim();\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  const jsonStr = (firstBrace !== -1 && lastBrace !== -1)\n    ? cleaned.substring(firstBrace, lastBrace + 1)\n    : cleaned;\n  analysis = JSON.parse(jsonStr);\n} catch (error) {\n  // Safe fallback\n  analysis = {\n    overall_score: 70,\n    completeness_score: 70,\n    experience_quality: 'average',\n    skills_relevance: 'medium',\n    red_flags: [],\n    strengths: [],\n    gaps: [],\n    recommended_roles: [],\n    status: 'needs_review'\n  };\n}\n\n// Clamp score\nanalysis.overall_score = Math.max(0, Math.min(100, analysis.overall_score || 70));\n\nreturn {\n  json: {\n    document_id: resumeInfo.document_id,\n    user_id: resumeInfo.user_id,\n    resume_data: resumeInfo.resume_data,\n    analysis: analysis\n  }\n};"
+      },
+      "id": "b89726da-a680-4bf7-8bc3-1068e75e7761",
+      "name": "Parse Analysis Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        -528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\nconst resume = data.resume_data || {};\nconst analysis = data.analysis || {};\n\n// Confidence & status\nconst confidence_score = analysis.overall_score || 0;\nlet status = analysis.status || 'needs_review';\n// Ensure status is a valid enum value for documents table\nif (!['valid', 'needs_review', 'invalid'].includes(status)) status = 'needs_review';\n\nreturn {\n  json: {\n    document_id: data.document_id,\n    user_id: data.user_id,\n    resume_data: resume,\n    analysis: analysis,\n    // Flattened for easy access\n    candidate_name: resume.candidate_name || null,\n    email: resume.email || null,\n    phone: resume.phone || null,\n    location: resume.location || null,\n    linkedin_url: resume.linkedin_url || null,\n    years_of_experience: resume.years_of_experience || 0,\n    current_position: resume.current_position || null,\n    current_company: resume.current_company || null,\n    education_level: resume.education_level || null,\n    professional_summary: resume.professional_summary || null,\n    skills: resume.skills || [],\n    experience: resume.experience || [],\n    education: resume.education || [],\n    certifications: resume.certifications || [],\n    languages: resume.languages || [],\n    validation: {\n      confidence_score,\n      status,\n      completeness_score: analysis.completeness_score || 0,\n      experience_quality: analysis.experience_quality || 'average',\n      red_flags: analysis.red_flags || [],\n      strengths: analysis.strengths || [],\n      gaps: analysis.gaps || [],\n      recommended_roles: analysis.recommended_roles || []\n    }\n  }\n};"
+      },
+      "id": "6089e95c-b0f6-4e61-a548-eeae3248cd51",
+      "name": "Validate Resume Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2112,
+        -528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://docuflow-api-r9y6.onrender.com/api/webhooks/resume-processed",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  document_id: $('Validate Resume Data').item.json.document_id,\n  processed_data: {\n    candidate_name: $('Validate Resume Data').item.json.candidate_name,\n    email: $('Validate Resume Data').item.json.email,\n    phone: $('Validate Resume Data').item.json.phone,\n    location: $('Validate Resume Data').item.json.location,\n    linkedin_url: $('Validate Resume Data').item.json.linkedin_url,\n    years_of_experience: $('Validate Resume Data').item.json.years_of_experience || 0,\n    current_position: $('Validate Resume Data').item.json.current_position,\n    current_company: $('Validate Resume Data').item.json.current_company,\n    summary: $('Validate Resume Data').item.json.professional_summary,\n    skills: $('Validate Resume Data').item.json.skills || [],\n    experience: $('Validate Resume Data').item.json.experience || [],\n    education: $('Validate Resume Data').item.json.education || []\n  },\n  validation: {\n    confidence_score: $('Validate Resume Data').item.json.validation.confidence_score || 0,\n    status: $('Validate Resume Data').item.json.validation.status || 'needs_review',\n    errors: $('Validate Resume Data').item.json.validation.red_flags?.map(f => f.flag) || []\n  },\n  timestamp: new Date().toISOString()\n}) }}",
+        "options": {}
+      },
+      "id": "efaea7d4-c692-4588-86fc-1750f831e121",
+      "name": "Send to Backend Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2336,
+        -528
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "repoPXXztd1eybbw",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO resumes (\n  id, user_id, document_id,\n  candidate_name, email, phone, location, linkedin_url,\n  professional_summary, total_years_experience,\n  current_position,\n  skills, experience, education, certifications,\n  match_score,\n  created_at, updated_at\n) VALUES (\n  gen_random_uuid(),\n  '{{ $('Get Processing Resumes').item.json.user_id }}',\n  '{{ $('Get Processing Resumes').item.json.id }}',\n  {{ $('Validate Resume Data').item.json.candidate_name ? \"'\" + $('Validate Resume Data').item.json.candidate_name.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $('Validate Resume Data').item.json.email ? \"'\" + $('Validate Resume Data').item.json.email.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $('Validate Resume Data').item.json.phone ? \"'\" + $('Validate Resume Data').item.json.phone.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $('Validate Resume Data').item.json.location ? \"'\" + $('Validate Resume Data').item.json.location.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $('Validate Resume Data').item.json.linkedin_url ? \"'\" + $('Validate Resume Data').item.json.linkedin_url.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $('Validate Resume Data').item.json.professional_summary ? \"'\" + $('Validate Resume Data').item.json.professional_summary.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  {{ $('Validate Resume Data').item.json.years_of_experience || 0 }},\n  {{ $('Validate Resume Data').item.json.current_position ? \"'\" + $('Validate Resume Data').item.json.current_position.replace(/'/g, \"''\") + \"'\" : \"NULL\" }},\n  '{{ JSON.stringify($('Validate Resume Data').item.json.skills || []) }}'::jsonb,\n  '{{ JSON.stringify($('Validate Resume Data').item.json.experience || []) }}'::jsonb,\n  '{{ JSON.stringify($('Validate Resume Data').item.json.education || []) }}'::jsonb,\n  '{{ JSON.stringify($('Validate Resume Data').item.json.certifications || []) }}'::jsonb,\n  0,\n  NOW(),\n  NOW()\n);",
+        "options": {}
+      },
+      "id": "9efa6ca7-967d-4254-b31a-e05099d5b821",
+      "name": "Insert Resume to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2560,
+        -528
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('IF Resumes Found').item.json.extracted_text }}",
+        "options": {
+          "systemMessage": "=ROLE\nYou are an expert resume parser and HR analyst specializing in extracting structured candidate information from unstructured resume text with high accuracy.\n\nOBJECTIVE\nExtract structured data from resume text and return ONLY a strictly valid JSON object that follows the defined schema.\n\nINPUT\nThe agent will receive raw resume text:\n{{resume_text}}\n\nOUTPUT REQUIREMENT (STRICT)\n- Return ONLY valid JSON\n- No markdown\n- No explanations\n- No extra text\n\nJSON SCHEMA\n{\n  \"candidate_name\": \"Full name\",\n  \"email\": \"Email address\",\n  \"phone\": \"Phone number\",\n  \"location\": \"City, State/Country\",\n  \"linkedin_url\": \"LinkedIn profile URL if present\",\n  \"years_of_experience\": <number>,\n  \"current_position\": \"Most recent job title\",\n  \"current_company\": \"Most recent employer\",\n  \"education_level\": \"highest degree (High School, Associate, Bachelor, Master, PhD)\",\n  \"professional_summary\": \"Brief 2-3 sentence summary\",\n  \"skills\": [\"skill1\", \"skill2\", \"skill3\"],\n  \"experience\": [\n    {\n      \"title\": \"Job title\",\n      \"company\": \"Company name\",\n      \"start_date\": \"YYYY-MM\",\n      \"end_date\": \"YYYY-MM or Present\",\n      \"duration_months\": <number>,\n      \"description\": \"Brief description\"\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"Degree name\",\n      \"field\": \"Field of study\",\n      \"institution\": \"School name\",\n      \"graduation_year\": \"YYYY\"\n    }\n  ],\n  \"certifications\": [\"cert1\", \"cert2\"],\n  \"languages\": [\"English\", \"Spanish\"]\n}\n\nEXTRACTION RULES\n1. Use null for missing or unavailable fields.\n2. Calculate total years_of_experience from work history.\n3. Extract all technical and soft skills mentioned.\n4. Identify the most recent role as current_position and current_company.\n5. Standardize dates to YYYY-MM format.\n6. Compute duration_months for each job.\n7. Include employment gaps if notable.\n8. Determine the highest completed education level.\n9. Generate a concise 2–3 sentence professional_summary based on the candidate profile.\n10. Ensure syntactically valid JSON output.\n\nVALIDATION REQUIREMENTS\n- Proper JSON formatting\n- Numeric values must be numbers (not strings)\n- Arrays must exist even if empty\n- No trailing commas\n- Consistent date formatting\n\nFAILSAFE\nIf complete parsing is not possible, return the best structured extraction with null values where necessary.\n\nFINAL RESPONSE\nReturn only:\n{ valid JSON }"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        960,
+        -528
+      ],
+      "id": "8b1194b9-787f-4508-acab-0ef078ce9edc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.1-8b-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        -304
+      ],
+      "id": "4997f8ce-f157-4d49-8d23-60b152ba1a85",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NpzfO7Xh947muyKs",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.resume_data }}",
+        "options": {
+          "systemMessage": "=ROLE\nYou are an expert HR analyst specializing in resume evaluation, candidate profiling, and hiring risk assessment.\n\nOBJECTIVE\nAnalyze structured resume data for quality, completeness, consistency, and potential hiring risks. Produce an objective assessment suitable for recruitment decision support.\n\nINPUT\nThe agent will receive structured resume data:\n{{ $json.resume_data }}\n\nOUTPUT REQUIREMENT (STRICT)\n- Return ONLY a valid JSON object\n- No markdown\n- No explanations\n- No extra text\n\nJSON SCHEMA\n{\n  \"overall_score\": <0-100>,\n  \"completeness_score\": <0-100>,\n  \"experience_quality\": \"excellent|good|average|below_average\",\n  \"skills_relevance\": \"high|medium|low\",\n  \"red_flags\": [\n    {\n      \"flag\": \"description\",\n      \"severity\": \"high|medium|low\"\n    }\n  ],\n  \"strengths\": [\"strength1\", \"strength2\"],\n  \"gaps\": [\"gap1\", \"gap2\"],\n  \"recommended_roles\": [\"role1\", \"role2\", \"role3\"],\n  \"status\": \"valid|needs_review|invalid\"\n}\n\nEVALUATION CRITERIA\nAssess the resume using these factors:\n\n1. COMPLETENESS\n- Presence of contact information\n- Work history clarity\n- Skills documentation\n- Education details\n- Structured and consistent data\n\n2. EXPERIENCE QUALITY\n- Career progression\n- Role relevance\n- Responsibility clarity\n- Measurable impact\n- Seniority alignment\n\n3. SKILLS RELEVANCE\n- Alignment of skills with experience level\n- Breadth vs depth\n- Industry applicability\n- Modern vs outdated technologies\n\n4. RED FLAG DETECTION\nIdentify and assess severity for:\n- Employment gaps greater than 6 months\n- Job hopping (less than 1 year per role)\n- Missing contact information\n- Vague or generic job descriptions\n- Inconsistent career progression\n- Skills not matching experience level\n- Education verification concerns\n- Unexplained timeline inconsistencies\n\nSCORING LOGIC\n- overall_score reflects holistic candidate quality\n- completeness_score reflects data coverage and clarity\n- severity weighting impacts overall_score\n- multiple high-severity flags may lead to \"invalid\" status\n\nSTATUS RULES\n- valid → strong profile with minimal concerns\n- needs_review → moderate concerns or incomplete data\n- invalid → major inconsistencies, missing critical info, or high-risk profile\n\nVALIDATION REQUIREMENTS\n- Proper JSON formatting\n- Numeric values must be numbers\n- Arrays must exist even if empty\n- No trailing commas\n- Only allowed enum values used\n\nFAILSAFE\nIf evaluation cannot be fully determined, provide best possible structured output with conservative scoring and explanatory red flags.\n\nFINAL RESPONSE\nReturn only:\n{ valid JSON }"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1536,
+        -528
+      ],
+      "id": "77307c74-577a-4772-bf26-c3e32d7f646f",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.1-8b-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        -304
+      ],
+      "id": "a4db16f9-00fc-44c4-9586-ab308c9c5a6b",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NpzfO7Xh947muyKs",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT d.id, d.user_id, d.document_type, d.extracted_text, d.original_filename\nFROM documents d\nWHERE d.processing_status = 'processing'\nAND d.document_type = 'resume'\nAND d.extracted_text IS NOT NULL\nAND d.extracted_text != ''\nORDER BY d.upload_date ASC\nLIMIT 5;",
+        "options": {}
+      },
+      "id": "62eef035-f9e4-4f0a-b8a8-76b85ea76a0d",
+      "name": "Get Processing Resumes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        288,
+        -432
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE documents SET processing_status = 'completed', processed_at = NOW() WHERE id = '{{ $('Get Processing Resumes').item.json.id }}';",
+        "options": {}
+      },
+      "id": "17fc3dc4-d2b0-42ac-8c3a-14a1c95da832",
+      "name": "Set Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2784,
+        -528
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "979d2992-c74a-4389-b118-d8637995a494",
+      "name": "No Resume",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        736,
+        -336
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 1 Minute": {
+      "main": [
+        [
+          {
+            "node": "Get Processing Resumes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Resumes Found": {
+      "main": [
+        [
+          {
+            "node": "Set Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Processing": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Response": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Analysis Response": {
+      "main": [
+        [
+          {
+            "node": "Validate Resume Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Parse Analysis Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Processing Resumes": {
+      "main": [
+        [
+          {
+            "node": "IF Resumes Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Backend Webhook": {
+      "main": [
+        [
+          {
+            "node": "Insert Resume to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Resume Data": {
+      "main": [
+        [
+          {
+            "node": "Send to Backend Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Resume to DB": {
+      "main": [
+        [
+          {
+            "node": "Set Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1eda943c-ab7a-4cc0-a6db-2e97dbfe4540",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae5f943fd07d49f2070c4a24bb2e5d781e1b58fb656b12bf392c28258184fb4b"
+  },
+  "id": "I4ZvGJfHx7YED4xL",
+  "tags": []
+}

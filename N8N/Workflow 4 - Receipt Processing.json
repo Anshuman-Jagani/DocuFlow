@@ -1,0 +1,459 @@
+{
+  "name": "Workflow 4 - Receipt Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/1 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "7a1e2a48-500e-47d0-9c45-1d9f2b602463",
+      "name": "Every 1 Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -576,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT d.id, d.user_id, d.document_type, d.extracted_text, d.original_filename\nFROM documents d\nWHERE d.processing_status = 'processing'\nAND d.document_type = 'receipt'\nAND d.extracted_text IS NOT NULL\nAND d.extracted_text != ''\nORDER BY d.upload_date ASC\nLIMIT 5;",
+        "options": {}
+      },
+      "id": "f686b10e-fe74-4e97-a2e2-cfb42bdb8a69",
+      "name": "Get Pending Receipts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -352,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "ec799b71-f5eb-4cc9-bd24-5d44e3f5b266",
+      "name": "IF Receipts Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE documents \nSET processing_status = 'processing',\n    updated_at = NOW()\nWHERE id = $1;",
+        "options": {
+          "queryReplacement": "={{ $json.id }}"
+        }
+      },
+      "id": "d898ee49-6e7c-4227-9afd-3a630c5e79a1",
+      "name": "Set Processing",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        96,
+        -16
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "doc-id",
+              "name": "document_id",
+              "value": "={{ $('Get Pending Receipts').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "file-name",
+              "name": "file_name",
+              "value": "={{ $('Get Pending Receipts').item.json.file_name }}",
+              "type": "string"
+            },
+            {
+              "id": "extracted-text",
+              "name": "extracted_text",
+              "value": "={{ $('Get Pending Receipts').item.json.extracted_text }}",
+              "type": "string"
+            },
+            {
+              "id": "user-id",
+              "name": "user_id",
+              "value": "={{ $('Get Pending Receipts').item.json.user_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "33728098-b739-4545-bf42-3200346bf77e",
+      "name": "Prepare Receipt Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        320,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst docInfo = $('Prepare Receipt Data').item.json;\n\ntry {\n  // Step 1: Extract raw content\n  let rawContent = response.choices?.[0]?.message?.content \n    || response.content \n    || response.output \n    || JSON.stringify(response);\n  \n  console.log('Raw content length:', rawContent.length);\n  console.log('First 200 chars:', rawContent.substring(0, 200));\n  \n  if (!rawContent || rawContent.trim() === '') {\n    throw new Error('Empty response from LLM');\n  }\n  \n  // Step 2: Clean markdown formatting\n  let cleaned = rawContent.trim()\n    .replace(/^```json\\s*/gi, '')\n    .replace(/^```\\s*/gi, '')\n    .replace(/```\\s*$/gi, '')\n    .trim();\n  \n  // Step 3: Find JSON boundaries\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  \n  if (firstBrace === -1 || lastBrace === -1) {\n    console.error('No JSON braces found in:', cleaned.substring(0, 500));\n    throw new Error('No valid JSON structure found');\n  }\n  \n  cleaned = cleaned.slice(firstBrace, lastBrace + 1);\n  console.log('Extracted JSON length:', cleaned.length);\n  \n  // Step 4: Fix common JSON issues\n  cleaned = cleaned\n    // Fix dollar amounts\n    .replace(/:\\s*\"\\$?([\\d,]+\\.?\\d*)\"/g, (match, num) => {\n      const fixed = parseFloat(num.replace(/,/g, ''));\n      return ': ' + (isNaN(fixed) ? 0 : fixed);\n    })\n    // Fix unquoted dollar amounts\n    .replace(/:\\s*\\$?([\\d,]+\\.?\\d*)\\s*([,}\\]])/g, (match, num, ending) => {\n      const fixed = parseFloat(num.replace(/,/g, ''));\n      return ': ' + (isNaN(fixed) ? 0 : fixed) + ending;\n    })\n    // Fix NaN, Infinity, undefined\n    .replace(/:\\s*NaN\\s*([,}\\]])/g, ': 0$1')\n    .replace(/:\\s*Infinity\\s*([,}\\]])/g, ': 0$1')\n    .replace(/:\\s*undefined\\s*([,}\\]])/g, ': null$1')\n    // Fix trailing commas\n    .replace(/,(\\s*[}\\]])/g, '$1')\n    // Fix duplicate commas\n    .replace(/,\\s*,/g, ',')\n    // Fix missing commas between fields\n    .replace(/\"\\s*\"([a-zA-Z_])/g, '\", \"$1')\n    // Fix single quotes to double quotes\n    .replace(/'/g, '\"')\n    // Fix newlines in strings (if any)\n    .replace(/\\n/g, ' ');\n  \n  console.log('Cleaned JSON (first 300 chars):', cleaned.substring(0, 300));\n  console.log('Around position 1380:', cleaned.substring(1350, 1420));\n  \n  // Step 5: Parse JSON\n  let receiptData;\n  try {\n    receiptData = JSON.parse(cleaned);\n  } catch (parseError) {\n    console.error('JSON Parse Error:', parseError.message);\n    console.error('Position:', parseError.message.match(/position (\\d+)/)?.[1]);\n    \n    // Show context around error\n    const errorPos = parseInt(parseError.message.match(/position (\\d+)/)?.[1] || 0);\n    if (errorPos > 0) {\n      console.error('Context around error:', cleaned.substring(Math.max(0, errorPos - 50), errorPos + 50));\n    }\n    \n    throw new Error(`JSON parsing failed: ${parseError.message}`);\n  }\n  \n  // Step 6: Validate required fields\n  if (!receiptData) {\n    throw new Error('Receipt data is null after parsing');\n  }\n  \n  console.log('✓ Receipt parsed successfully');\n  console.log('Merchant:', receiptData.merchant_name);\n  console.log('Total:', receiptData.total_amount);\n  console.log('Items count:', receiptData.items?.length || 0);\n  \n  // Step 7: Return structured data\n  return {\n    json: {\n      document_id: docInfo.document_id,\n      user_id: docInfo.user_id,\n      file_name: docInfo.file_name,\n      receipt_data: receiptData\n    }\n  };\n  \n} catch (error) {\n  console.error('❌ Receipt parsing failed:', error.message);\n  console.error('Error stack:', error.stack);\n  \n  // Return error info for debugging\n  throw new Error(`Receipt parsing error: ${error.message}. Check execution logs for details.`);\n}"
+      },
+      "id": "bb654a9b-e0e2-436e-9619-026ca4b0f9d2",
+      "name": "Parse Receipt Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst receiptInfo = $('Parse Receipt Response').item.json;\n\nlet validation = null;\ntry {\n  let rawContent = response.choices?.[0]?.message?.content || response.content;\n  let cleaned = rawContent.trim().replace(/^```json\\s*/i, '').replace(/```$/i, '');\n  const firstBrace = cleaned.indexOf('{');\n  const lastBrace = cleaned.lastIndexOf('}');\n  cleaned = cleaned.slice(firstBrace, lastBrace + 1);\n  validation = JSON.parse(cleaned);\n} catch (error) {\n  validation = {\n    validation_score: 70,\n    status: 'needs_review',\n    is_business_expense: null,\n    reimbursable: null,\n    tax_deductible: null,\n    issues: []\n  };\n}\n\nreturn {\n  json: {\n    document_id: receiptInfo.document_id,\n    user_id: receiptInfo.user_id,\n    receipt_data: receiptInfo.receipt_data,\n    validation: validation\n  }\n};"
+      },
+      "id": "12e9afe3-f00a-444b-aec2-25e6905dbca7",
+      "name": "Parse Validation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\nconst receipt = data.receipt_data;\nconst validation = data.validation;\n\nconst payload = {\n  document_id: data.document_id,\n  processed_data: {\n    merchant_name: receipt.merchant_name,\n    total_amount: receipt.total_amount,\n    currency: receipt.currency || 'USD',\n    purchase_date: receipt.purchase_date,\n    category: receipt.expense_category,\n    tax_amount: receipt.tax_amount || 0,\n    payment_method: receipt.payment_method || 'unknown',\n    is_business_expense: validation.is_business_expense ?? receipt.is_business_expense,\n    items: receipt.items || []\n  },\n  validation: {\n    confidence_score: validation.validation_score,\n    status: validation.status || 'needs_review',\n    errors: validation.issues || []\n  },\n  timestamp: new Date().toISOString()\n};\n\nconsole.log('Receipt webhook:', payload.processed_data.merchant_name, payload.processed_data.total_amount);\n\nreturn { json: payload };"
+      },
+      "id": "143c1101-3c35-4cb8-a4ff-0724b1d9bede",
+      "name": "Format for Backend",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://docuflow-api-r9y6.onrender.com/api/webhooks/receipt-processed",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  document_id: $('Parse Validation').item.json.document_id,\n\n  processed_data: {\n\n    merchant_name: $('Parse Validation').item.json.receipt_data.merchant_name,\n\n    total_amount: $('Parse Validation').item.json.receipt_data.total_amount,\n\n    currency: $('Parse Validation').item.json.receipt_data.currency || 'USD',\n\n    purchase_date: $('Parse Validation').item.json.receipt_data.purchase_date,\n\n    category: $('Parse Validation').item.json.receipt_data.expense_category,\n\n    tax_amount: $('Parse Validation').item.json.receipt_data.tax_amount || 0,\n\n    payment_method: $('Parse Validation').item.json.receipt_data.payment_method || 'unknown',\n\n    is_business_expense: $('Parse Validation').item.json.validation.is_business_expense ?? $('Parse Validation').item.json.receipt_data.is_business_expense,\n\n    items: $('Parse Validation').item.json.receipt_data.items || [],\n  },\n\n  validation: {\n\n    confidence_score: $('Parse Validation').item.json.validation.validation_score || 70,\n\n    status: $('Parse Validation').item.json.validation.status || 'needs_review',\n  },\n\n  timestamp: new Date().toISOString()\n}) }}",
+        "options": {}
+      },
+      "id": "0cf9f686-d56e-42f7-88e0-ebba8af8d277",
+      "name": "Send to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        -16
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "5eee37d8-71c3-4764-bb5d-7933691f213a",
+      "name": "No Receipt",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        96,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.extracted_text }}",
+        "options": {
+          "systemMessage": "=You are an expert receipt parser and expense analyst. Extract structured information from receipts with high accuracy.\n\nExtract and return ONLY a valid JSON object. No markdown, no code blocks, no explanations - just raw JSON.\n\nSchema:\n{\n  \"merchant_name\": \"Store/Restaurant name\",\n  \"merchant_address\": \"Full address or null\",\n  \"merchant_phone\": \"Phone number or null\",\n  \"purchase_date\": \"YYYY-MM-DD\",\n  \"purchase_time\": \"HH:MM or null\",\n  \"total_amount\": <number>,\n  \"subtotal\": <number or null>,\n  \"tax_amount\": <number or null>,\n  \"tip_amount\": <number or null>,\n  \"discount_amount\": <number or null>,\n  \"currency\": \"USD|EUR|GBP|etc\",\n  \"payment_method\": \"cash|credit_card|debit_card|mobile_payment|other|unknown\",\n  \"card_last_four\": \"Last 4 digits or null\",\n  \"receipt_number\": \"Receipt/transaction number or null\",\n  \"items\": [\n    {\n      \"description\": \"Item name\",\n      \"quantity\": <number>,\n      \"unit_price\": <number>,\n      \"total_price\": <number>,\n      \"category\": \"food|beverage|supplies|equipment|fuel|parking|lodging|entertainment|other\"\n    }\n  ],\n  \"expense_category\": \"meals|travel|office_supplies|fuel|parking|lodging|entertainment|utilities|professional_services|equipment|other\",\n  \"is_business_expense\": true|false|null,\n  \"has_alcohol\": true|false,\n  \"reimbursable\": true|false|null,\n  \"tax_deductible\": true|false|null,\n  \"receipt_quality\": \"excellent|good|fair|poor\",\n  \"notes\": \"Any additional info or null\"\n}\n\nCritical rules:\n1. Return ONLY valid JSON\n2. Use null for missing data\n3. Dates must be YYYY-MM-DD format\n4. All monetary amounts as numbers\n5. Extract ALL line items visible on receipt\n6. Boolean fields must be true/false/null"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        544,
+        -16
+      ],
+      "id": "64a55d5b-be9b-4522-b463-746435a7ffd8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.receipt_data }}",
+        "options": {
+          "systemMessage": "=You are an expert expense auditor. Validate receipt data for accuracy and business legitimacy.\n\nReturn ONLY valid JSON:\n{\n  \"validation_score\": <0-100>,\n  \"status\": \"valid|needs_review|invalid\",\n  \"is_business_expense\": true|false,\n  \"reimbursable\": true|false,\n  \"tax_deductible\": true|false,\n  \"issues\": [{\"type\": \"...\", \"severity\": \"...\", \"description\": \"...\"}]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1120,
+        -16
+      ],
+      "id": "0253e98b-bd96-4196-af2a-d90198790e6c",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.1-8b-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        624,
+        208
+      ],
+      "id": "60118006-4e07-443b-ba0c-ff09d9a60b48",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NpzfO7Xh947muyKs",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.1-8b-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        208
+      ],
+      "id": "357fd9e6-b5ad-49a2-b641-9dae9d225cdb",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NpzfO7Xh947muyKs",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE documents SET processing_status = 'completed', processed_at = NOW() WHERE id = '{{ $('Get Pending Receipts').item.json.id }}';",
+        "options": {}
+      },
+      "id": "04308260-6698-4ece-8047-2e697fd4b33c",
+      "name": "Set Complete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        2144,
+        -16
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "VxnRgB1N5VKPaHQp",
+          "name": "Postgres account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 1 Minute": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Receipts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Receipts": {
+      "main": [
+        [
+          {
+            "node": "IF Receipts Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Receipts Found": {
+      "main": [
+        [
+          {
+            "node": "Set Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Processing": {
+      "main": [
+        [
+          {
+            "node": "Prepare Receipt Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Receipt Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Receipt Response": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Validation": {
+      "main": [
+        [
+          {
+            "node": "Format for Backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for Backend": {
+      "main": [
+        [
+          {
+            "node": "Send to Backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Backend": {
+      "main": [
+        [
+          {
+            "node": "Set Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Receipt Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Parse Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c85b649b-fe41-4f9a-8f59-bba286e18846",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae5f943fd07d49f2070c4a24bb2e5d781e1b58fb656b12bf392c28258184fb4b"
+  },
+  "id": "bWMAeCbTzNM2PIAI",
+  "tags": []
+}
