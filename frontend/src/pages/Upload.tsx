@@ -10,7 +10,7 @@ type DocumentType = 'invoice' | 'resume' | 'contract' | 'receipt';
 
 // Selected accent per type
 const DOC_TYPE_COLORS: Record<DocumentType, string> = {
-  invoice:  'border-[#0EA5E9] bg-[#0EA5E9]/10 text-[#0EA5E9]',
+  invoice:  'border-[#22D3EE] bg-[#22D3EE]/10 text-[#22D3EE]',
   receipt:  'border-[#D946EF] bg-[#D946EF]/10 text-[#D946EF]',
   resume:   'border-[#A78BFA] bg-[#A78BFA]/10 text-[#A78BFA]',
   contract: 'border-[#FBBF24] bg-[#FBBF24]/10 text-[#FBBF24]',

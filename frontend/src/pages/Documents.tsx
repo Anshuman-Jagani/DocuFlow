@@ -8,7 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import clsx from 'clsx';
 
 const documentTypeColors = {
-  invoice: 'bg-blue-900/40 text-blue-300 border border-blue-500/30',
+  invoice: 'bg-cyan-900/40 text-cyan-300 border border-cyan-500/30',
   receipt: 'bg-pink-900/40 text-pink-300 border border-pink-500/30',
   resume: 'bg-purple-900/40 text-purple-300 border border-purple-500/30',
   contract: 'bg-yellow-900/40 text-yellow-300 border border-yellow-500/30',
