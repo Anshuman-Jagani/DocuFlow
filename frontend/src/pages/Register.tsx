@@ -201,6 +201,14 @@ const Register: React.FC = () => {
                   {...register("password")}
                 />
 
+                <Input
+                  label="Confirm Password"
+                  type="password"
+                  placeholder="••••••••"
+                  error={errors.confirmPassword?.message}
+                  {...register("confirmPassword")}
+                />
+
                 {password && (
                   <div className="bg-[#0A0A0A] p-4 rounded-xl border border-[#111111] transition-all animate-fade-in">
                     <div className="flex items-center justify-between text-[10px] mb-2 uppercase tracking-wide">
@@ -244,7 +252,6 @@ const Register: React.FC = () => {
                 <a href="#" className="underline hover:text-white">
                   Privacy
                 </a>
-                .
               </p>
             </form>
 

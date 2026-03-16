@@ -111,9 +111,6 @@ const Login: React.FC = () => {
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="text-[10px] font-bold text-[#333333] tracking-[0.15em] uppercase">Password</label>
-                  <button type="button" className="text-[10px] font-bold text-[#444444] hover:text-white transition-colors uppercase tracking-widest">
-                    Forgot?
-                  </button>
                 </div>
                 <Input type="password" placeholder="••••••••" error={errors.password?.message} {...register("password")} />
               </div>
