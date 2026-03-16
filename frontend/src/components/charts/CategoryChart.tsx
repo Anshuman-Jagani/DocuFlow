@@ -4,8 +4,14 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 interface CategoryData { name: string; value: number; }
 interface CategoryChartProps { data: CategoryData[]; isLoading?: boolean; }
 
-// Pure monochrome palette — white shades only
-const COLORS = ['#FFFFFF', '#888888', '#444444', '#222222', '#111111'];
+const COLOR_MAP: Record<string, string> = {
+  'Invoices': '#22D3EE',
+  'Receipts': '#D946EF',
+  'Resumes': '#A78BFA',
+  'Contracts': '#FBBF24'
+};
+
+const DEFAULT_COLOR = '#FFFFFF';
 
 const CategoryChart: React.FC<CategoryChartProps> = ({ data, isLoading }) => {
   if (isLoading) {
@@ -24,16 +30,20 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ data, isLoading }) => {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload?.length) {
       const item = payload[0];
-      const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0';
+      const color = COLOR_MAP[item.name] || DEFAULT_COLOR;
+      const pct = total > 0 ? ((item.payload.value / total) * 100).toFixed(1) : '0.0';
       return (
-        <div style={{ backgroundColor: '#0A0A0A', border: '1px solid #1A1A1A', borderRadius: '6px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.9)', padding: '10px 14px' }}>
-          <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{item.name}</p>
-          <p style={{ color: '#555555', fontSize: 11 }}>
+        <div style={{ backgroundColor: '#0A0A0A', border: '1px solid #111111', borderRadius: '12px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.9)', padding: '12px 16px' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+            <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 13 }}>{item.name}</p>
+          </div>
+          <p style={{ color: '#888888', fontSize: 11, marginBottom: 4 }}>
             <span style={{ color: '#FFFFFF', fontWeight: 700 }}>{item.value}</span> doc{item.value !== 1 ? 's' : ''}
           </p>
-          <p style={{ color: '#333333', fontSize: 11 }}>
-            <span style={{ color: '#888888', fontWeight: 700 }}>{pct}%</span> of total
+          <p style={{ color: '#444444', fontSize: 10, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
+            <span style={{ color: color }}>{pct}%</span> Contribution
           </p>
         </div>
       );
@@ -53,19 +63,19 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ data, isLoading }) => {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={90}
-                paddingAngle={3} dataKey="value" stroke="none"
+              <Pie data={data} cx="50%" cy="50%" innerRadius={65} outerRadius={95}
+                paddingAngle={5} dataKey="value" stroke="none"
                 animationBegin={0} animationDuration={800} startAngle={90} endAngle={450}>
-                {data.map((_, i) => (
-                  <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]}
-                    className="hover:opacity-75 transition-opacity cursor-pointer outline-none" />
+                {data.map((item, i) => (
+                  <Cell key={`cell-${i}`} fill={COLOR_MAP[item.name] || DEFAULT_COLOR}
+                    className="hover:opacity-80 transition-opacity cursor-pointer outline-none" />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-              <Legend verticalAlign="bottom" height={36} iconType="circle"
-                wrapperStyle={{ paddingTop: '20px', fontSize: '9px', fontWeight: 700,
-                  color: '#333333', textTransform: 'uppercase', letterSpacing: '0.1em' }}
-                formatter={(v) => <span style={{ color: '#333333' }}>{v}</span>} />
+              <Legend verticalAlign="bottom" height={48} iconType="circle"
+                wrapperStyle={{ paddingTop: '30px', fontSize: '9px', fontWeight: 700,
+                  textTransform: 'uppercase', letterSpacing: '0.15em' }}
+                formatter={(v) => <span style={{ color: '#555555' }}>{v}</span>} />
             </PieChart>
           </ResponsiveContainer>
         )}
