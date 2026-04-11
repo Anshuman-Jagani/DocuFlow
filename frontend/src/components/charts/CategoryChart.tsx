@@ -27,6 +27,10 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ data, isLoading }) => {
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
+  // Only render segments that have actual documents — zero-value entries
+  // still consume paddingAngle in Recharts, creating phantom gaps.
+  const chartData = data.filter((item) => item.value > 0);
+
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload?.length) {
       const item = payload[0];
@@ -63,19 +67,32 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ data, isLoading }) => {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={65} outerRadius={95}
-                paddingAngle={5} dataKey="value" stroke="none"
-                animationBegin={0} animationDuration={800} startAngle={90} endAngle={450}>
-                {data.map((item, i) => (
+              <Pie data={chartData} cx="50%" cy="50%" innerRadius={65} outerRadius={95}
+                paddingAngle={chartData.length > 1 ? 4 : 0} dataKey="value" stroke="none"
+                animationBegin={0} animationDuration={800} startAngle={90} endAngle={-270}>
+                {chartData.map((item, i) => (
                   <Cell key={`cell-${i}`} fill={COLOR_MAP[item.name] || DEFAULT_COLOR}
                     className="hover:opacity-80 transition-opacity cursor-pointer outline-none" />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-              <Legend verticalAlign="bottom" height={48} iconType="circle"
-                wrapperStyle={{ paddingTop: '30px', fontSize: '9px', fontWeight: 700,
-                  textTransform: 'uppercase', letterSpacing: '0.15em' }}
-                formatter={(v) => <span style={{ color: '#555555' }}>{v}</span>} />
+              <Legend
+                verticalAlign="bottom" height={48}
+                content={() => (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
+                    gap: '8px 16px', paddingTop: '30px' }}>
+                    {chartData.map((item) => (
+                      <span key={item.name} style={{ display: 'flex', alignItems: 'center',
+                        gap: 5, fontSize: '9px', fontWeight: 700,
+                        textTransform: 'uppercase', letterSpacing: '0.15em', color: '#555555' }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%',
+                          backgroundColor: COLOR_MAP[item.name] || DEFAULT_COLOR,
+                          display: 'inline-block', flexShrink: 0 }} />
+                        {item.name}
+                      </span>
+                    ))}
+                  </div>
+                )} />
             </PieChart>
           </ResponsiveContainer>
         )}
