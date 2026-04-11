@@ -6,101 +6,104 @@ interface SkillsDisplayProps {
 }
 
 const SkillsDisplay: React.FC<SkillsDisplayProps> = ({ skills }) => {
-  // Categorize skills based on common patterns
   const categorizeSkills = (skillsList: string[]): SkillCategory[] => {
     const categories: SkillCategory[] = [];
 
-    // Technical/Programming skills
-    const programmingKeywords = ['javascript', 'python', 'java', 'c++', 'c#', 'ruby', 'php', 'swift', 'kotlin', 'go', 'rust', 'typescript', 'react', 'angular', 'vue', 'node', 'django', 'flask', 'spring', '.net'];
-    const programmingSkills = skillsList.filter(skill => 
-      programmingKeywords.some(keyword => skill.toLowerCase().includes(keyword))
-    );
-    if (programmingSkills.length > 0) {
-      categories.push({ category: 'Programming & Frameworks', skills: programmingSkills });
-    }
-
-    // Database skills
-    const databaseKeywords = ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'oracle', 'database', 'nosql', 'dynamodb', 'cassandra'];
-    const databaseSkills = skillsList.filter(skill => 
-      databaseKeywords.some(keyword => skill.toLowerCase().includes(keyword)) &&
-      !programmingSkills.includes(skill)
-    );
-    if (databaseSkills.length > 0) {
-      categories.push({ category: 'Databases', skills: databaseSkills });
-    }
-
-    // Cloud & DevOps
-    const cloudKeywords = ['aws', 'azure', 'gcp', 'cloud', 'docker', 'kubernetes', 'jenkins', 'ci/cd', 'devops', 'terraform', 'ansible'];
-    const cloudSkills = skillsList.filter(skill => 
-      cloudKeywords.some(keyword => skill.toLowerCase().includes(keyword)) &&
-      !programmingSkills.includes(skill) &&
-      !databaseSkills.includes(skill)
-    );
-    if (cloudSkills.length > 0) {
-      categories.push({ category: 'Cloud & DevOps', skills: cloudSkills });
-    }
-
-    // Soft skills
-    const softKeywords = ['leadership', 'communication', 'teamwork', 'management', 'agile', 'scrum', 'problem solving', 'analytical', 'creative'];
-    const softSkills = skillsList.filter(skill => 
-      softKeywords.some(keyword => skill.toLowerCase().includes(keyword))
-    );
-    if (softSkills.length > 0) {
-      categories.push({ category: 'Soft Skills', skills: softSkills });
-    }
-
-    // Other skills
-    const categorizedSkills = [
-      ...programmingSkills,
-      ...databaseSkills,
-      ...cloudSkills,
-      ...softSkills
+    const programmingKeywords = [
+      'javascript', 'python', 'java', 'c++', 'c#', 'ruby', 'php', 'swift',
+      'kotlin', 'go', 'rust', 'typescript', 'react', 'angular', 'vue',
+      'node', 'django', 'flask', 'spring', '.net',
     ];
-    const otherSkills = skillsList.filter(skill => !categorizedSkills.includes(skill));
-    if (otherSkills.length > 0) {
-      categories.push({ category: 'Other Skills', skills: otherSkills });
-    }
+    const programmingSkills = skillsList.filter((s) =>
+      programmingKeywords.some((kw) => s.toLowerCase().includes(kw))
+    );
+    if (programmingSkills.length > 0)
+      categories.push({ category: 'Programming & Frameworks', skills: programmingSkills });
+
+    const databaseKeywords = [
+      'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'oracle',
+      'database', 'nosql', 'dynamodb', 'cassandra',
+    ];
+    const databaseSkills = skillsList.filter(
+      (s) =>
+        databaseKeywords.some((kw) => s.toLowerCase().includes(kw)) &&
+        !programmingSkills.includes(s)
+    );
+    if (databaseSkills.length > 0)
+      categories.push({ category: 'Databases', skills: databaseSkills });
+
+    const cloudKeywords = [
+      'aws', 'azure', 'gcp', 'cloud', 'docker', 'kubernetes',
+      'jenkins', 'ci/cd', 'devops', 'terraform', 'ansible',
+    ];
+    const cloudSkills = skillsList.filter(
+      (s) =>
+        cloudKeywords.some((kw) => s.toLowerCase().includes(kw)) &&
+        !programmingSkills.includes(s) &&
+        !databaseSkills.includes(s)
+    );
+    if (cloudSkills.length > 0)
+      categories.push({ category: 'Cloud & DevOps', skills: cloudSkills });
+
+    const softKeywords = [
+      'leadership', 'communication', 'teamwork', 'management',
+      'agile', 'scrum', 'problem solving', 'analytical', 'creative',
+    ];
+    const softSkills = skillsList.filter((s) =>
+      softKeywords.some((kw) => s.toLowerCase().includes(kw))
+    );
+    if (softSkills.length > 0)
+      categories.push({ category: 'Soft Skills', skills: softSkills });
+
+    const categorized = [...programmingSkills, ...databaseSkills, ...cloudSkills, ...softSkills];
+    const other = skillsList.filter((s) => !categorized.includes(s));
+    if (other.length > 0) categories.push({ category: 'Other', skills: other });
 
     return categories;
   };
 
   const categories = categorizeSkills(skills);
 
-  const getCategoryColor = (category: string) => {
+  type ColorSet = { badge: string; dot: string };
+
+  const getCategoryColors = (category: string): ColorSet => {
     switch (category) {
       case 'Programming & Frameworks':
-        return 'bg-white text-white border-blue-200';
+        return { badge: 'bg-[#22D3EE]/10 text-[#22D3EE] border-[#22D3EE]/20', dot: 'bg-[#22D3EE]' };
       case 'Databases':
-        return 'bg-green-50 text-green-700 border-green-200';
+        return { badge: 'bg-green-400/10 text-green-400 border-green-400/20', dot: 'bg-green-400' };
       case 'Cloud & DevOps':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
+        return { badge: 'bg-purple-400/10 text-purple-400 border-purple-400/20', dot: 'bg-purple-400' };
       case 'Soft Skills':
-        return 'bg-pink-50 text-pink-700 border-pink-200';
+        return { badge: 'bg-pink-400/10 text-pink-400 border-pink-400/20', dot: 'bg-pink-400' };
       default:
-        return 'bg-[#0A0A0A] text-[#555555] border-[#111111]';
+        return { badge: 'bg-[#111111] text-[#888888] border-[#1A1A1A]', dot: 'bg-[#444444]' };
     }
   };
 
   return (
     <div className="space-y-6">
-      {categories.map((category, index) => (
-        <div key={index}>
-          <h3 className="text-sm font-semibold text-[#555555] mb-3 flex items-center gap-2">
-            <span className="w-1 h-4 bg-white rounded-full"></span>
-            {category.category}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {category.skills.map((skill, skillIndex) => (
-              <span
-                key={skillIndex}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg border ${getCategoryColor(category.category)}`}
-              >
-                {skill}
-              </span>
-            ))}
+      {categories.map((cat, i) => {
+        const colors = getCategoryColors(cat.category);
+        return (
+          <div key={i}>
+            <h3 className="flex items-center gap-2 text-[9px] font-bold text-[#333333] uppercase tracking-[0.18em] mb-3">
+              <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+              {cat.category}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {cat.skills.map((skill, si) => (
+                <span
+                  key={si}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg border ${colors.badge}`}
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
