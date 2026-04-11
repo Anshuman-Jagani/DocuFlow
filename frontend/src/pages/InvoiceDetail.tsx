@@ -7,6 +7,55 @@ import PDFViewer from '../components/PDFViewer';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../hooks/useToast';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import {
+  ArrowLeft, Download, Trash2, Pencil, Check, X,
+  FileText, Building2, User, StickyNote, Hash,
+  Calendar, Clock, DollarSign, Tag
+} from 'lucide-react';
+
+type Tab = 'details' | 'lineitems' | 'parties' | 'notes';
+
+/* ── helpers ── */
+const formatCurrency = (amount: number | null | undefined, currency: string) => {
+  if (amount == null) return '—';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount);
+};
+
+const formatDate = (ds: string | null | undefined) => {
+  if (!ds) return '—';
+  return new Date(ds).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
+
+const statusConfig = (status: Invoice['status']) => {
+  switch (status) {
+    case 'paid':     return { label: 'Paid',     cls: 'bg-green-400/10 text-green-400 border-green-400/20' };
+    case 'unpaid':   return { label: 'Unpaid',   cls: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' };
+    case 'overdue':  return { label: 'Overdue',  cls: 'bg-red-400/10 text-red-400 border-red-400/20' };
+    case 'partial':  return { label: 'Partial',  cls: 'bg-blue-400/10 text-blue-400 border-blue-400/20' };
+    default:         return { label: 'Pending',  cls: 'bg-[#111111] text-[#888888] border-[#1A1A1A]' };
+  }
+};
+
+/* ── shared input style ── */
+const inputCls =
+  'w-full px-3 py-2 bg-black border border-[#1A1A1A] rounded-lg text-sm text-white ' +
+  'placeholder-[#333333] focus:outline-none focus:border-white/20 transition-colors';
+const textareaCls = inputCls + ' resize-none';
+
+/* ── field display row ── */
+const Field: React.FC<{ label: string; value: React.ReactNode; icon?: React.ReactNode }> = ({
+  label, value, icon,
+}) => (
+  <div className="flex items-start gap-3 p-4 bg-black border border-[#0F0F0F] rounded-lg hover:border-white/10 transition-all">
+    {icon && <div className="w-4 h-4 text-[#444444] mt-0.5 flex-shrink-0">{icon}</div>}
+    <div className="flex-1 min-w-0">
+      <p className="text-[9px] font-bold text-[#333333] uppercase tracking-widest">{label}</p>
+      <p className="text-sm text-white mt-0.5 break-words">{value || '—'}</p>
+    </div>
+  </div>
+);
+
+/* ══════════════════════════════════════════════════════════════ */
 
 const InvoiceDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,77 +65,51 @@ const InvoiceDetail: React.FC = () => {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editedInvoice, setEditedInvoice] = useState<Partial<Invoice>>({});
   const [documentBlobUrl, setDocumentBlobUrl] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('details');
   const blobUrlRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      fetchInvoice();
-    }
-  }, [id]);
+  useEffect(() => { if (id) fetchInvoice(); }, [id]);
 
   const fetchInvoice = async () => {
     try {
       setLoading(true);
       const response = await invoiceApi.getInvoiceById(id!);
-      const invoiceData: Invoice = response.data;
-      setInvoice(invoiceData);
-      setEditedInvoice(invoiceData);
+      const data: Invoice = response.data;
+      setInvoice(data);
+      setEditedInvoice(data);
 
-      // Fetch document as blob for preview (iframe can't send auth headers)
-      if (invoiceData.document?.id) {
+      if (data.document?.id) {
         try {
-          const docResponse = await api.get(`/api/documents/${invoiceData.document.id}/download`, {
-            responseType: 'blob',
-          });
-          const blobUrl = URL.createObjectURL(docResponse.data);
-          // Revoke previous blob URL if any
-          if (blobUrlRef.current) {
-            URL.revokeObjectURL(blobUrlRef.current);
-          }
-          blobUrlRef.current = blobUrl;
-          setDocumentBlobUrl(blobUrl);
-        } catch {
-          // Document preview unavailable, silently ignore
-        }
+          const docRes = await api.get(`/api/documents/${data.document.id}/download`, { responseType: 'blob' });
+          const blob = URL.createObjectURL(docRes.data);
+          if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+          blobUrlRef.current = blob;
+          setDocumentBlobUrl(blob);
+        } catch { /* preview unavailable */ }
       }
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to fetch invoice', 'error');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to load invoice', 'error');
       navigate('/invoices');
     } finally {
       setLoading(false);
     }
   };
 
-  // Cleanup blob URL on unmount
-  useEffect(() => {
-    return () => {
-      if (blobUrlRef.current) {
-        URL.revokeObjectURL(blobUrlRef.current);
-      }
-    };
-  }, []);
-
   const handleSave = async () => {
     try {
+      setSaving(true);
       await invoiceApi.updateInvoice(id!, editedInvoice);
-      showToast('Invoice updated successfully', 'success');
+      showToast('Invoice updated', 'success');
       setEditing(false);
       fetchInvoice();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to update invoice', 'error');
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await invoiceApi.deleteInvoice(id!);
-      showToast('Invoice deleted successfully', 'success');
-      navigate('/invoices');
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to delete invoice', 'error');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Update failed', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -95,395 +118,464 @@ const InvoiceDetail: React.FC = () => {
     setEditing(false);
   };
 
-  const formatCurrency = (amount: number | null, currency: string) => {
-    if (amount === null || amount === undefined) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount);
+  const handleDelete = async () => {
+    try {
+      await invoiceApi.deleteInvoice(id!);
+      showToast('Invoice deleted', 'success');
+      navigate('/invoices');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Delete failed', 'error');
+    }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const handleDownload = async () => {
+    if (!invoice?.document?.id || !invoice?.document?.original_filename) {
+      showToast('No document available', 'error'); return;
+    }
+    try {
+      const docRes = await api.get(`/api/documents/${invoice.document.id}/download`, { responseType: 'blob' });
+      const url = URL.createObjectURL(docRes.data);
+      const a = document.createElement('a');
+      a.href = url; a.download = invoice.document.original_filename; a.click();
+      URL.revokeObjectURL(url);
+      showToast('Downloaded', 'success');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Download failed', 'error');
+    }
   };
 
+  useEffect(() => () => { if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current); }, []);
+
+  /* ── loading ── */
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#A0A0A0]" />
         </div>
       </DashboardLayout>
     );
   }
+  if (!invoice) return null;
 
-  if (!invoice) {
-    return null;
-  }
+  const status = statusConfig(invoice.status);
+  const lineItems = invoice.line_items ?? [];
+
+  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    { key: 'details',   label: 'Details',   icon: <Hash     className="w-3.5 h-3.5" /> },
+    { key: 'lineitems', label: 'Line Items', icon: <Tag      className="w-3.5 h-3.5" /> },
+    { key: 'parties',   label: 'Parties',   icon: <Building2 className="w-3.5 h-3.5" /> },
+    { key: 'notes',     label: 'Notes',     icon: <StickyNote className="w-3.5 h-3.5" /> },
+  ];
+
+  /* ── edit helpers ── */
+  const set = (key: keyof Invoice, value: any) =>
+    setEditedInvoice((prev) => ({ ...prev, [key]: value }));
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/invoices')}
-            className="p-2 hover:bg-[#111111] rounded-lg transition-colors"
-          >
-            <svg className="w-6 h-6 text-[#888888]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-white uppercase tracking-tight">
-              Invoice {invoice.invoice_number}
-            </h1>
-            <p className="mt-1 text-sm text-[#888888]">
-              {invoice.vendor_name || 'Unknown Vendor'}
-            </p>
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-6">
 
-        <div className="flex items-center gap-2">
-          {editing ? (
-            <>
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-[#888888] bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg hover:bg-[#111111] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-black bg-white rounded-lg hover:bg-white/90 transition-all shadow-glow-white-sm"
-              >
-                Save
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setEditing(true)}
-                className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-[#888888] bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg hover:bg-[#111111] transition-colors"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-danger bg-danger/10 border border-danger/20 rounded-lg hover:bg-danger/20 transition-colors"
-              >
-                Delete
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+        {/* ── Back nav ── */}
+        <button
+          onClick={() => navigate('/invoices')}
+          className="flex items-center gap-2 text-[#555555] hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
+        >
+          <ArrowLeft className="w-4 h-4" /> Invoices
+        </button>
 
-      {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* PDF Viewer */}
-        <div className="lg:col-span-1">
-          {documentBlobUrl && invoice.document ? (
-            <PDFViewer
-              fileUrl={documentBlobUrl}
-              filename={invoice.document?.original_filename}
-            />
-          ) : (
-            <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-8 text-center aspect-[3/4] flex flex-col items-center justify-center">
-              <svg className="w-16 h-16 mx-auto text-[#444444] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-[#888888]">{invoice.document ? 'Loading preview...' : 'No document available'}</p>
+        {/* ── Hero card ── */}
+        <div className="bg-[#0A0A0A] border border-[#111111] rounded-xl p-6 hover:border-white/10 transition-all duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+
+            {/* Icon */}
+            <div className="w-16 h-16 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+              <FileText className="w-7 h-7 text-[#444444]" />
             </div>
-          )}
-        </div>
 
-        {/* Invoice Details */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Basic Information */}
-          <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Invoice Information</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white mb-1">
-                  Invoice Number
-                </label>
-                {editing ? (
-                  <input
-                    type="text"
-                    value={editedInvoice.invoice_number || ''}
-                    onChange={(e) => setEditedInvoice({ ...editedInvoice, invoice_number: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                  />
-                ) : (
-                  <p className="text-white">{invoice.invoice_number || 'N/A'}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-white mb-1">
-                    Invoice Date
-                  </label>
-                  {editing ? (
-                    <input
-                      type="date"
-                      value={editedInvoice.invoice_date?.split('T')[0] || ''}
-                      onChange={(e) => setEditedInvoice({ ...editedInvoice, invoice_date: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                    />
-                  ) : (
-                    <p className="text-white">{formatDate(invoice.invoice_date)}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white mb-1">
-                    Due Date
-                  </label>
-                  {editing ? (
-                    <input
-                      type="date"
-                      value={editedInvoice.due_date?.split('T')[0] || ''}
-                      onChange={(e) => setEditedInvoice({ ...editedInvoice, due_date: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                    />
-                  ) : (
-                    <p className="text-white">{invoice.due_date ? formatDate(invoice.due_date) : '-'}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white mb-1">
-                  Payment Status
-                </label>
-                {editing ? (
-                  <select
-                    value={editedInvoice.status || ''}
-                    onChange={(e) => setEditedInvoice({ ...editedInvoice, status: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="paid">Paid</option>
-                    <option value="unpaid">Unpaid</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="partial">Partial</option>
-                  </select>
-                ) : (
-                  <span className={`inline-block px-3 py-1 text-xs font-bold uppercase tracking-widest rounded border ${
-                    invoice.status === 'paid' ? 'bg-success/10 text-success border-success/20' :
-                    invoice.status === 'unpaid' ? 'bg-warning/10 text-warning border-warning/20' :
-                    invoice.status === 'overdue' ? 'bg-danger/10 text-danger border-danger/20' :
-                    'bg-[#111111] text-[#888888] border-[#1A1A1A]'
-                  }`}>
-                    {invoice.status}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Vendor Information */}
-          <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Vendor Information</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white mb-1">
-                  Vendor Name
-                </label>
-                {editing ? (
-                  <input
-                    type="text"
-                    value={editedInvoice.vendor_name || ''}
-                    onChange={(e) => setEditedInvoice({ ...editedInvoice, vendor_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                  />
-                ) : (
-                  <p className="text-white">{invoice.vendor_name || 'Unknown Vendor'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white mb-1">
-                  Vendor Address
-                </label>
-                {editing ? (
-                  <textarea
-                    value={editedInvoice.vendor_address || ''}
-                    onChange={(e) => setEditedInvoice({ ...editedInvoice, vendor_address: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                  />
-                ) : (
-                  <p className="text-white">{invoice.vendor_address || '-'}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Customer Information */}
-          {(invoice.customer_name || editing) && (
-            <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Customer Information</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-white mb-1">
-                    Customer Name
-                  </label>
-                  {editing ? (
-                    <input
-                      type="text"
-                      value={editedInvoice.customer_name || ''}
-                      onChange={(e) => setEditedInvoice({ ...editedInvoice, customer_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                    />
-                  ) : (
-                    <p className="text-white">{invoice.customer_name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white mb-1">
-                    Customer Address
-                  </label>
-                  {editing ? (
-                    <textarea
-                      value={editedInvoice.customer_address || ''}
-                      onChange={(e) => setEditedInvoice({ ...editedInvoice, customer_address: e.target.value })}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                    />
-                  ) : (
-                    <p className="text-white">{invoice.customer_address || '-'}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Amount Information */}
-          <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Amount Details</h2>
-            
-            <div className="space-y-3">
-              {invoice.subtotal && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-white">Subtotal</span>
-                  <span className="text-sm font-medium text-white">
-                    {formatCurrency(invoice.subtotal, invoice.currency)}
-                  </span>
-                </div>
-              )}
-
-              {invoice.tax && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-white">Tax</span>
-                  <span className="text-sm font-medium text-white">
-                    {formatCurrency(invoice.tax, invoice.currency)}
-                  </span>
-                </div>
-              )}
-
-              <div className="flex justify-between pt-3 border-t border-[#1A1A1A]">
-                <span className="text-base font-semibold text-white">Total Amount</span>
-                <span className="text-base font-bold text-white">
-                  {formatCurrency(invoice.total_amount, invoice.currency)}
+            {/* Title + meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold text-white tracking-tight">
+                  {invoice.invoice_number ? `Invoice ${invoice.invoice_number}` : 'Invoice'}
+                </h1>
+                <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest rounded-lg border ${status.cls}`}>
+                  {status.label}
                 </span>
               </div>
+              <p className="text-sm text-[#555555] mt-1">{invoice.vendor_name || 'Unknown vendor'}</p>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                {invoice.invoice_date && (
+                  <span className="flex items-center gap-1.5 text-[11px] text-[#444444]">
+                    <Calendar className="w-3.5 h-3.5" /> {formatDate(invoice.invoice_date)}
+                  </span>
+                )}
+                {invoice.due_date && (
+                  <span className="flex items-center gap-1.5 text-[11px] text-[#444444]">
+                    <Clock className="w-3.5 h-3.5" /> Due {formatDate(invoice.due_date)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Total amount */}
+            <div className="flex-shrink-0 text-right">
+              <p className="text-[9px] font-bold text-[#333333] uppercase tracking-widest mb-1">Total Amount</p>
+              <p className="text-3xl font-bold text-white tracking-tight">
+                {formatCurrency(invoice.total_amount, invoice.currency)}
+              </p>
+              {invoice.currency && invoice.currency !== 'USD' && (
+                <p className="text-[10px] text-[#444444] mt-0.5">{invoice.currency}</p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              {editing ? (
+                <>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-black bg-white rounded-lg hover:bg-white/90 transition-all disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" /> {saving ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#888888] bg-black border border-[#1A1A1A] rounded-lg hover:border-white/20 hover:text-white transition-all"
+                  >
+                    <X className="w-3.5 h-3.5" /> Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#888888] bg-black border border-[#1A1A1A] rounded-lg hover:border-white/20 hover:text-white transition-all"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#888888] bg-black border border-[#1A1A1A] rounded-lg hover:border-white/20 hover:text-white transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg hover:bg-red-400/20 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Line Items */}
-          {invoice.line_items && invoice.line_items.length > 0 && (
-            <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Line Items</h2>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-[#0A0A0A]">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase">Description</th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-white uppercase">Qty</th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-white uppercase">Unit Price</th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-white uppercase">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#111111]">
-                    {invoice.line_items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-4 py-2 text-sm text-white">{item.description}</td>
-                        <td className="px-4 py-2 text-sm text-white text-right">{item.quantity}</td>
-                        <td className="px-4 py-2 text-sm text-white text-right">
-                          {formatCurrency(item.unit_price, invoice.currency)}
-                        </td>
-                        <td className="px-4 py-2 text-sm font-medium text-white text-right">
-                          {formatCurrency(item.amount, invoice.currency)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          {/* Stat chips */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-[#111111]">
+            <div className="bg-black border border-[#0F0F0F] rounded-lg p-4 text-center hover:border-white/10 transition-all">
+              <p className="text-lg font-bold text-white">{formatCurrency(invoice.subtotal, invoice.currency)}</p>
+              <p className="text-[9px] text-[#333333] uppercase font-bold tracking-widest mt-1">Subtotal</p>
             </div>
-          )}
-
-          {/* Notes */}
-          {(invoice.notes || editing) && (
-            <div className="bg-[#0A0A0A] rounded-lg shadow-card border border-[#1A1A1A] p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Notes</h2>
-              {editing ? (
-                <textarea
-                  value={editedInvoice.notes || ''}
-                  onChange={(e) => setEditedInvoice({ ...editedInvoice, notes: e.target.value })}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-[#1A1A1A] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-[#111111]"
-                  placeholder="Add notes..."
-                />
+            <div className="bg-black border border-[#0F0F0F] rounded-lg p-4 text-center hover:border-white/10 transition-all">
+              <p className="text-lg font-bold text-white">{formatCurrency(invoice.tax, invoice.currency)}</p>
+              <p className="text-[9px] text-[#333333] uppercase font-bold tracking-widest mt-1">Tax</p>
+            </div>
+            <div className="bg-black border border-[#0F0F0F] rounded-lg p-4 text-center hover:border-white/10 transition-all">
+              <p className="text-lg font-bold text-white">{lineItems.length}</p>
+              <p className="text-[9px] text-[#333333] uppercase font-bold tracking-widest mt-1">Line Items</p>
+            </div>
+            <div className="bg-black border border-[#0F0F0F] rounded-lg p-4 text-center hover:border-white/10 transition-all">
+              {invoice.confidence_score != null ? (
+                <>
+                  <p className="text-lg font-bold text-white">{Math.round(invoice.confidence_score * 100)}%</p>
+                  <p className="text-[9px] text-[#333333] uppercase font-bold tracking-widest mt-1">Confidence</p>
+                </>
               ) : (
-                <p className="text-white whitespace-pre-wrap">{invoice.notes}</p>
+                <>
+                  <p className="text-lg font-bold text-[#333333]">—</p>
+                  <p className="text-[9px] text-[#222222] uppercase font-bold tracking-widest mt-1">Confidence</p>
+                </>
               )}
             </div>
-          )}
+          </div>
+        </div>
+
+        {/* ── Main grid: tabbed content left + PDF right ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+          {/* Left — tabbed panel */}
+          <div className="lg:col-span-3 space-y-0">
+
+            {/* Tab bar */}
+            <div className="flex gap-1 bg-[#0A0A0A] border border-[#111111] rounded-xl p-1 mb-4">
+              {tabs.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveTab(t.key)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-200 ${
+                    activeTab === t.key
+                      ? 'bg-white text-black'
+                      : 'text-[#444444] hover:text-[#888888]'
+                  }`}
+                >
+                  {t.icon}{t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            <div className="bg-[#0A0A0A] border border-[#111111] rounded-xl p-6 hover:border-white/10 transition-all duration-300 min-h-[400px]">
+
+              {/* ── DETAILS ── */}
+              {activeTab === 'details' && (
+                <div className="space-y-5">
+                  <p className="text-[10px] font-bold text-[#333333] uppercase tracking-[0.18em]">Invoice Details</p>
+
+                  {editing ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Invoice Number</label>
+                        <input className={inputCls} value={editedInvoice.invoice_number || ''} onChange={(e) => set('invoice_number', e.target.value)} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Invoice Date</label>
+                          <input type="date" className={inputCls} value={(editedInvoice.invoice_date || '').split('T')[0]} onChange={(e) => set('invoice_date', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Due Date</label>
+                          <input type="date" className={inputCls} value={(editedInvoice.due_date || '').split('T')[0]} onChange={(e) => set('due_date', e.target.value)} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Status</label>
+                        <select className={inputCls} value={editedInvoice.status || ''} onChange={(e) => set('status', e.target.value)}>
+                          <option value="pending">Pending</option>
+                          <option value="paid">Paid</option>
+                          <option value="unpaid">Unpaid</option>
+                          <option value="overdue">Overdue</option>
+                          <option value="partial">Partial</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Payment Terms</label>
+                        <input className={inputCls} value={editedInvoice.payment_terms || ''} onChange={(e) => set('payment_terms', e.target.value)} placeholder="e.g. Net 30" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      <Field label="Invoice Number" value={invoice.invoice_number} icon={<Hash className="w-4 h-4" />} />
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <Field label="Invoice Date" value={formatDate(invoice.invoice_date)} icon={<Calendar className="w-4 h-4" />} />
+                        <Field label="Due Date" value={formatDate(invoice.due_date)} icon={<Clock className="w-4 h-4" />} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div className="flex items-start gap-3 p-4 bg-black border border-[#0F0F0F] rounded-lg hover:border-white/10 transition-all">
+                          <DollarSign className="w-4 h-4 text-[#444444] mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-[9px] font-bold text-[#333333] uppercase tracking-widest">Status</p>
+                            <span className={`inline-block mt-1 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest rounded border ${status.cls}`}>
+                              {status.label}
+                            </span>
+                          </div>
+                        </div>
+                        <Field label="Payment Terms" value={invoice.payment_terms} icon={<Tag className="w-4 h-4" />} />
+                      </div>
+                      {invoice.validation_status && (
+                        <Field label="Validation" value={invoice.validation_status} />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── LINE ITEMS ── */}
+              {activeTab === 'lineitems' && (
+                <div>
+                  <p className="text-[10px] font-bold text-[#333333] uppercase tracking-[0.18em] mb-5">Line Items</p>
+                  {lineItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                      <Tag className="w-8 h-8 text-[#222222]" />
+                      <p className="text-[10px] font-bold text-[#222222] uppercase tracking-widest">No line items</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto rounded-lg border border-[#0F0F0F]">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[#111111]">
+                            {['Description', 'Qty', 'Unit Price', 'Amount'].map((h, i) => (
+                              <th key={i} className={`px-4 py-3 text-[9px] font-bold text-[#333333] uppercase tracking-widest bg-black ${i > 0 ? 'text-right' : 'text-left'}`}>
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lineItems.map((item, i) => (
+                            <tr key={i} className="border-b border-[#0A0A0A] hover:bg-black/40 transition-colors last:border-0">
+                              <td className="px-4 py-3 text-[#888888]">{item.description}</td>
+                              <td className="px-4 py-3 text-[#888888] text-right">{item.quantity}</td>
+                              <td className="px-4 py-3 text-[#888888] text-right">{formatCurrency(item.unit_price, invoice.currency)}</td>
+                              <td className="px-4 py-3 text-white font-medium text-right">{formatCurrency(item.amount, invoice.currency)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-[#1A1A1A]">
+                            <td colSpan={3} className="px-4 py-3 text-[9px] font-bold text-[#333333] uppercase tracking-widest text-right bg-black">Total</td>
+                            <td className="px-4 py-3 text-white font-bold text-right bg-black">
+                              {formatCurrency(invoice.total_amount, invoice.currency)}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── PARTIES ── */}
+              {activeTab === 'parties' && (
+                <div className="space-y-6">
+                  {/* Vendor */}
+                  <div>
+                    <p className="text-[10px] font-bold text-[#333333] uppercase tracking-[0.18em] mb-3 flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5" /> Vendor
+                    </p>
+                    {editing ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Name</label>
+                          <input className={inputCls} value={editedInvoice.vendor_name || ''} onChange={(e) => set('vendor_name', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Address</label>
+                          <textarea rows={3} className={textareaCls} value={editedInvoice.vendor_address || ''} onChange={(e) => set('vendor_address', e.target.value)} />
+                        </div>
+                        {invoice.vendor_email !== undefined && (
+                          <div>
+                            <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Email</label>
+                            <input className={inputCls} value={editedInvoice.vendor_email || ''} onChange={(e) => set('vendor_email', e.target.value)} />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Field label="Name" value={invoice.vendor_name} icon={<Building2 className="w-4 h-4" />} />
+                        {invoice.vendor_address && <Field label="Address" value={invoice.vendor_address} />}
+                        {invoice.vendor_email  && <Field label="Email"   value={invoice.vendor_email} />}
+                        {invoice.vendor_tax_id && <Field label="Tax ID"  value={invoice.vendor_tax_id} />}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Customer */}
+                  <div>
+                    <p className="text-[10px] font-bold text-[#333333] uppercase tracking-[0.18em] mb-3 flex items-center gap-2">
+                      <User className="w-3.5 h-3.5" /> Customer
+                    </p>
+                    {editing ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Name</label>
+                          <input className={inputCls} value={editedInvoice.customer_name || ''} onChange={(e) => set('customer_name', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-bold text-[#333333] uppercase tracking-widest block mb-1.5">Address</label>
+                          <textarea rows={3} className={textareaCls} value={editedInvoice.customer_address || ''} onChange={(e) => set('customer_address', e.target.value)} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Field label="Name"    value={invoice.customer_name}    icon={<User className="w-4 h-4" />} />
+                        {invoice.customer_address && <Field label="Address" value={invoice.customer_address} />}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ── NOTES ── */}
+              {activeTab === 'notes' && (
+                <div>
+                  <p className="text-[10px] font-bold text-[#333333] uppercase tracking-[0.18em] mb-4">Notes</p>
+                  {editing ? (
+                    <textarea
+                      rows={10}
+                      className={textareaCls}
+                      value={editedInvoice.notes || ''}
+                      onChange={(e) => set('notes', e.target.value)}
+                      placeholder="Add notes or comments about this invoice…"
+                    />
+                  ) : invoice.notes ? (
+                    <p className="text-sm text-[#888888] leading-relaxed whitespace-pre-wrap">{invoice.notes}</p>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                      <StickyNote className="w-8 h-8 text-[#222222]" />
+                      <p className="text-[10px] font-bold text-[#222222] uppercase tracking-widest">No notes</p>
+                      {!editing && (
+                        <button
+                          onClick={() => setEditing(true)}
+                          className="text-[10px] font-bold text-[#444444] hover:text-white uppercase tracking-widest transition-colors"
+                        >
+                          + Add a note
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right — sticky PDF preview */}
+          <div className="lg:col-span-2">
+            <div className="lg:sticky lg:top-6">
+              {documentBlobUrl && invoice.document ? (
+                <PDFViewer fileUrl={documentBlobUrl} filename={invoice.document.original_filename} />
+              ) : (
+                <div className="bg-[#0A0A0A] border border-[#111111] rounded-xl aspect-[3/4] flex flex-col items-center justify-center gap-4 hover:border-white/10 transition-all duration-300">
+                  <div className="w-14 h-14 flex items-center justify-center bg-black border border-[#1A1A1A] rounded-xl">
+                    <FileText className="w-6 h-6 text-[#333333]" />
+                  </div>
+                  <p className="text-[10px] font-bold text-[#2A2A2A] uppercase tracking-widest">
+                    {invoice.document ? 'Processing preview…' : 'No document'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Delete Invoice"
-      >
+      {/* ── Delete modal ── */}
+      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Invoice">
         <div className="space-y-4">
-          <p className="text-white">
-            Are you sure you want to delete this invoice? This action cannot be undone.
+          <p className="text-sm text-[#888888]">
+            Are you sure you want to delete{' '}
+            <span className="text-white font-semibold">
+              {invoice.invoice_number ? `Invoice ${invoice.invoice_number}` : 'this invoice'}
+            </span>?
+            This action cannot be undone.
           </p>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-2">
             <button
               onClick={() => setShowDeleteModal(false)}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg hover:bg-[#0A0A0A] transition-colors"
+              className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#888888] border border-[#1A1A1A] rounded-lg hover:bg-[#111111] hover:text-white transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleDelete}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+              className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg hover:bg-red-400/20 transition-all"
             >
               Delete
             </button>
           </div>
         </div>
       </Modal>
-    </div>
     </DashboardLayout>
   );
 };
