@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { invoiceApi } from '../services/documentApi';
-import api from '../services/api';
-import type { Invoice } from '../types/invoice';
-import PDFViewer from '../components/PDFViewer';
-import Modal from '../components/ui/Modal';
-import { useToast } from '../hooks/useToast';
-import DashboardLayout from '../components/layout/DashboardLayout';
+import { invoiceApi } from '../../services/documentApi';
+import api from '../../services/api';
+import type { Invoice } from '../../types/invoice';
+import PDFViewer from '../../components/PDFViewer';
+import Modal from '../../components/ui/Modal';
+import { useToast } from '../../hooks/useToast';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import {
   ArrowLeft, Download, Trash2, Pencil, Check, X,
   FileText, Building2, User, StickyNote, Hash,
@@ -66,11 +66,14 @@ const InvoiceDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editedInvoice, setEditedInvoice] = useState<Partial<Invoice>>({});
   const [documentBlobUrl, setDocumentBlobUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('details');
   const blobUrlRef = useRef<string | null>(null);
+  const statusMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { if (id) fetchInvoice(); }, [id]);
 
@@ -117,6 +120,32 @@ const InvoiceDetail: React.FC = () => {
     setEditedInvoice(invoice || {});
     setEditing(false);
   };
+
+  const handleQuickStatusChange = async (newStatus: string) => {
+    if (!id || updatingStatus) return;
+    setShowStatusMenu(false);
+    try {
+      setUpdatingStatus(true);
+      await invoiceApi.updateInvoice(id, { status: newStatus as Invoice['status'] });
+      showToast(`Status updated to ${newStatus}`, 'success');
+      fetchInvoice();
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Status update failed', 'error');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  // Close status menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (statusMenuRef.current && !statusMenuRef.current.contains(e.target as Node)) {
+        setShowStatusMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleDelete = async () => {
     try {
@@ -199,9 +228,48 @@ const InvoiceDetail: React.FC = () => {
                 <h1 className="text-2xl font-bold text-white tracking-tight">
                   {invoice.invoice_number ? `Invoice ${invoice.invoice_number}` : 'Invoice'}
                 </h1>
-                <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest rounded-lg border ${status.cls}`}>
-                  {status.label}
-                </span>
+
+                {/* Quick-status pill (clickable) */}
+                <div className="relative" ref={statusMenuRef}>
+                  <button
+                    onClick={() => !editing && setShowStatusMenu((v) => !v)}
+                    disabled={updatingStatus || editing}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest rounded-lg border transition-all ${
+                      editing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:opacity-80'
+                    } ${status.cls}`}
+                    title={editing ? 'Exit edit mode to change status quickly' : 'Click to change status'}
+                  >
+                    {updatingStatus ? (
+                      <span className="w-2.5 h-2.5 rounded-full border border-current border-t-transparent animate-spin" />
+                    ) : (
+                      status.label
+                    )}
+                    {!editing && <span className="opacity-60">▾</span>}
+                  </button>
+
+                  {showStatusMenu && (
+                    <div className="absolute top-full mt-1.5 left-0 z-50 bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl shadow-2xl overflow-hidden min-w-[140px]">
+                      {([
+                        { value: 'pending', label: 'Pending',  cls: 'text-[#888888]' },
+                        { value: 'paid',    label: 'Paid',     cls: 'text-green-400' },
+                        { value: 'unpaid',  label: 'Unpaid',   cls: 'text-yellow-400' },
+                        { value: 'overdue', label: 'Overdue',  cls: 'text-red-400' },
+                        { value: 'partial', label: 'Partial',  cls: 'text-blue-400' },
+                      ] as const).map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => handleQuickStatusChange(opt.value)}
+                          className={`w-full text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-colors hover:bg-white/5 ${
+                            invoice.status === opt.value ? 'bg-white/5 ' + opt.cls : opt.cls
+                          }`}
+                        >
+                          {invoice.status === opt.value && <span className="mr-1.5">✓</span>}
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <p className="text-sm text-[#555555] mt-1">{invoice.vendor_name || 'Unknown vendor'}</p>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
