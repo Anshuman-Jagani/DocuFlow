@@ -16,7 +16,7 @@ export interface Invoice {
   subtotal?: number | null;
   currency: string;
   payment_terms?: string | null;
-  status: 'paid' | 'unpaid' | 'overdue' | 'partial' | 'pending';
+  status: 'paid' | 'overdue' | 'cancelled' | 'pending';
   validation_status?: string | null;
   validation_errors?: any[];
   confidence_score?: number | null;

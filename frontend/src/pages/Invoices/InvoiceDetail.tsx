@@ -28,11 +28,10 @@ const formatDate = (ds: string | null | undefined) => {
 
 const statusConfig = (status: Invoice['status']) => {
   switch (status) {
-    case 'paid':     return { label: 'Paid',     cls: 'bg-green-400/10 text-green-400 border-green-400/20' };
-    case 'unpaid':   return { label: 'Unpaid',   cls: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' };
-    case 'overdue':  return { label: 'Overdue',  cls: 'bg-red-400/10 text-red-400 border-red-400/20' };
-    case 'partial':  return { label: 'Partial',  cls: 'bg-blue-400/10 text-blue-400 border-blue-400/20' };
-    default:         return { label: 'Pending',  cls: 'bg-[#111111] text-[#888888] border-[#1A1A1A]' };
+    case 'paid':      return { label: 'Paid',      cls: 'bg-green-400/10 text-green-400 border-green-400/20' };
+    case 'overdue':   return { label: 'Overdue',   cls: 'bg-red-400/10 text-red-400 border-red-400/20' };
+    case 'cancelled': return { label: 'Cancelled', cls: 'bg-orange-400/10 text-orange-400 border-orange-400/20' };
+    default:          return { label: 'Pending',   cls: 'bg-[#111111] text-[#888888] border-[#1A1A1A]' };
   }
 };
 
@@ -250,11 +249,10 @@ const InvoiceDetail: React.FC = () => {
                   {showStatusMenu && (
                     <div className="absolute top-full mt-1.5 left-0 z-50 bg-[#0A0A0A] border border-[#1A1A1A] rounded-xl shadow-2xl overflow-hidden min-w-[140px]">
                       {([
-                        { value: 'pending', label: 'Pending',  cls: 'text-[#888888]' },
-                        { value: 'paid',    label: 'Paid',     cls: 'text-green-400' },
-                        { value: 'unpaid',  label: 'Unpaid',   cls: 'text-yellow-400' },
-                        { value: 'overdue', label: 'Overdue',  cls: 'text-red-400' },
-                        { value: 'partial', label: 'Partial',  cls: 'text-blue-400' },
+                        { value: 'pending',   label: 'Pending',   cls: 'text-[#888888]' },
+                        { value: 'paid',      label: 'Paid',      cls: 'text-green-400' },
+                        { value: 'overdue',   label: 'Overdue',   cls: 'text-red-400' },
+                        { value: 'cancelled', label: 'Cancelled', cls: 'text-orange-400' },
                       ] as const).map((opt) => (
                         <button
                           key={opt.value}
@@ -422,9 +420,8 @@ const InvoiceDetail: React.FC = () => {
                         <select className={inputCls} value={editedInvoice.status || ''} onChange={(e) => set('status', e.target.value)}>
                           <option value="pending">Pending</option>
                           <option value="paid">Paid</option>
-                          <option value="unpaid">Unpaid</option>
                           <option value="overdue">Overdue</option>
-                          <option value="partial">Partial</option>
+                          <option value="cancelled">Cancelled</option>
                         </select>
                       </div>
                       <div>
