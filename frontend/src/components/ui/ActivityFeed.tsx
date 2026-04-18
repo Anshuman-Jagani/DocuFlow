@@ -5,14 +5,14 @@ import clsx from 'clsx';
 
 interface ActivityFeedProps { activities: Activity[]; isLoading?: boolean; }
 
-const activityIcons = { upload: Upload, process: FileCheck, delete: Trash2, export: Download };
-const activityColors = {
+const activityIcons: Record<string, any> = { upload: Upload, process: FileCheck, delete: Trash2, export: Download };
+const activityColors: Record<string, string> = {
   upload:  'text-white/60 bg-white/5',
   process: 'text-[#4ADE80] bg-[#4ADE80]/10',
   delete:  'text-[#F87171] bg-[#F87171]/10',
   export:  'text-white/40 bg-white/5',
 };
-const docTypeColors = {
+const docTypeColors: Record<string, string> = {
   invoice:  'bg-[#22D3EE]/10 text-[#22D3EE]',
   receipt:  'bg-[#4ADE80]/10 text-[#4ADE80]',
   resume:   'bg-[#A78BFA]/10 text-[#A78BFA]',

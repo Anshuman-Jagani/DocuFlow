@@ -60,11 +60,11 @@ export interface DashboardOverview {
 
 export interface Activity {
   id: string;
-  type: string;
-  document_type: string;
-  filename: string;
+  type: 'upload' | 'process' | 'delete' | 'export';
+  documentType: 'invoice' | 'resume' | 'contract' | 'receipt';
+  documentName: string;
   status: string;
-  created_at: string;
+  timestamp: string;
 }
 
 export interface TrendData {

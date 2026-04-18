@@ -45,6 +45,7 @@ export interface Experience {
 
 export interface ResumeFilters {
   search: string;
+  email: string;
   skills: string[];
   minExperience: number;
   maxExperience: number;

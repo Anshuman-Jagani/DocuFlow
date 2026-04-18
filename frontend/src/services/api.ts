@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
 const api = axios.create({
@@ -11,7 +11,7 @@ const api = axios.create({
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (value: unknown) => void; reject: (reason?: unknown) => void }> = [];
 
-const processQueue = (error: axios.AxiosError | null, token: string | null = null) => {
+const processQueue = (error: AxiosError | null, token: string | null = null) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
@@ -80,7 +80,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError as axios.AxiosError, null);
+        processQueue(refreshError as AxiosError, null);
         useAuthStore.getState().logout();
         window.location.href = '/login';
         return Promise.reject(refreshError);

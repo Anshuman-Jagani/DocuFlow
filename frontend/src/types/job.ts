@@ -8,7 +8,9 @@ export interface Job {
   required_skills: string[];
   preferred_skills?: string[];
   experience_required?: string;
+  department?: string;
   location?: string;
+  type?: 'full-time' | 'part-time' | 'contract' | 'internship';
   status: 'open' | 'closed';
   createdAt: string;
   updatedAt: string;
@@ -17,5 +19,6 @@ export interface Job {
 
 export interface JobFilters {
   search: string;
+  department: string;
   status: string;
 }

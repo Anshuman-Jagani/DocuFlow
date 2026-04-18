@@ -61,15 +61,17 @@ const JobCreate: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="p-8 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { label: 'Job Title *', placeholder: 'e.g. Senior Backend Engineer', key: 'title' as const, required: true },
-                { label: 'Department', placeholder: 'e.g. Engineering', key: 'department' as const },
-                { label: 'Location', placeholder: 'e.g. New York or Remote', key: 'location' as const },
-              ].map(({ label, placeholder, key, required }) => (
+              {(
+                [
+                  { label: 'Job Title *', placeholder: 'e.g. Senior Backend Engineer', key: 'title', required: true },
+                  { label: 'Department', placeholder: 'e.g. Engineering', key: 'department', required: false },
+                  { label: 'Location', placeholder: 'e.g. New York or Remote', key: 'location', required: false },
+                ] as Array<{ label: string; placeholder: string; key: keyof Job; required: boolean }>
+              ).map(({ label, placeholder, key, required }) => (
                 <div key={key} className="space-y-2">
                   <label className="text-[10px] font-bold text-[#444444] uppercase tracking-widest">{label}</label>
                   <input type="text" required={required} placeholder={placeholder} className={inputClass}
-                    value={formData[key] as string} onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} />
+                    value={formData[key] as string || ''} onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} />
                 </div>
               ))}
               <div className="space-y-2">

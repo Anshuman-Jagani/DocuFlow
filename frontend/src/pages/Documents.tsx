@@ -255,7 +255,7 @@ export default function Documents() {
                           {formatFileSize(doc.file_size)}
                         </td>
                         <td className="px-6 py-4 text-sm text-[#555555]">
-                          {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
                         </td>
                         <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
                           <button
