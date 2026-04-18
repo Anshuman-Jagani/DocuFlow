@@ -183,7 +183,19 @@ const ReceiptDetail: React.FC = () => {
                   <tfoot className="bg-[#111111]">
                     <tr>
                       <td colSpan={3} className="px-6 py-4 text-right text-sm font-bold text-[#888888]">Subtotal</td>
-                      <td className="px-6 py-4 text-right text-sm font-bold text-white">{formatCurrency(receipt.subtotal ?? null, receipt.currency)}</td>
+                      <td className="px-6 py-4 text-right text-sm font-bold text-white">
+                        {formatCurrency(
+                          receipt.subtotal && receipt.subtotal !== 0
+                            ? receipt.subtotal
+                            : (receipt.items || []).reduce((sum, item) => {
+                                const lineTotal = (item.amount && item.amount !== 0)
+                                  ? item.amount
+                                  : (item.quantity || 1) * (item.unit_price || 0);
+                                return sum + lineTotal;
+                              }, 0),
+                          receipt.currency
+                        )}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
