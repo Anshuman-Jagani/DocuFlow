@@ -162,14 +162,20 @@ const ReceiptDetail: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-[#0F0F0F]">
                     {receipt.items && receipt.items.length > 0 ? (
-                      receipt.items.map((item, i) => (
-                        <tr key={i} className="hover:bg-[#111111] transition-colors">
-                          <td className="px-6 py-4 text-sm font-medium text-white">{item.name}</td>
-                          <td className="px-6 py-4 text-sm text-[#888888] text-center">{item.quantity}</td>
-                          <td className="px-6 py-4 text-sm text-[#888888] text-right">{formatCurrency(item.unit_price, receipt.currency)}</td>
-                          <td className="px-6 py-4 text-sm font-bold text-white text-right">{formatCurrency(item.amount, receipt.currency)}</td>
-                        </tr>
-                      ))
+                      receipt.items.map((item, i) => {
+                        // AI extraction may not populate `amount`; fall back to qty × unit_price
+                        const lineTotal = (item.amount && item.amount !== 0)
+                          ? item.amount
+                          : (item.quantity || 1) * (item.unit_price || 0);
+                        return (
+                          <tr key={i} className="hover:bg-[#111111] transition-colors">
+                            <td className="px-6 py-4 text-sm font-medium text-white">{item.name}</td>
+                            <td className="px-6 py-4 text-sm text-[#888888] text-center">{item.quantity}</td>
+                            <td className="px-6 py-4 text-sm text-[#888888] text-right">{formatCurrency(item.unit_price, receipt.currency)}</td>
+                            <td className="px-6 py-4 text-sm font-bold text-white text-right">{formatCurrency(lineTotal, receipt.currency)}</td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr><td colSpan={4} className="px-6 py-10 text-center text-sm text-[#888888] italic">No item data extracted</td></tr>
                     )}
