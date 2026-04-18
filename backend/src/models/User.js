@@ -66,9 +66,9 @@ module.exports = (sequelize) => {
     return await bcrypt.compare(candidatePassword, this.password_hash);
   };
 
-  // Instance method to get safe user object (without password)
+  // Instance method to get safe user object (without password and tokens)
   User.prototype.toSafeObject = function() {
-    const { password_hash, ...safeUser } = this.toJSON();
+    const { password_hash, access_token, token_expires_at, ...safeUser } = this.toJSON();
     return safeUser;
   };
 

@@ -13,18 +13,18 @@ const JobCreate: React.FC = () => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Job>>({
-    title: '', department: '', location: '', type: 'full-time', description: '', requirements: [] as string[], status: 'open',
+    title: '', department: '', location: '', type: 'full-time', description: '', required_skills: [] as string[], status: 'open',
   });
   const [newRequirement, setNewRequirement] = useState('');
 
   const handleAddRequirement = () => {
     if (newRequirement.trim()) {
-      setFormData({ ...formData, requirements: [...(formData.requirements || []), newRequirement.trim()] });
+      setFormData({ ...formData, required_skills: [...(formData.required_skills || []), newRequirement.trim()] });
       setNewRequirement('');
     }
   };
   const removeRequirement = (index: number) => {
-    setFormData({ ...formData, requirements: formData.requirements?.filter((_: string, i: number) => i !== index) });
+    setFormData({ ...formData, required_skills: formData.required_skills?.filter((_: string, i: number) => i !== index) });
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +103,7 @@ const JobCreate: React.FC = () => {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {formData.requirements?.map((req: string, i: number) => (
+                {formData.required_skills?.map((req: string, i: number) => (
                   <div key={i} className="flex items-center gap-2 bg-black border border-[#111111] px-3 py-1.5 rounded-full text-sm font-medium text-[#888888]">
                     {req}
                     <button onClick={() => removeRequirement(i)} type="button" className="text-[#444444] hover:text-danger transition-colors">

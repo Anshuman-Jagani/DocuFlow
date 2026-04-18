@@ -58,7 +58,7 @@ export const invoiceApi = {
     if (filters.minAmount) params.append('min_amount', filters.minAmount);
     if (filters.maxAmount) params.append('max_amount', filters.maxAmount);
 
-    const response = await api.get(`/api/invoices/export?${params.toString()}`, {
+    const response = await api.get(`/api/invoices/export/csv?${params.toString()}`, {
       responseType: 'blob',
     });
     
@@ -85,27 +85,19 @@ export const resumeApi = {
   ) => {
     const params = new URLSearchParams();
     
-    if (filters.search) params.append('search', filters.search);
-    if (filters.skills && filters.skills.length > 0) {
-      params.append('skills', filters.skills.join(','));
-    }
+    if (filters.search) params.append('candidate_name', filters.search);
+    if (filters.email) params.append('email', filters.email);
     if (filters.minExperience !== undefined) {
-      params.append('minExperience', filters.minExperience.toString());
+      params.append('min_experience', filters.minExperience.toString());
     }
     if (filters.maxExperience !== undefined) {
-      params.append('maxExperience', filters.maxExperience.toString());
-    }
-    if (filters.minScore !== undefined) {
-      params.append('minScore', filters.minScore.toString());
-    }
-    if (filters.maxScore !== undefined) {
-      params.append('maxScore', filters.maxScore.toString());
+      params.append('max_experience', filters.maxExperience.toString());
     }
     
     params.append('page', page.toString());
     params.append('limit', limit.toString());
-    params.append('sortBy', sortField);
-    params.append('order', sortOrder);
+    params.append('sort_by', sortField);
+    params.append('sort_order', sortOrder);
 
     const response = await api.get(`/api/resumes?${params.toString()}`);
     return response.data;
@@ -137,7 +129,7 @@ export const resumeApi = {
   },
 
   matchResumeToJob: async (resumeId: string, jobId: string) => {
-    const response = await api.post(`/api/resumes/${resumeId}/match`, { jobId });
+    const response = await api.post(`/api/resumes/${resumeId}/match`, { job_id: jobId });
     return response.data;
   },
 };
@@ -153,15 +145,15 @@ export const contractApi = {
   ) => {
     const params = new URLSearchParams();
     
-    if (filters.search) params.append('search', filters.search);
-    if (filters.type) params.append('type', filters.type);
+    if (filters.search) params.append('contract_title', filters.search);
+    if (filters.type) params.append('contract_type', filters.type);
     if (filters.status) params.append('status', filters.status);
-    if (filters.risk) params.append('risk', filters.risk);
+    if (filters.risk) params.append('risk_level', filters.risk);
     
     params.append('page', page.toString());
     params.append('limit', limit.toString());
-    params.append('sortBy', sortField);
-    params.append('order', sortOrder);
+    params.append('sort_by', sortField);
+    params.append('sort_order', sortOrder);
 
     const response = await api.get(`/api/contracts?${params.toString()}`);
     return response.data;
@@ -187,11 +179,11 @@ export const receiptApi = {
   ) => {
     const params = new URLSearchParams();
     
-    if (filters.search) params.append('search', filters.search);
-    if (filters.category) params.append('category', filters.category);
-    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters.dateTo) params.append('dateTo', filters.dateTo);
-    if (filters.isBusiness !== undefined) params.append('isBusiness', filters.isBusiness.toString());
+    if (filters.search) params.append('merchant_name', filters.search);
+    if (filters.category) params.append('expense_category', filters.category);
+    if (filters.dateFrom) params.append('start_date', filters.dateFrom);
+    if (filters.dateTo) params.append('end_date', filters.dateTo);
+    if (filters.isBusiness !== undefined) params.append('is_business_expense', filters.isBusiness.toString());
     
     params.append('page', page.toString());
     params.append('limit', limit.toString());
@@ -206,7 +198,7 @@ export const receiptApi = {
   },
 
   getReceiptStats: async () => {
-    const response = await api.get('/api/receipts/stats');
+    const response = await api.get('/api/receipts/by-category');
     return response.data;
   },
 
@@ -239,7 +231,7 @@ export const jobApi = {
   },
 
   updateJob: async (id: string, data: Partial<Job>) => {
-    const response = await api.put(`/api/jobs/${id}`, data);
+    const response = await api.patch(`/api/jobs/${id}`, data);
     return response.data;
   },
 

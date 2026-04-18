@@ -71,7 +71,7 @@ const uploadDocument = async (req, res) => {
           file_size: document.file_size,
           mime_type: document.mime_type,
           processing_status: document.processing_status,
-          created_at: document.createdAt
+          createdAt: document.created_at
         }
       }, 'Document uploaded successfully')
     );
@@ -97,7 +97,7 @@ const uploadDocument = async (req, res) => {
  */
 const listDocuments = async (req, res) => {
   try {
-    const { page = 1, limit = 20, document_type, processing_status, sort_by = 'upload_date', order = 'DESC' } = req.query;
+    const { page = 1, limit = 20, document_type, processing_status, search, sort_by = 'upload_date', order = 'DESC' } = req.query;
     
     // Build where clause
     const where = { user_id: req.user.id };
@@ -108,6 +108,11 @@ const listDocuments = async (req, res) => {
     
     if (processing_status) {
       where.processing_status = processing_status;
+    }
+
+    // Add search filter for original_filename
+    if (search) {
+      where.original_filename = { [require('sequelize').Op.iLike]: `%${search}%` };
     }
     
     // Get pagination params

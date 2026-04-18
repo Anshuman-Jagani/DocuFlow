@@ -59,7 +59,6 @@ const JobList: React.FC = () => {
             <option value="">All Statuses</option>
             <option value="open">Open</option>
             <option value="closed">Closed</option>
-            <option value="draft">Draft</option>
           </select>
         </div>
 

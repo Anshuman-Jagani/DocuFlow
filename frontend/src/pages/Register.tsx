@@ -68,7 +68,7 @@ const Register: React.FC = () => {
       setTimeout(() => navigate("/login"), 1500);
     } catch (error: any) {
       showToast(
-        error.response?.data?.message ||
+        error.response?.data?.error?.message ||
           "Registration failed. Please try again.",
         "error",
       );

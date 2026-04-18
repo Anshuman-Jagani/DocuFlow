@@ -105,7 +105,7 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center bg-black p-4 border border-[#0F0F0F] rounded-lg hover:border-white/5 transition-all">
                   <span className="text-[9px] font-bold text-[#333333] uppercase tracking-widest">Total Invoiced</span>
                   <span className="font-bold text-white text-lg tracking-tight">
-                    ${overview.financial.invoices.total_amount.toFixed(2)}
+                    ${overview.financial?.invoices?.total_amount?.toFixed(2) || '0.00'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center bg-black p-4 border border-[#0F0F0F] rounded-lg hover:border-white/5 transition-all">

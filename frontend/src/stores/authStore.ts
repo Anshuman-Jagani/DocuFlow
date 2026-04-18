@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import api from '../services/api';
 
 interface User {
   id: string;
@@ -11,25 +12,32 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  login: (token: string, user: User) => void;
-  logout: () => void;
+  login: (token: string, refreshToken: string, user: User) => void;
+  logout: () => Promise<void>;
   setUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       
-      login: (token: string, user: User) => {
-        set({ token, user, isAuthenticated: true });
+      login: (token: string, refreshToken: string, user: User) => {
+        set({ token, refreshToken, user, isAuthenticated: true });
       },
       
-      logout: () => {
-        set({ token: null, user: null, isAuthenticated: false });
+      logout: async () => {
+        try {
+          await api.post("/api/auth/logout");
+        } catch (error) {
+          console.error("Logout API failed:", error);
+        }
+        set({ token: null, refreshToken: null, user: null, isAuthenticated: false });
       },
       
       setUser: (user: User) => {

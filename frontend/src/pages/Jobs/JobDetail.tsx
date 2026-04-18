@@ -93,7 +93,7 @@ const JobDetail: React.FC = () => {
               <section>
                 <h3 className="font-bold text-[#555555] text-lg mb-3">Requirements</h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {job.requirements.map((req, i) => (
+                  {job.required_skills?.map((req, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-[#555555] bg-[#0A0A0A] p-3 rounded-lg border border-[#111111]">
                       <div className="mt-1 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-white"></div>
                       {req}

@@ -60,11 +60,11 @@ export interface DashboardOverview {
 
 export interface Activity {
   id: string;
-  type: 'upload' | 'process' | 'delete' | 'export';
-  documentType: 'invoice' | 'resume' | 'contract' | 'receipt';
-  documentName: string;
-  timestamp: string;
-  status?: string;
+  type: string;
+  document_type: string;
+  filename: string;
+  status: string;
+  created_at: string;
 }
 
 export interface TrendData {
@@ -82,6 +82,7 @@ export interface FinancialSummary {
     paid: number;
     pending: number;
     overdue: number;
+    cancelled: number;
   };
 }
 

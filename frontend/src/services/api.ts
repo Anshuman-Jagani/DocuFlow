@@ -8,6 +8,20 @@ const api = axios.create({
   },
 });
 
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value: unknown) => void; reject: (reason?: unknown) => void }> = [];
+
+const processQueue = (error: axios.AxiosError | null, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Request interceptor - add auth token
 api.interceptors.request.use(
   (config) => {
@@ -22,15 +36,59 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle errors
+// Response interceptor - handle 401 errors with token refresh
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Clear token and redirect to login
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch(err => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = useAuthStore.getState().refreshToken;
+      
+      if (!refreshToken) {
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/refresh`,
+          { refreshToken }
+        );
+        
+        const { accessToken } = response.data.data;
+        const user = useAuthStore.getState().user;
+        
+        useAuthStore.getState().login(accessToken, refreshToken, user!);
+        processQueue(null, accessToken);
+        
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError as axios.AxiosError, null);
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+    
     return Promise.reject(error);
   }
 );

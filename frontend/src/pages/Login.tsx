@@ -23,12 +23,12 @@ const Login: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await api.post("/api/auth/login", data);
-      const { accessToken, user } = response.data.data;
-      login(accessToken, user);
+      const { accessToken, refreshToken, user } = response.data.data;
+      login(accessToken, refreshToken, user);
       showToast("Login successful!", "success");
       navigate("/dashboard");
     } catch (error: any) {
-      showToast(error.response?.data?.message || "Login failed. Please try again.", "error");
+      showToast(error.response?.data?.error?.message || "Login failed. Please try again.", "error");
     } finally { setIsLoading(false); }
   };
 
