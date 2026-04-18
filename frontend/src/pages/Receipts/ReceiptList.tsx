@@ -25,7 +25,8 @@ const ReceiptList: React.FC = () => {
       setLoading(true);
       const response = await receiptApi.getReceipts(filters, page, limit);
       setReceipts(response.data || []);
-      setTotal(response.meta?.pagination?.total || 0);
+      // Backend wraps pagination in meta.pagination
+      setTotal(response.meta?.pagination?.total ?? response.pagination?.total ?? 0);
     } catch { showToast('Failed to fetch receipts', 'error'); }
     finally { setLoading(false); }
   };

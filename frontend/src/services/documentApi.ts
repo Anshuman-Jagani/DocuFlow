@@ -199,7 +199,28 @@ export const receiptApi = {
 
   getReceiptStats: async () => {
     const response = await api.get('/api/receipts/by-category');
-    return response.data;
+    // The endpoint returns an array of { category, count, total_amount, receipts[] }
+    // Transform it into the ReceiptStats shape that components expect
+    const categories: Array<{ category: string; count: number; total_amount: number }> =
+      response.data?.data || [];
+
+    const total_amount = categories.reduce((sum: number, c: any) => sum + (c.total_amount || 0), 0);
+    const count = categories.reduce((sum: number, c: any) => sum + (c.count || 0), 0);
+
+    const stats = {
+      total_amount,
+      count,
+      category_breakdown: categories.map((c: any) => ({
+        category: c.category,
+        amount: c.total_amount || 0,
+      })),
+      monthly_spending: [] as Array<{ month: string; amount: number }>,
+      business_total: 0,
+      personal_total: 0,
+      avg_amount: count > 0 ? total_amount / count : 0,
+    };
+
+    return { data: stats };
   },
 
   deleteReceipt: async (id: string) => {
