@@ -12,7 +12,7 @@ const { generateInvoiceCSV, generateInvoicePDF } = require('../services/exportSe
 exports.listInvoices = async (req, res, next) => {
   try {
     const { page, limit, offset } = getPaginationParams(req.query);
-    const { status, vendor_name, invoice_number, start_date, end_date } = req.query;
+    const { status, search, vendor_name, invoice_number, start_date, end_date, min_amount, max_amount } = req.query;
     
     // Build where clause
     const where = {
@@ -20,18 +20,30 @@ exports.listInvoices = async (req, res, next) => {
       ...buildStatusFilter('status', status),
       ...buildDateRangeFilter('invoice_date', start_date, end_date)
     };
-    
-    // Add search filters
-    if (vendor_name) {
-      where.vendor_name = {
-        [Op.iLike]: `%${vendor_name}%`
-      };
+
+    // Unified search across vendor_name and invoice_number
+    if (search) {
+      where[Op.or] = [
+        { vendor_name:     { [Op.iLike]: `%${search}%` } },
+        { invoice_number:  { [Op.iLike]: `%${search}%` } },
+      ];
     }
-    
-    if (invoice_number) {
-      where.invoice_number = {
-        [Op.iLike]: `%${invoice_number}%`
-      };
+
+    // Legacy individual field filters (kept for backwards compat)
+    if (!search && vendor_name) {
+      where.vendor_name = { [Op.iLike]: `%${vendor_name}%` };
+    }
+    if (!search && invoice_number) {
+      where.invoice_number = { [Op.iLike]: `%${invoice_number}%` };
+    }
+
+    // Amount range filter
+    if (min_amount !== undefined && max_amount !== undefined) {
+      where.total_amount = { [Op.between]: [parseFloat(min_amount), parseFloat(max_amount)] };
+    } else if (min_amount !== undefined) {
+      where.total_amount = { [Op.gte]: parseFloat(min_amount) };
+    } else if (max_amount !== undefined) {
+      where.total_amount = { [Op.lte]: parseFloat(max_amount) };
     }
     
     // Get invoices with associated documents
@@ -108,9 +120,11 @@ exports.updateInvoice = async (req, res, next) => {
     
     // Update allowed fields
     const allowedFields = [
-      'invoice_number', 'vendor_name', 'invoice_date', 'due_date',
-      'total_amount', 'currency', 'status', 'line_items', 'tax_details',
-      'payment_terms', 'validation_errors', 'confidence_score'
+      'invoice_number', 'vendor_name', 'vendor_address', 'vendor_email',
+      'vendor_tax_id', 'customer_name', 'customer_address',
+      'invoice_date', 'due_date', 'total_amount', 'subtotal', 'tax',
+      'currency', 'status', 'line_items', 'tax_details',
+      'payment_terms', 'validation_errors', 'confidence_score', 'notes'
     ];
     
     const updates = {};

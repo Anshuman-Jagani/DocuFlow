@@ -31,6 +31,13 @@ const authenticate = async (req, res, next) => {
       );
     }
 
+    // Check token hasn't been revoked (e.g. after logout)
+    if (user.access_token && user.access_token !== token) {
+      return res.status(401).json(
+        errorResponse('TOKEN_REVOKED', 'Token has been revoked. Please log in again.')
+      );
+    }
+
     // Attach user to request
     req.user = user;
     next();

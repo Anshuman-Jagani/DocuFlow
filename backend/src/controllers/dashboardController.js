@@ -28,15 +28,15 @@ exports.getDashboardOverview = async (req, res, next) => {
       };
     }
     
-    // Get all documents for this user
+    // Single query for all documents (used for both summary and trends)
     const documents = await Document.findAll({
       where: { user_id: userId, ...dateFilter }
     });
 
-    // Get invoices and receipts
+    // Get invoices and receipts — also scoped to the same date filter
     const [invoices, receipts] = await Promise.all([
-      Invoice.findAll({ where: { user_id: userId } }),
-      Receipt.findAll({ where: { user_id: userId } })
+      Invoice.findAll({ where: { user_id: userId, ...dateFilter } }),
+      Receipt.findAll({ where: { user_id: userId, ...dateFilter } })
     ]);
 
     // Calculate summary
@@ -86,12 +86,11 @@ exports.getDashboardOverview = async (req, res, next) => {
       }
     };
 
-    // Get recent activity (last 10 documents)
-    const recentDocs = await Document.findAll({
-      where: { user_id: userId },
-      order: [['createdAt', 'DESC']],
-      limit: 10
-    });
+    // Get recent activity (last 10 documents from the filtered set)
+    const recentDocs = documents
+      .slice()
+      .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at))
+      .slice(0, 10);
 
     const recent_activity = recentDocs.map(doc => ({
       id: doc.id,
@@ -102,24 +101,20 @@ exports.getDashboardOverview = async (req, res, next) => {
       created_at: doc.createdAt || doc.created_at
     }));
 
-    // Calculate trends
+    // Calculate trends using the same documents array (no second DB call)
     const now = new Date();
     const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const allDocs = await Document.findAll({
-      where: { user_id: userId }
-    });
-
-    const uploads_last_7_days = allDocs.filter(d => new Date(d.createdAt || d.created_at) >= last7Days).length;
-    const uploads_last_30_days = allDocs.filter(d => new Date(d.createdAt || d.created_at) >= last30Days).length;
+    const uploads_last_7_days = documents.filter(d => new Date(d.createdAt || d.created_at) >= last7Days).length;
+    const uploads_last_30_days = documents.filter(d => new Date(d.createdAt || d.created_at) >= last30Days).length;
 
     // Group by date for last 30 days
     const documents_by_date = [];
     for (let i = 29; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dateStr = date.toISOString().split('T')[0];
-      const count = allDocs.filter(d => {
+      const count = documents.filter(d => {
         const docDate = new Date(d.createdAt || d.created_at).toISOString().split('T')[0];
         return docDate === dateStr;
       }).length;

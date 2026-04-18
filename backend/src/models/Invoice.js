@@ -101,12 +101,16 @@ module.exports = (sequelize) => {
       defaultValue: []
     },
     confidence_score: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.FLOAT,
       allowNull: true,
       validate: {
         min: 0,
-        max: 100
+        max: 1
       }
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     tableName: 'invoices',

@@ -26,7 +26,7 @@ exports.listContracts = async (req, res, next) => {
       user_id: req.user.id,
       ...buildStatusFilter('contract_type', contract_type),
       ...buildStatusFilter('status', status),
-      ...buildDateRangeFilter('start_date', start_date, end_date),
+      ...buildDateRangeFilter('expiration_date', start_date, end_date),
       ...buildNumericRangeFilter('risk_score', min_risk_score, max_risk_score)
     };
     
@@ -111,8 +111,8 @@ exports.updateContract = async (req, res, next) => {
     
     // Update allowed fields
     const allowedFields = [
-      'contract_title', 'contract_type', 'parties', 'start_date',
-      'end_date', 'contract_value', 'currency', 'status',
+      'contract_title', 'contract_type', 'parties', 'effective_date',
+      'expiration_date', 'contract_value', 'currency', 'status',
       'key_obligations', 'payment_terms', 'termination_clauses',
       'red_flags', 'risk_score', 'auto_renewal'
     ];
@@ -174,14 +174,14 @@ exports.getExpiringContracts = async (req, res, next) => {
     const contracts = await Contract.findAll({
       where: {
         user_id: req.user.id,
-        end_date: {
+        expiration_date: {
           [Op.between]: [today, futureDate]
         },
         status: {
           [Op.ne]: 'terminated'
         }
       },
-      order: [['end_date', 'ASC']],
+      order: [['expiration_date', 'ASC']],
       include: [{
         model: Document,
         as: 'document',
@@ -192,7 +192,7 @@ exports.getExpiringContracts = async (req, res, next) => {
     // Calculate days until expiration for each contract
     const contractsWithDays = contracts.map(contract => {
       const daysUntilExpiration = Math.ceil(
-        (new Date(contract.end_date) - today) / (1000 * 60 * 60 * 24)
+        (new Date(contract.expiration_date) - today) / (1000 * 60 * 60 * 24)
       );
       
       return {

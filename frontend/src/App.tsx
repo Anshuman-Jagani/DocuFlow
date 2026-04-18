@@ -147,18 +147,18 @@ function App() {
             }
           />
           <Route
-            path="/receipts/:id"
-            element={
-              <ProtectedRoute>
-                <ReceiptDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/receipts/analytics"
             element={
               <ProtectedRoute>
                 <ReceiptAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receipts/:id"
+            element={
+              <ProtectedRoute>
+                <ReceiptDetail />
               </ProtectedRoute>
             }
           />

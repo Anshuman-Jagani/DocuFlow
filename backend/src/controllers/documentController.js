@@ -71,7 +71,7 @@ const uploadDocument = async (req, res) => {
           file_size: document.file_size,
           mime_type: document.mime_type,
           processing_status: document.processing_status,
-          upload_date: document.upload_date
+          created_at: document.createdAt
         }
       }, 'Document uploaded successfully')
     );

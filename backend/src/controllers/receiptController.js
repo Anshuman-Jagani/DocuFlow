@@ -24,7 +24,7 @@ exports.listReceipts = async (req, res, next) => {
     const where = {
       user_id: req.user.id,
       ...buildStatusFilter('expense_category', expense_category),
-      ...buildDateRangeFilter('receipt_date', start_date, end_date)
+      ...buildDateRangeFilter('purchase_date', start_date, end_date)
     };
     
     // Search by merchant name
@@ -298,7 +298,7 @@ exports.exportReceiptsCSV = async (req, res, next) => {
     const where = {
       user_id: req.user.id,
       ...buildStatusFilter('expense_category', expense_category),
-      ...buildDateRangeFilter('receipt_date', start_date, end_date)
+      ...buildDateRangeFilter('purchase_date', start_date, end_date)
     };
     
     if (merchant_name) {

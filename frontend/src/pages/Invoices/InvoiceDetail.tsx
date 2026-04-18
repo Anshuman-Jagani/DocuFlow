@@ -355,7 +355,12 @@ const InvoiceDetail: React.FC = () => {
             <div className="bg-black border border-[#0F0F0F] rounded-lg p-4 text-center hover:border-white/10 transition-all">
               {invoice.confidence_score != null ? (
                 <>
-                  <p className="text-lg font-bold text-white">{Math.round(invoice.confidence_score * 100)}%</p>
+                  <p className="text-lg font-bold text-white">
+                    {invoice.confidence_score! > 1
+                      ? Math.round(invoice.confidence_score!)   // legacy 0–100 integer
+                      : Math.round(invoice.confidence_score! * 100) // new 0–1 float
+                    }%
+                  </p>
                   <p className="text-[9px] text-[#333333] uppercase font-bold tracking-widest mt-1">Confidence</p>
                 </>
               ) : (

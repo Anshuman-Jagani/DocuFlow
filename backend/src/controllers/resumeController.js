@@ -35,14 +35,14 @@ exports.listResumes = async (req, res, next) => {
     
     // Filter by years of experience
     if (min_experience !== undefined) {
-      where.years_of_experience = {
+      where.total_years_experience = {
         [Op.gte]: parseInt(min_experience)
       };
     }
     
     if (max_experience !== undefined) {
-      where.years_of_experience = {
-        ...where.years_of_experience,
+      where.total_years_experience = {
+        ...where.total_years_experience,
         [Op.lte]: parseInt(max_experience)
       };
     }
@@ -200,9 +200,9 @@ exports.matchResumeWithJob = async (req, res, next) => {
     // Perform matching using the service
     const matchResult = await matchingService.matchResumeToJob(req.params.id, job_id);
     
-    // Fetch updated resume with job data
+    // Fetch updated resume with job data — scoped to current user for security
     const resume = await Resume.findOne({
-      where: { id: req.params.id },
+      where: { id: req.params.id, user_id: req.user.id },
       include: [{ model: JobPosting, as: 'job' }]
     });
     

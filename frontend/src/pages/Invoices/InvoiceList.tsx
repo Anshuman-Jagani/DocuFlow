@@ -11,10 +11,10 @@ const inputClass = 'w-full px-3 py-2 bg-[#0A0A0A] border border-[#111111] rounde
 const labelClass = 'block text-[10px] font-bold text-[#444444] uppercase tracking-widest mb-1';
 
 const STATUS_STYLES: Record<string, string> = {
-  paid:    'bg-success/10 text-success border border-success/20',
-  unpaid:  'bg-warning/10 text-warning border border-warning/20',
-  overdue: 'bg-danger/10 text-danger border border-danger/20',
-  partial: 'bg-white/10 text-white border border-white/20',
+  pending:   'bg-[#1A1A1A] text-[#888888] border border-[#333333]',
+  paid:      'bg-success/10 text-success border border-success/20',
+  overdue:   'bg-danger/10 text-danger border border-danger/20',
+  cancelled: 'bg-orange-400/10 text-orange-400 border border-orange-400/20',
 };
 
 const InvoiceList: React.FC = () => {
@@ -109,10 +109,10 @@ const InvoiceList: React.FC = () => {
               <label className={labelClass}>Status</label>
               <select value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} className={inputClass.replace('placeholder-[#5A5A5A]', '')}>
                 <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
                 <option value="paid">Paid</option>
-                <option value="unpaid">Unpaid</option>
                 <option value="overdue">Overdue</option>
-                <option value="partial">Partial</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
             <div className="flex items-end">

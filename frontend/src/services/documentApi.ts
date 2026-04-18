@@ -19,15 +19,15 @@ export const invoiceApi = {
     
     if (filters.search) params.append('search', filters.search);
     if (filters.status) params.append('status', filters.status);
-    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters.dateTo) params.append('dateTo', filters.dateTo);
-    if (filters.minAmount) params.append('minAmount', filters.minAmount);
-    if (filters.maxAmount) params.append('maxAmount', filters.maxAmount);
+    if (filters.dateFrom) params.append('start_date', filters.dateFrom);
+    if (filters.dateTo) params.append('end_date', filters.dateTo);
+    if (filters.minAmount) params.append('min_amount', filters.minAmount);
+    if (filters.maxAmount) params.append('max_amount', filters.maxAmount);
     
     params.append('page', page.toString());
     params.append('limit', limit.toString());
-    params.append('sortBy', sortField);
-    params.append('order', sortOrder);
+    params.append('sort_by', sortField);
+    params.append('sort_order', sortOrder);
 
     const response = await api.get(`/api/invoices?${params.toString()}`);
     return response.data;
@@ -53,10 +53,10 @@ export const invoiceApi = {
     
     if (filters.search) params.append('search', filters.search);
     if (filters.status) params.append('status', filters.status);
-    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters.dateTo) params.append('dateTo', filters.dateTo);
-    if (filters.minAmount) params.append('minAmount', filters.minAmount);
-    if (filters.maxAmount) params.append('maxAmount', filters.maxAmount);
+    if (filters.dateFrom) params.append('start_date', filters.dateFrom);
+    if (filters.dateTo) params.append('end_date', filters.dateTo);
+    if (filters.minAmount) params.append('min_amount', filters.minAmount);
+    if (filters.maxAmount) params.append('max_amount', filters.maxAmount);
 
     const response = await api.get(`/api/invoices/export?${params.toString()}`, {
       responseType: 'blob',
