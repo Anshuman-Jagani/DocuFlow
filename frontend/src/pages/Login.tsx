@@ -8,13 +8,14 @@ import { useToast } from "../components/ui/Toast";
 import api from "../services/api";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { FileText, CheckCircle2, Zap } from "lucide-react";
+import { FileText, CheckCircle2, Zap, Eye, EyeOff } from "lucide-react";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuthStore();
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
 
@@ -112,7 +113,25 @@ const Login: React.FC = () => {
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="text-[10px] font-bold text-[#333333] tracking-[0.15em] uppercase">Password</label>
                 </div>
-                <Input type="password" placeholder="••••••••" error={errors.password?.message} {...register("password")} />
+              <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    error={errors.password?.message}
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#444444] hover:text-white transition-colors focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword
+                      ? <EyeOff className="w-4 h-4" />
+                      : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <Button type="submit" variant="primary" className="w-full py-3 font-bold uppercase tracking-widest text-xs" isLoading={isLoading}>

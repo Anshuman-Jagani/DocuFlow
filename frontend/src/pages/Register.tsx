@@ -7,12 +7,14 @@ import { useToast } from "../components/ui/Toast";
 import api from "../services/api";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { FileText, ShieldCheck, Zap, ArrowRight } from "lucide-react";
+import { FileText, ShieldCheck, Zap, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -193,21 +195,43 @@ const Register: React.FC = () => {
               />
 
               <div className="space-y-3">
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="••••••••"
-                  error={errors.password?.message}
-                  {...register("password")}
-                />
+                <div className="relative">
+                  <Input
+                    label="Password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    error={errors.password?.message}
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-8 text-[#444444] hover:text-white transition-colors focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
 
-                <Input
-                  label="Confirm Password"
-                  type="password"
-                  placeholder="••••••••"
-                  error={errors.confirmPassword?.message}
-                  {...register("confirmPassword")}
-                />
+                <div className="relative">
+                  <Input
+                    label="Confirm Password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    error={errors.confirmPassword?.message}
+                    {...register("confirmPassword")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-8 text-[#444444] hover:text-white transition-colors focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
 
                 {password && (
                   <div className="bg-[#0A0A0A] p-4 rounded-xl border border-[#111111] transition-all animate-fade-in">

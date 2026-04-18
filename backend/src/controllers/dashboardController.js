@@ -223,10 +223,21 @@ exports.getDashboardTrends = async (req, res, next) => {
 exports.getFinancialSummary = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const { start_date, end_date } = req.query;
+
+    // Build optional date filter
+    let dateFilter = {};
+    if (start_date && end_date) {
+      dateFilter = {
+        createdAt: {
+          [Op.between]: [new Date(start_date), new Date(end_date + 'T23:59:59')]
+        }
+      };
+    }
 
     const [invoices, receipts] = await Promise.all([
-      Invoice.findAll({ where: { user_id: userId } }),
-      Receipt.findAll({ where: { user_id: userId } })
+      Invoice.findAll({ where: { user_id: userId, ...dateFilter } }),
+      Receipt.findAll({ where: { user_id: userId, ...dateFilter } })
     ]);
 
     const summary = {
@@ -237,7 +248,8 @@ exports.getFinancialSummary = async (req, res, next) => {
       byStatus: {
         paid: invoices.filter(inv => inv.status === 'paid').length,
         pending: invoices.filter(inv => inv.status === 'pending').length,
-        overdue: invoices.filter(inv => inv.status === 'overdue').length
+        overdue: invoices.filter(inv => inv.status === 'overdue').length,
+        cancelled: invoices.filter(inv => inv.status === 'cancelled').length
       }
     };
 

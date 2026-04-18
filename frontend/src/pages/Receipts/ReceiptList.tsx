@@ -145,7 +145,7 @@ const ReceiptList: React.FC = () => {
                     <p className="text-white font-bold ml-2">{formatCurrency(receipt.total_amount, receipt.currency)}</p>
                   </div>
                   <div className="flex items-center text-xs text-[#444444] gap-3">
-                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(receipt.purchase_date!).toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {receipt.purchase_date ? new Date(receipt.purchase_date).toLocaleDateString() : 'N/A'}</span>
                     <span className="flex items-center gap-1"><Tag className="w-3 h-3" /> {receipt.category || 'Uncategorized'}</span>
                   </div>
                 </div>

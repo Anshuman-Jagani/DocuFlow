@@ -176,8 +176,8 @@ const ContractList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{contract.contract_title || 'Untitled Contract'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#888888]">{contract.contract_type || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#444444]">
-                          {contract.parties.slice(0, 2).map(p => p.name).join(' & ')}
-                          {contract.parties.length > 2 && ' ...'}
+                        {(contract.parties ?? []).slice(0, 2).map((p: any) => p.name).join(' & ')}
+                          {(contract.parties?.length ?? 0) > 2 && ' ...'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#444444]">{formatDate(contract.expiration_date)}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{getRiskBadge(contract.risk_score)}</td>

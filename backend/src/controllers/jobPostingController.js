@@ -20,6 +20,7 @@ const createJobPosting = async (req, res) => {
     } = req.body;
 
     const jobPosting = await JobPosting.create({
+      user_id: req.user.id,   // scope to the creating user
       title,
       description,
       required_skills: required_skills || [],
@@ -57,7 +58,8 @@ const getAllJobPostings = async (req, res) => {
       order = 'DESC'
     } = req.query;
 
-    const where = {};
+    // Scope to current user's job postings
+    const where = { user_id: req.user.id };
     if (status) {
       where.status = status;
     }

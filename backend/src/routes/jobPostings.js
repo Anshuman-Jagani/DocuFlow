@@ -11,7 +11,7 @@ const jobPostingValidation = [
   body('description').notEmpty().withMessage('Description is required'),
   body('required_skills').optional().isArray().withMessage('Required skills must be an array'),
   body('preferred_skills').optional().isArray().withMessage('Preferred skills must be an array'),
-  body('status').optional().isIn(['open', 'closed']).withMessage('Invalid status')
+  body('status').optional().isIn(['open', 'closed', 'draft']).withMessage('Invalid status')
 ];
 
 // Routes
