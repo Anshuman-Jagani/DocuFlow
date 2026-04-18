@@ -113,24 +113,23 @@ const Login: React.FC = () => {
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="text-[10px] font-bold text-[#333333] tracking-[0.15em] uppercase">Password</label>
                 </div>
-              <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    error={errors.password?.message}
-                    {...register("password")}
+                    {...register('password')}
+                    className="w-full px-3 py-2.5 pr-10 bg-[#0A0A0A] border rounded-md text-white placeholder-[#333333] outline-none transition-all duration-200 text-sm focus:border-white/30 focus:shadow-glow-white-sm border-[#1A1A1A]"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowPassword(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#444444] hover:text-white transition-colors focus:outline-none"
                     tabIndex={-1}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword
-                      ? <EyeOff className="w-4 h-4" />
-                      : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
+                  {errors.password && <p className="mt-1.5 text-[11px] text-[#F87171]">{errors.password.message}</p>}
                 </div>
               </div>
 

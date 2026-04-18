@@ -196,41 +196,47 @@ const Register: React.FC = () => {
 
               <div className="space-y-3">
                 <div className="relative">
-                  <Input
-                    label="Password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    error={errors.password?.message}
-                    {...register("password")}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-8 text-[#444444] hover:text-white transition-colors focus:outline-none"
-                    tabIndex={-1}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <label className="block text-[10px] font-bold text-[#333333] tracking-[0.15em] uppercase mb-1.5">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      {...register('password')}
+                      className="w-full px-3 py-2.5 pr-10 bg-[#0A0A0A] border rounded-md text-white placeholder-[#333333] outline-none transition-all duration-200 text-sm focus:border-white/30 focus:shadow-glow-white-sm border-[#1A1A1A]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#444444] hover:text-white transition-colors focus:outline-none"
+                      tabIndex={-1}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="mt-1.5 text-[11px] text-[#F87171]">{errors.password.message}</p>}
                 </div>
 
                 <div className="relative">
-                  <Input
-                    label="Confirm Password"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    error={errors.confirmPassword?.message}
-                    {...register("confirmPassword")}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-8 text-[#444444] hover:text-white transition-colors focus:outline-none"
-                    tabIndex={-1}
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <label className="block text-[10px] font-bold text-[#333333] tracking-[0.15em] uppercase mb-1.5">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      {...register('confirmPassword')}
+                      className="w-full px-3 py-2.5 pr-10 bg-[#0A0A0A] border rounded-md text-white placeholder-[#333333] outline-none transition-all duration-200 text-sm focus:border-white/30 focus:shadow-glow-white-sm border-[#1A1A1A]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#444444] hover:text-white transition-colors focus:outline-none"
+                      tabIndex={-1}
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && <p className="mt-1.5 text-[11px] text-[#F87171]">{errors.confirmPassword.message}</p>}
                 </div>
 
                 {password && (
