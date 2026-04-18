@@ -10,15 +10,15 @@ export interface Receipt {
   tax?: number | null;
   tip?: number | null;
   currency: string;
-  category: string | null;
+  expense_category: string | null;
   payment_method: string | null;
   is_business_expense: boolean;
   is_reimbursable: boolean;
   tax_deductible: boolean;
   items: ReceiptItem[];
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
   document?: {
     id: string;
     original_filename: string;

@@ -132,7 +132,7 @@ const ReceiptDetail: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-xs text-[#888888] mb-1">Category</p>
-                  <p className="text-sm font-bold text-white">{receipt.category || 'N/A'}</p>
+                  <p className="text-sm font-bold text-white">{receipt.expense_category || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-[#888888] mb-1">Tax</p>

@@ -183,7 +183,8 @@ export const receiptApi = {
     if (filters.category) params.append('expense_category', filters.category);
     if (filters.dateFrom) params.append('start_date', filters.dateFrom);
     if (filters.dateTo) params.append('end_date', filters.dateTo);
-    if (filters.isBusiness !== undefined) params.append('is_business_expense', filters.isBusiness.toString());
+    // Only send isBusiness when it's an explicit boolean (not empty string)
+    if (typeof filters.isBusiness === 'boolean') params.append('is_business_expense', filters.isBusiness.toString());
     
     params.append('page', page.toString());
     params.append('limit', limit.toString());
