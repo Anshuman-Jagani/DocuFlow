@@ -20,7 +20,6 @@ const createJobPosting = async (req, res) => {
     } = req.body;
 
     const jobPosting = await JobPosting.create({
-      user_id: req.user.id,   // scope to the creating user
       title,
       description,
       required_skills: required_skills || [],
@@ -58,8 +57,8 @@ const getAllJobPostings = async (req, res) => {
       order = 'DESC'
     } = req.query;
 
-    // Scope to current user's job postings
-    const where = { user_id: req.user.id };
+    // Job postings are global (used for resume matching across all users)
+    const where = {};
     if (status) {
       where.status = status;
     }
