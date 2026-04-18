@@ -24,7 +24,7 @@ const ResumeList: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const [filters, setFilters] = useState<ResumeFilters>({
-    search: '', skills: [], minExperience: 0, maxExperience: 50, minScore: 0, maxScore: 100,
+    search: '', email: '', skills: [], minExperience: 0, maxExperience: 50, minScore: 0, maxScore: 100,
   });
   const [skillInput, setSkillInput] = useState('');
 
@@ -62,7 +62,7 @@ const ResumeList: React.FC = () => {
   const removeSkillFilter = (skill: string) => handleFilterChange('skills', filters.skills.filter(s => s !== skill));
 
   const clearFilters = () => {
-    setFilters({ search: '', skills: [], minExperience: 0, maxExperience: 50, minScore: 0, maxScore: 100 });
+    setFilters({ search: '', email: '', skills: [], minExperience: 0, maxExperience: 50, minScore: 0, maxScore: 100 });
     setPage(1);
   };
 
